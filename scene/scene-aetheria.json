@@ -1,0 +1,86 @@
+{
+  "display": {
+    "title": "Meta GamiMall ",
+    "favicon": "favicon_asset",
+    "navmapThumbnail": "scene-thumbnail.png"
+  },
+  "owner": "",
+  "contact": {
+    "name": "Meta Live Studio",
+    "email": "metalivestudio@gmail.com"
+  },
+  "main": "bin/game.js",
+  "tags": [],
+  "scene": {
+    "parcels": [
+      "145,60",
+      "145,61",
+      "145,62",
+      "145,63",
+      "145,64",
+      "145,65",
+      "146,60",
+      "146,61",
+      "146,62",
+      "146,63",
+      "146,64",
+      "146,65",
+      "147,60",
+      "147,61",
+      "147,62",
+      "147,63",
+      "147,64",
+      "147,65",
+      "148,60",
+      "148,61",
+      "148,62",
+      "148,63",
+      "148,64",
+      "148,65",
+      "149,60",
+      "149,61",
+      "149,62",
+      "149,63",
+      "149,64",
+      "149,65"
+    ],
+    "base": "145,60"
+  },
+  "communications": {
+    "type": "webrtc",
+    "signalling": "https://signalling-01.decentraland.org"
+  },
+  "policy": {
+    "contentRating": "E",
+    "fly": true,
+    "voiceEnabled": true,
+    "blacklist": [],
+    "teleportPosition": ""
+  },
+  "source": {
+    "version": 1,
+    "origin": "builder",
+    "projectId": "97a8b072-db8e-4521-9522-e9c7aaba1bb7",
+    "point": {
+      "x": 0,
+      "y": 0
+    },
+    "rotation": "east",
+    "layout": {
+      "rows": 6,
+      "cols": 5
+    }
+  },
+  "spawnPoints": [
+    {
+      "name": "spawn1",
+      "default": true,
+      "position": {
+        "x": [43, 45],
+        "y": 1,
+        "z": [0, 2]
+      }
+    }
+  ],
+  "requiredPermissions": ["ALLOW_TO_MOVE_PLAYER_INSIDE_SCENE"]
+}
