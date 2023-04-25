@@ -5,6 +5,13 @@ import atlas_mappings from "./atlas_mappings";
 import { setSection } from "../dcl-scene-ui-workaround/resources";
 import { ImageSection } from "node_modules/@dcl/ui-scene-utils/dist/utils/types";
 import { CONFIG } from "src/config";
+import { getOrCreateFont } from "src/meta-decentrally/resources/common";
+import { formatTime } from "src/meta-decentrally/modules/utilities";
+import { convertDateToYMDHMS } from "src/utils";
+import { RESOURCES } from "src/gamimall/resources";
+import { CommonResources } from "src/resources/common";
+import { RewardNotification } from "src/gamimall/coin";
+import { fetchNFTData, isNFTResultValid } from "src/store/fetch-utils";
 
 const customDelayMs = 200;
 const canvas = ui.canvas;
@@ -13,6 +20,14 @@ const pinkNeonColor = new Color4(1, 0, 1, 0.1);
 
 export const custUiAtlas = new Texture(
   "images/ui/dialog-custom-atlas-v3-semi-tran.png"
+);
+
+export const AtlasEntryposter1 = new Texture(
+  "images/ui/Entryposter1.png"
+);
+
+export const AtlasEntryposter2 = new Texture(
+  "images/ui/Entryposter2.png"
 );
 
 export const mapUiAtlas = new Texture(
@@ -33,6 +48,10 @@ const SCALE_FONT_OK_PROMPT_TEXT = 1.4;
 const SCALE_UIImage = MASTER_SCALE;
 const SCALE_CLAIM_UIImage = 1;
 const SCALE_UIImage_PERCENT = MASTER_SCALE;
+
+const claimWindowPrefixNotStarted = "Can claim after " 
+const claimWindowPrefixExpired = "Claim expired " 
+
 
 export interface Modal {
   show(): void;
@@ -128,7 +147,7 @@ export class CustomOkPrompt implements Modal {
         ? options.textFontSize
         : 12 * SCALE_FONT_OK_PROMPT_TEXT
     ));
-    const sfFont = new Font(Fonts.SanFrancisco);
+    const sfFont = getOrCreateFont(Fonts.SanFrancisco)
     promptText.text.vAlign = "center";
     promptText.text.adaptHeight = true;
     promptText.text.font = sfFont;
@@ -300,7 +319,7 @@ export class CustomOptionsPrompt implements Modal {
       new Color4(1, 0.906, 0.553, 1),
       19 * SCALE_FONT_TITLE
     );
-    const sfFont = new Font(Fonts.SanFrancisco);
+    const sfFont = getOrCreateFont(Fonts.SanFrancisco)
 
     let subtitleText = (this.text = new CustomPromptText(
       this.prompt,
@@ -416,10 +435,12 @@ export type CustomGridTextRowData = {
   uiIconSection: ImageSection;
   text: string;
 };
-export class CustomRewardPrompt implements Modal {
+
+export class AbstractGridPrompt implements Modal {
   prompt: ui.CustomPrompt;
   title: ui.CustomPromptText;
   text: ui.CustomPromptText;
+  buttonPrimary: ui.CustomPromptButton
 
   /*
   coins:CustomTextRow
@@ -467,33 +488,23 @@ export class CustomRewardPrompt implements Modal {
 
   buttonConfirm: string;
   buttonSubtitleConfirm: string;
-  buttonRaffle: string;
-  buttonSubtitleRaffle: string;
+  //buttonRaffle: string;
+  //buttonSubtitleRaffle: string;
   primaryCallback?: () => void;
-  secundaryCallback?: () => void;
 
   textGrid: CustomGridTextRow[] = [];
 
   constructor(
     title: string,
     text: string,
-    coins: string,
-    dollars: string,
     buttonConfirm: string,
-    buttonSubtitleConfirm: string,
-    buttonRaffle: string,
-    buttonSubtitleRaffle: string,
     primaryCallback?: () => void,
-    secundaryCallback?: () => void,
     options?: CustomPromptOptions
   ) {
     this.primaryCallback = primaryCallback;
-    this.secundaryCallback = secundaryCallback;
 
     this.buttonConfirm = buttonConfirm;
-    this.buttonSubtitleConfirm = buttonSubtitleConfirm;
-    this.buttonRaffle = buttonRaffle;
-    this.buttonSubtitleRaffle = buttonSubtitleRaffle;
+    
     const width = OPTION_PROMPT_DEFAULT_WIDTH;
     const height = OPTION_PROMPT_DEFAULT_HEIGHT;
     this.prompt = new ui.CustomPrompt(undefined, undefined, undefined, true);
@@ -504,8 +515,8 @@ export class CustomRewardPrompt implements Modal {
       new Color4(1, 0.906, 0.553, 1),
       19 * SCALE_FONT_TITLE
     );
-    const sfFont = new Font(Fonts.SanFrancisco);
-
+    const sfFont = getOrCreateFont(Fonts.SanFrancisco)
+ 
     let subtitleText = (this.text = this.prompt.addText(
       text,
       0,
@@ -514,8 +525,45 @@ export class CustomRewardPrompt implements Modal {
       16
     ));
 
-    let rowYPos = 5;
-    const rowYHeight = 20;
+    let myButton = this.buttonPrimary = this.prompt.addButton(
+      this.buttonConfirm,
+      -50,
+      -40,
+      () => {
+        if (this.primaryCallback) this.primaryCallback();
+        this.hide();
+      },
+      ui.ButtonStyles.E
+    );
+    if (myButton.icon) {
+      myButton.icon.visible = false;
+      log(myButton.label);
+      myButton.label.positionX = -5;
+      myButton.label.positionY = 5;
+    } 
+    /*
+    let subtitleRaffle = new CustomPromptText(
+      this.prompt,
+      "xxxxx",
+      -78,
+      -185,
+      false,
+      Color4.White(),
+      8
+    );
+    subtitleRaffle.text.vAlign = "center";
+    subtitleRaffle.text.adaptHeight = true;
+    subtitleRaffle.text.font = sfFont;
+    subtitleRaffle.text.isPointerBlocker = false;*/
+
+    this.prompt.hide();
+    //FIXME call its own formatter, not levelups
+    //applyLevelUpPanel(this.prompt, myButton, options);
+  }
+  initGrid(args:{rowYPos?:number,rowYHeight?:number}){
+
+    let rowYPos = args.rowYPos !== undefined ? args.rowYPos : 5; 
+    const rowYHeight = args.rowYHeight !== undefined ? args.rowYHeight : 20;
     const fontSize = 12;
     const row1Xwidth = 70;
     const row1X = -70;
@@ -531,7 +579,7 @@ export class CustomRewardPrompt implements Modal {
       let strText = "xxx";
       switch (x) {
         case 1:
-          strText = "wood";
+          strText = "Gwood";
           break;
         case 2:
           strText = "diamon";
@@ -573,7 +621,7 @@ export class CustomRewardPrompt implements Modal {
       );
       text.text.hTextAlign = "left";
       text.text.width = 70;
-
+ 
       icon = this.prompt.addIcon(
         "",
         row2Ximage,
@@ -584,37 +632,246 @@ export class CustomRewardPrompt implements Modal {
       );
       icon.image.source = custUiAtlas;
       setSection(icon.image, atlas_mappings.icons.coin);
-
+ 
       //dont add right away so it adds down
       addAfter.push({ uiIcon: icon, text: text });
 
       rowYPos -= rowYHeight;
     }
 
-    this.updateCoins(coins);
-    this.updateDollar(dollars);
+    //debugger 
     for (const p in addAfter) {
       this.textGrid.push(addAfter[p]);
     }
 
     this.updateGrid();
 
-    let myButton = this.prompt.addButton(
-      this.buttonConfirm,
-      -50,
-      -40,
-      () => {
-        if (this.primaryCallback) this.primaryCallback();
-        this.hide();
-      },
-      ui.ButtonStyles.E
-    );
-    if (myButton.icon) {
-      myButton.icon.visible = false;
-      log(myButton.label);
-      myButton.label.positionX = -5;
-      myButton.label.positionY = 5;
+  }
+  show(): void {
+    utils.setTimeout(customDelayMs, () => {
+      this.prompt.show();
+      this.updateGrid();
+    });
+  }
+
+  hide(): void {
+    this.prompt.hide();
+  }
+  hideGrid() {
+    for (let x = 0; x < this.textGrid.length; x++) {
+      //log("hideGrid", x);
+      this.textGrid[x].text.hide();
+      this.textGrid[x].text.text.visible = false;
+      this.textGrid[x].uiIcon.hide();
     }
+  }
+  updateGridIndex(row: number, data: CustomGridTextRowData) {
+    if(this.textGrid===undefined){
+      log("updateGridIndex WARN this.textGrid is null ",row,this.textGrid)
+      return;
+    }
+    if(this.textGrid[row] === undefined){
+      //debugger
+      log("updateGridIndex WARN invalid index ",row,this.textGrid.length)
+      return;
+    }
+    this.textGrid[row].text.show();
+    this.textGrid[row].uiIcon.show();
+
+    this.textGrid[row].text.text.value = data.text;
+
+    if (data.uiIconSection !== undefined) {
+      setSection(this.textGrid[row].uiIcon.image, data.uiIconSection);
+    }
+  }
+  updateGrid() {
+    const arr: CustomGridTextRowData[] = [
+      this.coins,
+      this.coinsEarned,
+      this.dollars,
+      this.material1,
+      this.material2,
+      this.material3,
+    ];
+    //ask
+    //if(){
+    //,
+    //}
+
+    this.hideGrid();
+    //debugger
+    let row = 0;
+    for (let x = 0; x < arr.length; x++) {
+      if (arr[x].text !== undefined && arr[x].text.length > 0) {
+        this.updateGridIndex(row, arr[x]);
+        row++;
+      } else {
+        log("updateGrid was blank", arr[x]);
+      }
+    }
+    /*
+    row++
+    row++
+    //push it down to its own row
+    this.updateGridIndex(row,this.coinsEarned)*/
+  }
+  reset(){
+    this.updateTitle("")
+    this.updateCoins("")
+    this.updateDollar("")
+    this.updateSubGameDollars("")
+    this.updateText("")
+    this.updateMaterial1("")
+    this.updateMaterial2("")
+    this.updateMaterial3("")
+  }
+  updateTitle(title: string) {
+    this.title.text.value = title;
+  }
+  updateText(text: string) {
+    this.text.text.value = text;
+  }
+  updateCoins(coins: string) {
+    this.coins.text = coins;
+    //this.coins = coins;
+  }
+  updateCoinsEarned(coins: string) {
+    this.coinsEarned.text = coins;
+    //TODO
+    //updateCoinsEarned
+    //this.coins.text.value = coins
+  }
+  //for voxboard subgame, placeholder if need own object
+  updateSubGameDollars(dollar: string) {
+    this.dollars.text = dollar;
+  }
+
+  //material update placeholders
+  updateMaterial1(val: string) {
+    this.material1.text = val;
+  }
+  updateMaterial2(val: string) {
+    this.material2.text = val;
+  }
+  updateMaterial3(val: string) {
+    this.material3.text = val;
+  }
+
+  updateDollar(dollar: string) {
+    this.dollars.text = dollar;
+  }
+}
+export class LevelUpPrompt extends AbstractGridPrompt {
+  constructor(
+    title: string,
+    text: string,
+    buttonConfirm: string,
+    primaryCallback?: () => void,
+    options?: CustomPromptOptions
+  ) {
+    super(title,text,buttonConfirm,primaryCallback,options)
+
+    this.initGrid({rowYPos:-120})
+
+    this.title.text.value = "2"
+    this.title.text.positionX = 0
+    this.title.text.positionY = 55
+    this.title.text.vAlign = 'center'
+    this.title.text.vTextAlign = 'center'
+    this.title.text.fontSize = 80
+    this.title.text.color = Color4.White()
+
+    this.text.text.value = ''//not needed right now
+    this.text.text.positionX = 0
+    this.text.text.positionY = -50 
+    this.text.text.vAlign = 'center'
+    this.text.text.vTextAlign = 'center'
+
+    applyLevelUpPanel(this.prompt, this.buttonPrimary, options);
+  }
+  update(reward:RewardNotification){
+    
+    //clear out last values
+    this.reset()
+
+    this.updateTitle(reward.newLevel.toFixed(0))
+
+    if(reward.rewards!==undefined){
+      for(const p in reward.rewards){
+        switch(reward.rewards[p].id){
+          case CONFIG.GAME_COIN_TYPE_GC:
+            this.updateCoins(reward.rewards[p].amount.toFixed(0))
+          break;
+          case CONFIG.GAME_COIN_TYPE_MC:
+            this.updateDollar(reward.rewards[p].amount.toFixed(0))
+          break;
+          default:
+            log("unhandled reward type",reward.rewards[p].id,reward.rewards[p])
+        }
+      }
+      this.updateGrid()
+    }
+  }
+}
+
+export class CustomRewardPrompt extends AbstractGridPrompt {
+  //prompt: ui.CustomPrompt;
+  //title: ui.CustomPromptText;
+  //text: ui.CustomPromptText;
+
+  /*
+  coins:CustomTextRow
+  coinsEarned:CustomTextRow
+  dollars:CustomTextRow
+
+  material1:CustomTextRow
+  material2:CustomTextRow
+  material3:CustomTextRow
+  */
+
+  //coins: ui.CustomPromptText;
+  //coinsEarned: ui.CustomPromptText;
+  //dollars: ui.CustomPromptText;
+
+  //material1: ui.CustomPromptText;
+  //material2: ui.CustomPromptText;
+  //material3: ui.CustomPromptText;
+
+  //buttonConfirm: string;
+  //buttonSubtitleConfirm: string;
+  buttonRaffle: string;
+  buttonSubtitleRaffle: string;
+  //primaryCallback?: () => void;
+  secundaryCallback?: () => void;
+
+  //textGrid: CustomGridTextRow[] = [];
+
+  constructor(
+    title: string,
+    text: string,
+    coins: string,
+    dollars: string,
+    buttonConfirm: string,
+    buttonSubtitleConfirm: string,
+    buttonRaffle: string,
+    buttonSubtitleRaffle: string,
+    primaryCallback?: () => void,
+    secundaryCallback?: () => void,
+    options?: CustomPromptOptions
+  ) {
+    super( title,text,buttonConfirm,primaryCallback,options )
+
+    this.initGrid({}) 
+
+
+    //this.primaryCallback = primaryCallback;
+    this.secundaryCallback = secundaryCallback;
+
+    this.buttonConfirm = buttonConfirm;
+    this.buttonSubtitleConfirm = buttonSubtitleConfirm;
+    this.buttonRaffle = buttonRaffle;
+    this.buttonSubtitleRaffle = buttonSubtitleRaffle;
+    const sfFont = getOrCreateFont(Fonts.SanFrancisco)
 
     let secundaryButton = this.prompt.addButton(
       this.buttonRaffle,
@@ -661,101 +918,7 @@ export class CustomRewardPrompt implements Modal {
     subtitleRaffle.text.isPointerBlocker = false;
 
     this.prompt.hide();
-    applyRafflePanel(this.prompt, myButton, secundaryButton, options);
-  }
-  show(): void {
-    utils.setTimeout(customDelayMs, () => {
-      this.prompt.show();
-      this.updateGrid();
-    });
-  }
-
-  hide(): void {
-    this.prompt.hide();
-  }
-  hideGrid() {
-    for (let x = 0; x < this.textGrid.length; x++) {
-      //log("hideGrid", x);
-      this.textGrid[x].text.hide();
-      this.textGrid[x].text.text.visible = false;
-      this.textGrid[x].uiIcon.hide();
-    }
-  }
-  updateGridIndex(row: number, data: CustomGridTextRowData) {
-    this.textGrid[row].text.show();
-    this.textGrid[row].uiIcon.show();
-
-    this.textGrid[row].text.text.value = data.text;
-
-    if (data.uiIconSection !== undefined) {
-      setSection(this.textGrid[row].uiIcon.image, data.uiIconSection);
-    }
-  }
-  updateGrid() {
-    const arr: CustomGridTextRowData[] = [
-      this.coins,
-      this.dollars,
-      //this.coinsEarned,
-      this.material1,
-      this.material2,
-      this.material3,
-    ];
-    //ask
-    //if(){
-    //,
-    //}
-
-    this.hideGrid();
-    //debugger
-    let row = 0;
-    for (let x = 0; x < arr.length; x++) {
-      if (arr[x].text !== undefined && arr[x].text.length > 0) {
-        this.updateGridIndex(row, arr[x]);
-        row++;
-      } else {
-        log("updateGrid was blank", arr[x]);
-      }
-    }
-    /*
-    row++
-    row++
-    //push it down to its own row
-    this.updateGridIndex(row,this.coinsEarned)*/
-  }
-  updateTitle(title: string) {
-    this.title.text.value = title;
-  }
-  updateText(text: string) {
-    this.text.text.value = text;
-  }
-  updateCoins(coins: string) {
-    this.coins.text = coins;
-    //this.coins = coins;
-  }
-  updateCoinsEarned(coins: string) {
-    this.coinsEarned.text = coins;
-    //TODO
-    //updateCoinsEarned
-    //this.coins.text.value = coins
-  }
-  //for voxboard subgame, placeholder if need own object
-  updateSubGameDollars(dollar: string) {
-    this.dollars.text = dollar;
-  }
-
-  //material update placeholders
-  updateMaterial1(val: string) {
-    this.material1.text = val;
-  }
-  updateMaterial2(val: string) {
-    this.material2.text = val;
-  }
-  updateMaterial3(val: string) {
-    this.material3.text = val;
-  }
-
-  updateDollar(dollar: string) {
-    this.dollars.text = dollar;
+    applyRafflePanel(this.prompt, this.buttonPrimary, secundaryButton, options);
   }
 }
 
@@ -779,7 +942,20 @@ export type CustomClaimArgs = {
   coins?: string;
   cost?: CustomClaimCost[]; //FIXME, must send in multi costs
   dollars?: string;
-  claimCallback?: () => void;
+  
+  showStockQty?:boolean //defaults to true
+  itemQtyCurrent?:number
+  itemQtyTotal?:number
+
+  claimWindowEnabled?:boolean,//defaults to false
+  claimStartMS?: number,
+  claimEndMS?: number,
+
+  contract?: string,
+  itemId?:string,
+
+  claimCallback?: () => void,
+  //onOpenCallback?: () => void,
   options?: CustomPromptOptions;
 };
 export class CustomClaimPrompt implements Modal {
@@ -789,6 +965,11 @@ export class CustomClaimPrompt implements Modal {
   subtitleItemName: CustomPromptText;
   title: CustomPromptText;
   subtitle: CustomPromptText;
+  itemQtyAmount: CustomPromptText;
+  claimWindow: CustomPromptText;
+  checkingLatestPriceUI: CustomPromptText;
+  checkingLatestPrice:boolean = false
+  
   coins: CustomGridTextRowData = {
     uiIconSection: atlas_mappings.icons.coin,
     text: "",
@@ -797,6 +978,11 @@ export class CustomClaimPrompt implements Modal {
     uiIconSection: atlas_mappings.icons.dimond,
     text: "",
   };
+
+  contract?: string
+  itemId?:string
+  showStockQty?:boolean=false
+  itemQtyTotal?:number
 
   textGrid: CustomGridTextRow[] = [];
 
@@ -815,19 +1001,24 @@ export class CustomClaimPrompt implements Modal {
     this.prompt = new ui.CustomPrompt(undefined, undefined, undefined, true);
     let titleUI = (this.itemName = this.prompt.addText(
       "itemName",
-      125,
+      125 + 75,
       210,
       new Color4(1, 0.906, 0.553, 1),
       25 * SCALE_FONT_CLAIM_TITLE
     ));
-    const sfFont = new Font(Fonts.SanFrancisco);
+    const sfFont = getOrCreateFont(Fonts.SanFrancisco)
     titleUI.text.vAlign = "center";
     titleUI.text.adaptHeight = true;
+
+    titleUI.text.hTextAlign = "left";
+    titleUI.text.textWrapping = true
+    titleUI.text.width = 280
+
     /*     titleUI.text.shadowColor = new Color4(1, 0.906, 0.553, 1);
     titleUI.text.shadowOffsetX = 15;
     titleUI.text.shadowOffsetY = 15;
     titleUI.text.shadowBlur = 2; */
-
+      
     let itemsubtitleText = (this.subtitleItemName = new CustomPromptText(
       this.prompt,
       "subtitleItemName",
@@ -856,6 +1047,7 @@ export class CustomClaimPrompt implements Modal {
     titleText.text.adaptHeight = true;
     titleText.text.font = sfFont;
     titleText.text.fontSize = 15 * SCALE_FONT_CLAIM_TITLE;
+
     let subtitleText = (this.subtitle = new CustomPromptText(
       this.prompt,
       "subtitle",
@@ -870,10 +1062,63 @@ export class CustomClaimPrompt implements Modal {
     subtitleText.text.font = sfFont;
     subtitleText.text.fontSize = 11 * SCALE_FONT_CLAIM;
 
+ 
+    let itemQtyAmount = (this.itemQtyAmount = new CustomPromptText(
+      this.prompt,
+      "00/00",
+      125 + 75,
+      110 + 70,
+      false,
+      new Color4(1, 0.906, 0.553, 1),
+      14 * SCALE_FONT_CLAIM
+    ));
+    itemQtyAmount.text.vAlign = "center";
+    itemQtyAmount.text.adaptHeight = true;
+    itemQtyAmount.text.hTextAlign = "left";
+    itemQtyAmount.text.textWrapping = true
+    itemQtyAmount.text.width = titleUI.text.width //250
+    itemQtyAmount.text.font = sfFont;
+    itemQtyAmount.text.fontSize = 14 * SCALE_FONT_CLAIM;
+
+    let claimWindow = (this.claimWindow = new CustomPromptText(
+      this.prompt,
+      claimWindowPrefixNotStarted + convertDateToYMDHMS(new Date()),
+      125 + 75,
+      -60 - 120,
+      false,
+      Color4.White(),//new Color4(1, 0.906, 0.553, 1),
+      12 * SCALE_FONT_CLAIM
+    ));
+    claimWindow.text.vAlign = "center";
+    claimWindow.text.adaptHeight = true;
+    claimWindow.text.hTextAlign = "left";
+    claimWindow.text.textWrapping = true
+    claimWindow.text.width = titleUI.text.width //250
+    claimWindow.text.font = sfFont;
+    claimWindow.text.fontSize = 12 * SCALE_FONT_CLAIM;
+
+
+    let checkingLatestPrice = this.checkingLatestPriceUI = new CustomPromptText(
+      this.prompt,
+      "Checking Latest Prices...",
+      200,
+      -50,
+      false,
+      Color4.Green(),
+      12 * SCALE_FONT_CLAIM
+    );
+    checkingLatestPrice.text.vAlign = "center";
+    checkingLatestPrice.text.adaptHeight = true;
+    checkingLatestPrice.text.font = sfFont;
+    checkingLatestPrice.text.fontSize = 15 * SCALE_FONT;
+
+    checkingLatestPrice.hide()
+
+    const COST_X_BASE = CONFIG.CLAIM_CHECK_FOR_LATEST_PRICES ? 180 : 200
     let costText = new CustomPromptText(
       this.prompt,
       "COST",
-      200,
+      COST_X_BASE,
       40,
       false,
       Color4.White(),
@@ -883,6 +1128,36 @@ export class CustomClaimPrompt implements Modal {
     costText.text.adaptHeight = true;
     costText.text.font = sfFont;
     costText.text.fontSize = 15 * SCALE_FONT;
+
+    if(CONFIG.CLAIM_CHECK_FOR_LATEST_PRICES){
+      let costInfoIcon = this.prompt.addIcon(
+        "",
+        COST_X_BASE+72,
+        40-4,
+        28,
+        28,
+        atlas_mappings.icons.coin
+      );
+      costInfoIcon.image.source = custUiAtlas;
+      setSection(costInfoIcon.image, atlas_mappings.icons.costInfo);
+      costInfoIcon.image.onClick = new OnClick(() => {
+        openExternalURL("https://docs.google.com/document/d/1a11Xpk1sI4Kmpw_FyN4b5mTI5_vs2PPnEAhUX6en-2Y/edit?usp=sharing")
+      });
+
+      let costRefresIcon = this.prompt.addIcon(
+        "",
+        COST_X_BASE+42,
+        40-4,
+        28,
+        28,
+        atlas_mappings.icons.coin
+      );
+      costRefresIcon.image.source = custUiAtlas;
+      setSection(costRefresIcon.image, atlas_mappings.icons.costRefresh);
+      costRefresIcon.image.onClick = new OnClick(() => {
+        this.refreshData()
+      });
+    }
     /*
     let coinsText = (this.coins = new CustomPromptText(
       this.prompt,
@@ -1039,9 +1314,80 @@ export class CustomClaimPrompt implements Modal {
       args.options ?? this.options
     );
   }
+  showCheckingLatestPrice(val:boolean){
+    if(val){
+      this.checkingLatestPriceUI.show()
+    }else{
+      this.checkingLatestPriceUI.hide()
+    }
+    //because of async calls must remember last status
+    this.checkingLatestPrice = val
+  }
+  refreshData():void{
+    const METHOD_NAME = "refreshData"
+    if(!CONFIG.CLAIM_CHECK_FOR_LATEST_PRICES){
+      log("CONFIG.CLAIM_CHECK_FOR_LATEST_PRICES disabled, not to check...",CONFIG.CLAIM_CHECK_FOR_LATEST_PRICES)
+      this.showCheckingLatestPrice(false)
+      return
+    }
+    if(this.contract === undefined ){
+      log("no contract to check against, ignoreing...")
+      this.showCheckingLatestPrice(false)
+      return
+    }
+    this.showCheckingLatestPrice(true)
+    //do price update check
+    const result = fetchNFTData(this.contract).then(
+      (result:any)=>{
+        if(isNFTResultValid(result)){
+
+          for(const r in result.assets.supplyNfts){
+            const newValItm = result.assets.supplyNfts[r]
+            const newValAddress = newValItm.contract ? (newValItm.contract+"").toLowerCase() : undefined
+            const newValAmount = newValItm.count
+            const costs = newValItm.costs
+          
+            if (costs !== undefined && costs.length > 0) {
+              //reset them so they can be set again
+              this.coins.text = ""
+              this.dollars.text = ""
+
+              for (let p in costs) {
+                const price = costs[p].amount?.toFixed(0);
+                const id = costs[p].virtualCurrency;
+                switch (id) {
+                  case CONFIG.GAME_COIN_TYPE_GC:
+                    this.coins.text = price;
+                    break;
+                  case CONFIG.GAME_COIN_TYPE_MC: 
+                    this.dollars.text = price;
+                    break;
+                  case CONFIG.GAME_COIN_TYPE_MATERIAL_1_ID:
+                  case CONFIG.GAME_COIN_TYPE_MATERIAL_2_ID:
+                  case CONFIG.GAME_COIN_TYPE_MATERIAL_3_ID:
+                    //args. = price
+                    //TODO
+                    break;
+                }
+              }
+            }
+    
+            this.updateQty( newValAmount )
+            this.updateGrid();
+          }
+        }else{
+          log(METHOD_NAME,"invalid result",result)
+        }
+        this.showCheckingLatestPrice(false)
+      }
+    )
+    
+  }
   show(): void {
+    this.refreshData()
     utils.setTimeout(customDelayMs, () => {
       this.prompt.show();
+      this.showCheckingLatestPrice(this.checkingLatestPrice)
       this.updateGrid();
     });
   }
@@ -1051,7 +1397,7 @@ export class CustomClaimPrompt implements Modal {
 
   hideGrid() {
     for (let x = 0; x < this.textGrid.length; x++) {
-      log("hideGrid", x);
+      //log("hideGrid", x);
       this.textGrid[x].text.hide();
       this.textGrid[x].text.text.visible = false;
       this.textGrid[x].uiIcon.hide();
@@ -1059,10 +1405,18 @@ export class CustomClaimPrompt implements Modal {
   }
 
   updateGridIndex(row: number, data: CustomGridTextRowData) {
+    if(this.textGrid===undefined){
+      log("updateGridIndex WARN this.textGrid is null ",row,this.textGrid)
+      return;
+    }
+    if(this.textGrid[row] === undefined){
+      log("updateGridIndex WARN invalid index ",row,this.textGrid.length)
+      return;
+    }
     this.textGrid[row].text.show();
     this.textGrid[row].uiIcon.show();
 
-    this.textGrid[row].text.text.value = data.text;
+    if(this.textGrid[row].text.text !== undefined) this.textGrid[row].text.text.value = data.text;
 
     if (data.uiIconSection !== undefined) {
       setSection(this.textGrid[row].uiIcon.image, data.uiIconSection);
@@ -1095,6 +1449,8 @@ export class CustomClaimPrompt implements Modal {
   updateData(args: CustomClaimArgs) {
     //this.prompt = new ui.CustomPrompt(undefined, undefined, undefined, true);
 
+    //TODO WEB3 CHECK AND CHANGE BUY TO BUY:WALLET REQUIRED!
+
     //FIXME need a grid
     if (args.cost !== undefined && args.cost.length > 0) {
       for (let p in args.cost) {
@@ -1118,15 +1474,41 @@ export class CustomClaimPrompt implements Modal {
       //args.coins = args.cost[0].price?.toFixed(0);
     }
 
+    this.contract = args.contract
+    this.itemId = args.itemId
     this.claimCallback = args.claimCallback;
     this.itemName.text.value = args.itemName ? args.itemName : "";
+    //this.itemName.text.value = "xsdflkj flsdkj dlskfj dlskfjdskl j"
+    //this.itemName.text.value = "slfkjdsflksj fdsl "
     this.subtitleItemName.text.value = args.subtitleItemName
       ? args.subtitleItemName
       : "";
 
-    this.subtitle.text.value = args.subtitle ? args.subtitle : "";
+    this.showStockQty = args.showStockQty
+    this.itemQtyTotal = args.itemQtyTotal
+    const currQty = args.itemQtyCurrent
+      this.updateQty(currQty)
+
+      if(args.claimWindowEnabled !== undefined && args.claimWindowEnabled === true){
+        const now = Date.now()
+        const expired = args.claimEndMS >= 0 && args.claimEndMS < now
+        if( args.claimStartMS >= 0 && args.claimStartMS > now && !expired){
+          this.claimWindow.text.value = claimWindowPrefixNotStarted + convertDateToYMDHMS( new Date(args.claimStartMS) )
+        }else if( expired ){
+            this.claimWindow.text.value = claimWindowPrefixExpired + convertDateToYMDHMS( new Date(args.claimEndMS) )
+        }else{
+          //TODO IMPL OTHER VARIENTS
+          this.claimWindow.text.value = ""
+        }
+      }else{
+        //dont show
+        this.claimWindow.text.value = ""
+      }
+
+    
     this.title.text.value = args.title ? args.title : "";
     this.subtitle.text.value = args.subtitle ? args.subtitle : "";
+    
     this.coins.text = args.coins ? args.coins : "";
     this.dollars.text = args.dollars ? args.dollars : "";
 
@@ -1153,6 +1535,28 @@ export class CustomClaimPrompt implements Modal {
     image.image.source = new Texture(args.imagePath ? args.imagePath : "");
     image.image.sourceWidth = args.imageWidth ? args.imageWidth : 512;
     image.image.sourceHeight = args.imageHeight ? args.imageHeight : 512;
+  }
+  updateQty(currQty:number){
+    if(this.showStockQty === undefined || this.showStockQty === true){
+      if( currQty !== undefined && currQty >= 0 ){
+        let qtyVal = currQty + ""
+        if(this.itemQtyTotal){
+          qtyVal += "/" + this.itemQtyTotal
+        }else{
+          qtyVal += " In Stock"
+        }
+        this.itemQtyAmount.text.value = "("+qtyVal+")" 
+      }else{
+        if(currQty === undefined){
+          this.itemQtyAmount.text.value = "(Stock Not Available)" 
+        }else{
+          this.itemQtyAmount.text.value = "(Stock Not Available)"
+        }
+      }
+    }else{
+      //dont show
+      this.itemQtyAmount.text.value = ""
+    }
   }
 }
 
@@ -1292,6 +1696,46 @@ function applyClaimPanel(
   }
 }
 
+
+function applyLevelUpPanel(
+  modal: ui.CustomPrompt,
+  button?: CustomPromptButton,
+  options?: CustomPromptOptions
+) {
+  if (custUiAtlas !== undefined) {
+    modal.background.source = CommonResources.RESOURCES.textures.avatarswap04
+
+    modal.background.height =
+      options && options.height
+        ? options && options.height
+        : CLAIM_PROMPT_RAFFLE_HEIGHT;
+    modal.background.width =
+      options && options.width
+        ? options && options.width
+        : CLAIM_PROMPT_RAFFLE_WIDTH;
+
+        
+    setSection(modal.background,atlas_mappings.backgrounds.levelUp)
+    
+    modal.closeIcon.positionX = "41%";
+    modal.closeIcon.positionY = "22%";
+
+    if (button) {
+      button.image.source = custUiAtlas;
+      button.image.positionY = "-55%";
+      button.image.positionX = "0";
+      button.image.sourceLeft = 2035;//TODO move to atlas_mappings and use setSection
+      button.image.sourceWidth = 400;
+      button.image.sourceTop = 2393;
+      button.image.sourceHeight = 215;
+      button.image.width = "35%";
+      button.image.height = "15%";
+    }
+    if (modal instanceof ui.CustomPrompt) {
+      modal.texture = custUiAtlas;
+    }
+  }
+}
 function applyRafflePanel(
   modal: ui.CustomPrompt,
   button?: CustomPromptButton,

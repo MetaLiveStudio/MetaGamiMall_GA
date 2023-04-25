@@ -10,7 +10,6 @@ import {
 import { PromptStyles, ButtonStyles, SwitchStyles, ImageSection } from '../../utils/types'
 */
 
-//import { ImageSection } from "@dcl/npc-scene-utils"
 import {
   ButtonStyles,
   canvas,
@@ -20,7 +19,6 @@ import {
   SFFont,
   SwitchStyles,
 } from "@dcl/ui-scene-utils";
-//import { ImageSection } from "src/npcutils/index"
 import { ImageSection } from "node_modules/@dcl/ui-scene-utils/dist/utils/types";
 import resources, { buttonIconPos, setSection } from "./resources";
 

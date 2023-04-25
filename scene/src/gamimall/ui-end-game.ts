@@ -12,6 +12,7 @@ import {
   CustomClaimPrompt,
   CustomOptionsPrompt,
   CustomRewardPrompt,
+  LevelUpPrompt,
 } from "src/ui/modals";
 
 /*
@@ -68,12 +69,32 @@ const BANNER_SOURCE_WIDTH = 1093; //1038
 const BANNER_SOURCE_HEIGHT = 128;
 
 const BANNER_IMAGE_SCALE = 0.3;
-
-function makeRowText(val:number,labal:string,minValToShow:number,fallbackText:string){
+type RowModifierAmountData={
+  bonusPercent:number
+  bonusAmount:number
+  bonusLabel:string
+}
+function makeRowText(val:number,labal:string,modifierAmountData:RowModifierAmountData,minValToShow:number,fallbackText:string){
   if(val < minValToShow){
     return fallbackText
   }else{
-    return 'x' + '' + val
+    let valText = 'x' + '' + val
+    if(modifierAmountData !== undefined ){
+      if(modifierAmountData.bonusAmount !== undefined && modifierAmountData.bonusAmount > 0){
+        valText += "+" + modifierAmountData.bonusAmount
+      }
+      let bonusParens = ""
+      if(modifierAmountData.bonusPercent !== undefined){
+        bonusParens += "%"+ (((modifierAmountData.bonusPercent < 1) ? modifierAmountData.bonusPercent : modifierAmountData.bonusPercent-1)*100).toFixed(0)
+      }
+      if(modifierAmountData.bonusLabel !== undefined){
+        bonusParens += " "+modifierAmountData.bonusLabel
+      }
+      if(bonusParens !== undefined && bonusParens.length > 0){
+        valText += "("+bonusParens+")"
+      }
+    }
+    return valText
   }
 }
 
@@ -135,6 +156,8 @@ const endGameOfPrompt20 = new CustomRewardPrompt("End Current Game","End Current
     title: "HIHGHLIGHTS",
     coins: "x 3000",
     dollars: "x 1000",
+    itemQtyCurrent: 23,
+    itemQtyTotal:100,
     options: rewardOpts,
   });
   claimRewardPrompt20.updateData({
@@ -149,10 +172,19 @@ const endGameOfPrompt20 = new CustomRewardPrompt("End Current Game","End Current
     title: "HIHGHLIGHTS",
     coins: "x 99",
     dollars: "x 199",
+    itemQtyCurrent: 3,
+    itemQtyTotal:100,
     options: rewardOpts,
   });
 
   //claimRewardPrompt20.show()
+
+  
+  const levelUpPrompt = new LevelUpPrompt("title","text","OK",()=>{}) 
+  levelUpPrompt.updateCoins("2")
+  levelUpPrompt.updateDollar("3")
+  levelUpPrompt.hide()
+  REGISTRY.ui.levelUpPrompt = levelUpPrompt;
 
   const endGamePrompt20 = new CustomRewardPrompt(
     "Congratulations",
@@ -169,6 +201,7 @@ const endGameOfPrompt20 = new CustomRewardPrompt("End Current Game","End Current
       height: 430,
     }
   );
+  //endGamePrompt20.show()
   REGISTRY.ui.endGameConfirmPrompt = endGameConfirmPrompt20;
 
   function openClaimRewardPrompt() {
@@ -255,20 +288,23 @@ const endGameOfPrompt20 = new CustomRewardPrompt("End Current Game","End Current
           
           const minValToShow = 1
           const textWhenBelowMin = ""
-          let m1 = makeRowText(endGameResult.material1Collected,CONFIG.GAME_COIN_TYPE_MATERIAL_1,minValToShow,textWhenBelowMin)
-          let m2 = makeRowText(endGameResult.material2Collected,CONFIG.GAME_COIN_TYPE_MATERIAL_1,minValToShow,textWhenBelowMin)
-          let m3 = makeRowText(endGameResult.material3Collected,CONFIG.GAME_COIN_TYPE_MATERIAL_1,minValToShow,textWhenBelowMin)
+          let m1 = makeRowText(endGameResult.material1Collected,CONFIG.GAME_COIN_TYPE_MATERIAL_1,undefined,minValToShow,textWhenBelowMin)
+          let m2 = makeRowText(endGameResult.material2Collected,CONFIG.GAME_COIN_TYPE_MATERIAL_1,undefined,minValToShow,textWhenBelowMin)
+          let m3 = makeRowText(endGameResult.material3Collected,CONFIG.GAME_COIN_TYPE_MATERIAL_1,undefined,minValToShow,textWhenBelowMin)
 
 
-          let txtD = makeRowText(endGameResult.mcCollected , " MetaCash",minValToShow,textWhenBelowMin);
-          let txtC = makeRowText(endGameResult.gcCollected , " LilCoin",minValToShow,textWhenBelowMin);
+          let txtD = makeRowText(endGameResult.mcCollected , " MetaCash",undefined,minValToShow,textWhenBelowMin);
+          //todo add gcBonusEarned to it???
+          let txtC = makeRowText(
+              endGameResult.gcCollected , " LilCoin"
+              ,undefined//{bonusAmount:endGameResult.gcBonusEarned,bonusLabel:"Bonus",bonusPercent:endGameResult.coinMultiplier}
+              ,minValToShow,textWhenBelowMin);
           
           let txtEarned =
-            "+" +
-            endGameResult.gcBonusEarned +
-            " LilCoin (" +
-            Math.round(endGameResult.coinMultiplier * 100 - 100) +
-            "% Bonus)";
+            makeRowText(
+              endGameResult.gcBonusEarned , " LilCoin"
+              ,{bonusAmount:-1,bonusLabel:"Bonus",bonusPercent:endGameResult.coinMultiplier}
+              ,minValToShow,textWhenBelowMin);
           //resultMetaCoinText.text.visible = true;
           //resultGameCoinStartText.text.value = strPad("Game Coins Started With",".",textColLen+col2Len," " + endGameResult.gcStarted) // + " --> " + endGameResult.gcCollectedToMC + " MC"
 
@@ -277,7 +313,7 @@ const endGameOfPrompt20 = new CustomRewardPrompt("End Current Game","End Current
             //resultGameCoinEarnedText.text.visible = true;
             //resultGameCoinEarnedText.text.value = txtEarned;
           } else {
-            txtEarned = "+" + 0 + " LilCoin Bonus";
+            //txtEarned = "+" + 0 + " LilCoin Bonus";
             //resultGameCoinEarnedText.text.value = txtEarned;
           }
           endGamePrompt20.updateCoinsEarned(txtEarned);

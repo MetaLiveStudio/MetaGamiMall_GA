@@ -459,7 +459,7 @@ export function showPlayResultsUI(val: boolean, duration?: number) {
       }
 
       if (refreshData) {
-        refreshUserData();
+        refreshUserData('raffle');
       }
     });
   } else {
@@ -484,7 +484,7 @@ export async function playRaffle(): Promise<GameEndResultType> {
   const resultPromise = executeTask(async () => {
     let response = null;
     //https://us-central1-sandbox-query-blockchain.cloudfunctions.net/blockChainQueryApp/get-account-nft-balance?network=
-    //https://us-central1-sandbox-query-blockchain.cloudfunctions.net/blockChainQueryApp/get-account-nft-balance?network=matic&ownerAddress=WALLET-HERE&limit=9&logLevel=debug&storage=cacheX&multiCall=true&contractId=dcl-mtdgpnks
+    //https://us-central1-sandbox-query-blockchain.cloudfunctions.net/blockChainQueryApp/get-account-nft-balance?network=matic&ownerAddress=0xbd5b79D53D75497673e699A571AFA85492a2cc74&limit=9&logLevel=debug&storage=cacheX&multiCall=true&contractId=dcl-mtdgpnks
     const callUrl =
       customBaseUrl +
       "?" +

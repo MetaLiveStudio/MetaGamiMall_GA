@@ -19,9 +19,10 @@ import PlayFab from "./playfab_sdk/PlayFabClientApi";
 import { GAME_STATE } from "src/state";
 import { refreshUserData } from "./login-flow";
 import { Config, CONFIG } from "src/config";
-import { Coin, COIN_MANAGER, CoinType as CoinDataType } from "./coin";
+import { Coin, COIN_MANAGER, CoinType as CoinDataType, RewardNotification } from "./coin";
 import { Room } from "colyseus.js";
 import { REGISTRY } from "src/registry";
+import { setLobbyCameraTriggerShape } from "src/configTriggers";
 
 /*
 executeTask(async () => {
@@ -64,6 +65,7 @@ export function startGame(gameType?: string) {
     REGISTRY.ui.openloginGamePrompt();
   } else {
     log("starting game");
+    setLobbyCameraTriggerShape();
     GAME_STATE.setScreenBlockLoading(true);
     colyseusConnect(gameType);
   }
@@ -77,15 +79,30 @@ export function endGame() {
     ui.displayAnnouncement("Player not connected to game room");
   } else {
     log("ending game");
-    log("LEAVING ROOM!!!!!!!!!");
-    log("LEAVING ROOM!!!!!!!!!");
-    log("LEAVING ROOM!!!!!!!!!");
+    log("LEAVING ROOM1!!!!!!!!!");
+    log("LEAVING ROOM2!!!!!!!!!");
+    log("LEAVING ROOM3!!!!!!!!!");
 
-    GAME_STATE.setGameStarted(false);
+    log("endGame.sending quit-game!!!!!!!!");
+    //TODO notify of exit, to cause nicer exit
+    GAME_STATE.gameRoom.send("quit-game",{});
+    //ADD TIMER IF takes longer than X do this anyways
+    //popup a quitting screen.
+    GAME_STATE.setGameConnected('disconnecting',"endGame")
     GAME_STATE.setGameHudActive(false);
-    
-    disconnect(true)
-    
+    GAME_STATE.setGameStarted(false);
+    //waiting 3.5 seconds is kind of long bit need time for stats to be collected
+    utils.setTimeout(CONFIG.GAME_OTHER_ROOM_DISCONNECT_TIMER_WAIT_TIME,()=>{
+      log("endGame.timer.force.disconnected","GAME_STATE.gameConnected",GAME_STATE.gameConnected)
+      if(GAME_STATE.gameConnected === 'disconnecting' && GAME_STATE.gameRoom !== null && GAME_STATE.gameRoom !== undefined){
+        disconnect(true)
+        GAME_STATE.setGameStarted(false);
+        GAME_STATE.setGameHudActive(false);
+      }else{
+        log("endGame.timer.already disconnected","GAME_STATE.gameConnected",GAME_STATE.gameConnected)
+      }
+    })
+      
   }
 }
 
@@ -94,13 +111,25 @@ export const onJoinActions = (CONNECTION_EVENT_REGISTRY.onJoinActions = (
   eventName: string
 ) => {
   log("onJoinActions entered", eventName);
+  
+  GAME_STATE.connectRetryCount=0//reset counter
+
   GAME_STATE.setGameRoom(room);
+
+  GAME_STATE.setGameCoinRewardGCValue(0)
+  GAME_STATE.setGameCoinRewardMCValue(0)
+  GAME_STATE.setGameCoinGCValue(0)
+  GAME_STATE.setGameCoinMCValue(0)
 
   let lastBlockTouched: string = "";
   function onTouchBlock(id: string) {
-    optimisticCollectCoin(id);
+    if( CONFIG.GAME_CAN_COLLECT_WHEN_IDLE_ENABLED || (!CONFIG.GAME_CAN_COLLECT_WHEN_IDLE_ENABLED && !GAME_STATE.isIdle) ){
+      optimisticCollectCoin(id);
 
-    room.send("touch-block", id);
+      room.send("touch-block", id);
+    }else{
+      log("onTouchBlock","not collecting player is GAME_STATE.isIdle",GAME_STATE.isIdle,id,"CONFIG.GAME_CAN_COLLECT_WHEN_IDLE_ENABLED",CONFIG.GAME_CAN_COLLECT_WHEN_IDLE_ENABLED)
+    }
   }
 
   //will remove the coin ahead of actual server confirmed collection
@@ -218,6 +247,10 @@ export const onJoinActions = (CONNECTION_EVENT_REGISTRY.onJoinActions = (
       log("player.listen.coinGcCount", num);
       GAME_STATE.setGameCoinGCValue(num);
     });
+    player.listen("coinsCollectedEpoch", (num: number) => {
+      log("player.listen.coinsCollectedEpoch", num);
+      GAME_STATE.setGameCoinsCollectedEpochValue(num);
+    });
 
     player.listen("material1Count", (num: number) => {
       log("player.listen.material1Count", num);
@@ -285,22 +318,34 @@ export const onJoinActions = (CONNECTION_EVENT_REGISTRY.onJoinActions = (
     //playOnce(fallSound, 1, new Vector3(atPosition.x, atPosition.y, atPosition.z));
   });
 
+  
+  room.onMessage("game-saved", () => {
+    log("room.msg.game-saved");
+    refreshUserData("game-saved")
+    ui.displayAnnouncement(`Save Complete`, 3, Color4.White(), 60);
+    //refreshUserData("onMessage(finished")
+  });
   room.onMessage("finished", () => {
     log("room.msg.finished");
     //ui.displayAnnouncement(`${highestPlayer.name} wins!`, 8, Color4.White(), 60);
-    ui.displayAnnouncement(`Level Ended`, 8, Color4.White(), 60);
-    playOnceRandom([finishSound1], 0.2);
+    if(GAME_STATE.gameRoomTarget !== 'racing'){
+      ui.displayAnnouncement(`Level Ended`, 8, Color4.White(), 60);
+      playOnceRandom([finishSound1], 0.2);
+    }
     GAME_STATE.setGameStarted(false);
     GAME_STATE.setGameHudActive(false);
 
-    REGISTRY.ui.openEndGamePrompt();
+    if(GAME_STATE.gameRoomTarget !== 'racing'){
+      REGISTRY.ui.openEndGamePrompt();
+    }
 
     log("LEAVING ROOM!!!!!!!!!");
     log("LEAVING ROOM!!!!!!!!!");
     log("LEAVING ROOM!!!!!!!!!");
 
     disconnect()
-    refreshUserData()
+    log("room.onMessage.finished","refreshUserData not called, letting disconnect do it")
+    //refreshUserData("onMessage(finished")
   });
 
   //get end game results instead of tracking as session data
@@ -313,11 +358,52 @@ export const onJoinActions = (CONNECTION_EVENT_REGISTRY.onJoinActions = (
     //GAME_STATE.setGameEndResultMsg()
   });
 
-  room.onMessage("inGameMsg", (message) => {
-    log("room.msg.inGameMsg", message);
+  room.onMessage("inGameMsg", (data) => {
+    log("room.msg.inGameMsg", data);
+    if (data !== undefined && data.msg === undefined) {
+      GAME_STATE.notifyInGameMsg(data);
+      ui.displayAnnouncement(data, 8, Color4.White(), 60);
+    }else{
+      //if (message !== undefined && message.msg === undefined) {
+        GAME_STATE.notifyInGameMsg(data.msg);
+        ui.displayAnnouncement(data.msg, data.duration !== undefined ? data.duration : 8, Color4.White(), 60);
+      //}
+    }
+
+    //ui.displayAnnouncement(`${highestPlayer.name} wins!`, 8, Color4.White(), 60);
+    //ui.displayAnnouncement(message, 8, Color4.White(), 60);
+    //GAME_STATE.setGameEndResultMsg()
+  });
+
+  room.onMessage("notify.levelUp", (message) => {
+    log("room.msg.notify.levelUp", message);
     if (message !== undefined) {
-      GAME_STATE.notifyInGameMsg(message);
-      ui.displayAnnouncement(message, 8, Color4.White(), 60);
+      const result = (message as RewardNotification)
+      //GAME_STATE.notifyInGameMsg(message);
+      //ui.displayAnnouncement("PLUG IN LEVEL UP:"+result.newLevel, 8, Color4.White(), 60);
+      if(result.rewards!==undefined){
+        let gc=0
+        let mc=0
+        for(const p in result.rewards){
+          switch(result.rewards[p].id){
+            case CONFIG.GAME_COIN_TYPE_GC:
+              gc=result.rewards[p].amount
+            break;
+            case CONFIG.GAME_COIN_TYPE_MC:
+              mc=result.rewards[p].amount
+            break;
+            default:
+              log("unhandled reward type",result.rewards[p].id,result.rewards[p])
+          }
+        }
+        GAME_STATE.setGameCoinRewardGCValue(GAME_STATE.gameCoinRewardGCValue + gc)
+        GAME_STATE.setGameCoinRewardMCValue(GAME_STATE.gameCoinRewardMCValue + mc)
+
+        GAME_STATE.setGameCoinGCValue(  GAME_STATE.gameCoinGCValue )      
+        GAME_STATE.setGameCoinMCValue(  GAME_STATE.gameCoinMCValue )      
+      }
+      REGISTRY.ui.levelUpPrompt.update(result)
+      REGISTRY.ui.levelUpPrompt.show()
     }
 
     //ui.displayAnnouncement(`${highestPlayer.name} wins!`, 8, Color4.White(), 60);
@@ -343,13 +429,13 @@ export const onJoinActions = (CONNECTION_EVENT_REGISTRY.onJoinActions = (
   room.onMessage("restart", () => {
     log("room.msg.restart");
     playOnce(countdownRestartSound);
-  });
+  }); 
 
   room.onLeave((code) => {
     log("room.on.leave");
     log("onLeave, code =>", code);
-    //debugger
-    refreshUserData();
+    //debugger 
+    refreshUserData("onLeave'");
   });
 
   log("onJoinActions exit", eventName);

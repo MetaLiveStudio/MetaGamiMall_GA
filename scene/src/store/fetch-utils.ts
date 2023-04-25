@@ -1,0 +1,290 @@
+import { CONFIG } from "src/config";
+import { getAndSetUserData, getAndSetUserDataIfNull, getUserDataFromLocal } from "src/userData";
+import { isNull } from "src/utils";
+import resourcesDropin from "./resources-dropin";
+
+  export type NftBalanceResponse = {
+    balance?: number;
+    owner?: string;
+    queryTime?: number;
+  };
+  export type CheckMultiplierResultType={
+    ok:boolean,
+    msg:string,
+    multiplier:number
+    debug:any
+  }
+  
+  function isInvalidPublicKey(publicKey:string){
+    return (publicKey === undefined || publicKey === null || publicKey == '' || publicKey == 'null')
+  }
+  export async function fetchMultiplier(){
+    const METHOD_NAME = "fetchMultiplier";
+    log(METHOD_NAME,"ENTRY")
+    const result = await executeTask(async () => {
+      let userData = await getAndSetUserDataIfNull();
+      let wallet = userData !== undefined ? userData.publicKey : ""
+      let response = null;
+      //docs https://github.com/MetaLiveStudio/metadoge#apiwallet
+      const callUrl =
+        CONFIG.CHECK_MULTIPLIER_URL + CONFIG.CHECK_MULTIPLIER_URL_OWNER_FIELD + wallet
+ 
+      try {
+        log(METHOD_NAME," fetch.calling " , callUrl);
+        response = await fetch(callUrl, {
+          //headers: { "Content-Type": "application/json" },
+          method: "GET",
+          //body: JSON.stringify(myBody),
+        });
+        if (response.status == 200) {
+          let json:CheckMultiplierResultType = await response.json() as CheckMultiplierResultType;
+
+          //log(json)
+          log(METHOD_NAME, " reponse ", json);
+          return json;
+        } else {
+          let json = await response.json();
+          //log("NFTRepository reponse " + response.status + " " + response.statusText)
+          log(
+            METHOD_NAME ,
+              " error reponse to reach URL status:" +
+              response.status +
+              " text:" +
+              response.statusText +
+              " json:" +
+              JSON.stringify(json)
+          ); 
+          //throw new Error(response.status + " " + response.statusText)
+          const res:CheckMultiplierResultType={
+            ok:false,msg:response.status + " " + response.statusText + " " + json,
+            debug:undefined,multiplier:undefined
+          }
+          return res;
+        }
+      } catch (e) {
+        log(METHOD_NAME, ".failed to reach URL " + e + " " + response);
+        throw e;
+      }
+    });
+
+    log(METHOD_NAME,"RETURN",result)
+
+    return result
+}
+  //if pass contractId it fetches actual price but can only do at a time
+  export async function fetchNFTData(contractId?:string){
+      const METHOD_NAME = "fetchNFTData";
+      log(METHOD_NAME,"ENTRY",contractId)
+      const result = await executeTask(async () => {
+        let response = null;
+        //docs https://github.com/MetaLiveStudio/metadoge#apiwallet
+        const callUrl =
+          "https://www.metadoge.art/api/wallet?ownerAddress="+CONFIG.REWARD_SERVER_WAREHOUSE_WALLET+"&chain=137&withMetadata=false"
+          + (contractId !== undefined && contractId !== '' ? "&contractAddress="+contractId : "")
+          "&_unique=" +
+          new Date().getTime();
+   
+        try {
+          log(METHOD_NAME," fetch.calling " , callUrl);
+          response = await fetch(callUrl, {
+            //headers: { "Content-Type": "application/json" },
+            method: "GET",
+            //body: JSON.stringify(myBody),
+          });
+          if (response.status == 200) {
+            let json = await response.json();
+  
+            //log(json)
+            log(METHOD_NAME, " reponse ", json);
+            return json;
+          } else {
+            let json = await response.json();
+            //log("NFTRepository reponse " + response.status + " " + response.statusText)
+            log(
+              METHOD_NAME ,
+                " error reponse to reach URL status:" +
+                response.status +
+                " text:" +
+                response.statusText +
+                " json:" +
+                JSON.stringify(json)
+            ); 
+            //throw new Error(response.status + " " + response.statusText)
+            return {
+              errorMsg: response.status + " " + response.statusText + " " + json,
+            };
+          }
+        } catch (e) {
+          log(METHOD_NAME, ".failed to reach URL " + e + " " + response);
+          throw e;
+        }
+      });
+  
+      log(METHOD_NAME,"RETURN",result)
+
+      return result
+  }
+  export function isNFTResultValid(result:any){
+    const valid = result && result.success && (result.success =="ok"||result.success ==true) && result.assets && result.assets.supplyNfts
+    return valid;
+  }
+  export async function updateStoreNFTCounts(){
+    const METHOD_NAME = "updateStoreNFTCounts";
+    const result = await fetchNFTData()
+
+    //https://www.metadoge.art/api/wallet?ownerAddress=0x00512814cC77feb2855f842484E0f54F890AA554&contractAddress=0x879051feb8c2e0169ffae9e66b022e7136870574&chain=137
+    //update the qty
+    if( isNFTResultValid( result )){ 
+      for(const r in result.assets.supplyNfts){
+        const newValItm = result.assets.supplyNfts[r]
+        const newValAddress = newValItm.contract ? (newValItm.contract+"").toLowerCase() : undefined
+        const newValAmount = newValItm.count
+        //const newCosts = newValItm.costs
+
+        let found = false
+        
+
+        if(newValAddress){
+          for(const p in resourcesDropin.wearables){
+            const itm = resourcesDropin.wearables[p]
+            if(newValAddress == itm.contract.toLowerCase()){
+              found = true
+              if(itm.options.nftUIData){
+                log(METHOD_NAME,"FOUND",itm.contract,"updating amount from",itm.options.nftUIData.qtyCurrent,"newValAmount",newValAmount)  
+                itm.options.nftUIData.qtyCurrent = newValAmount
+              }else{
+                log(METHOD_NAME,"FOUND",itm.contract," ERROR, has no nftUIData",itm.options.nftUIData,"newValAmount",newValAmount)  
+              }
+              break;
+            }
+          }
+          if(!found){
+            log(METHOD_NAME,"WARNING. FAILED TO FIND",newValAddress," not updating count")  
+          }
+        }
+      }
+    }else{
+      log(METHOD_NAME,"unable to update counts",result)
+    }
+    
+  }
+
+  //https://us-central1-sandbox-query-blockchain.cloudfunctions.net/blockChainQueryApp/hello-world
+  const customBaseUrl =
+    "https://us-central1-sandbox-query-blockchain.cloudfunctions.net";
+  export async function getHelmetBalance(
+    profile: string,
+    version: string,
+    ownerAddress?: string | null
+  ): Promise<NftBalanceResponse> {
+    const METHOD_NAME = "getHelmetBalance";
+    const resultPromise = executeTask(async () => {
+      let response = null;
+      //https://us-central1-sandbox-query-blockchain.cloudfunctions.net/blockChainQueryApp/get-account-nft-balance?network=
+      //https://us-central1-sandbox-query-blockchain.cloudfunctions.net/blockChainQueryApp/get-account-nft-balance?network=matic&ownerAddress=0xbd5b79D53D75497673e699A571AFA85492a2cc74&limit=9&logLevel=debug&storage=cacheX&multiCall=true&contractId=dcl-mtdgpnks
+      const callUrl =
+        customBaseUrl +
+        "/blockChainQueryApp/get-account-nft-balance?" +
+        //const callUrl= customBaseUrl + '/blockChainQueryApp/hello-world?'
+        "&network=" +
+        "matic" +
+        "&limit=" +
+        10 +
+        "&contractId=" +
+        "dcl-mtdgpnks" +
+        "&profile=" +
+        profile +
+        "&version=" +
+        version +
+        "&ownerAddress=" +
+        ownerAddress +
+        "&_unique=" +
+        new Date().getTime();
+
+      try {
+        log(METHOD_NAME + " fetch.calling " + callUrl);
+        response = await fetch(callUrl, {
+          //headers: { "Content-Type": "application/json" },
+          method: "GET",
+          //body: JSON.stringify(myBody),
+        });
+        if (response.status == 200) {
+          let json = await response.json();
+
+          //log(json)
+          log(METHOD_NAME + " reponse ", json);
+          return json;
+        } else {
+          let json = await response.json();
+          //log("NFTRepository reponse " + response.status + " " + response.statusText)
+          log(
+            METHOD_NAME +
+              " error reponse to reach URL status:" +
+              response.status +
+              " text:" +
+              response.statusText +
+              " json:" +
+              JSON.stringify(json)
+          );
+          //throw new Error(response.status + " " + response.statusText)
+          return {
+            errorMsg: response.status + " " + response.statusText + " " + json,
+          };
+        }
+      } catch (e) {
+        log(METHOD_NAME + ".failed to reach URL " + e + " " + response);
+        throw e;
+      }
+    });
+
+    return resultPromise;
+  }
+
+  /*
+  const subMethodPublicKeyPromise = "XXpublicKeyPromise: ";
+
+  let publicKey: string | null = null;
+  
+  const publicKeyRequest = executeTask(async () => {
+    await getAndSetUserData();
+
+    const userData = getUserDataFromLocal();
+    let publicKey = null;
+    if (userData !== null) {
+      publicKey = userData.publicKey;
+    }
+    log(
+      subMethodPublicKeyPromise + " publicKeyRequest response " + publicKey,
+      userData
+    );
+
+    return publicKey;
+  })
+    .catch(function (error) {
+      log(subMethodPublicKeyPromise + " failed getting public key " + error);
+      publicKey = "error";
+      return null;
+    })
+    .then(function (value: string | null) {
+      if (value !== null) {
+        publicKey = value;
+      } else {
+        publicKey = "";
+      }
+      log(
+        subMethodPublicKeyPromise + "got and setting public key " + publicKey,
+        null
+      );
+      const retValBlank = isNull(publicKey) || publicKey == "";
+      if (retValBlank) {
+        log(
+          subMethodPublicKeyPromise +
+            "MISSING public key " +
+            publicKey +
+            " exiting",
+          null
+        );
+      }
+      //START GET HELMET COUNT
+
+    });*/

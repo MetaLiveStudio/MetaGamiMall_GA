@@ -5,7 +5,7 @@ import {
   CustomPrompt,
   CustomPromptButton,
 } from "src/dcl-scene-ui-workaround/CustomPrompt";
-import { avatarSwapScript, gameSceneManager } from "src/game";
+import { avatarSwapScript2InstExport as avatarSwapScript2Inst, gameSceneManager } from "src/game";
 import { GAME_STATE } from "src/state";
 import { avatarSwapCTAPrompt } from "src/ui-bars";
 import {
@@ -23,8 +23,9 @@ import {
   resetLoginState,
 } from "./login-flow";
 //import { loadingPrompt, showLoadingUI } from './ui-game-hud'
-import { getAndSetUserData, getUserDataFromLocal } from "src/userData";
+import { getAndSetUserData, getAndSetUserDataIfNull, getUserDataFromLocal } from "src/userData";
 import { REGISTRY } from "src/registry";
+import { SceneNames } from "src/modules/sceneMgmt/scenes/sceneNames";
 
 const textFont = new Font(Fonts.SansSerif);
 
@@ -36,8 +37,8 @@ export async function createDebugUIButtons() {
   }
   log("debug buttons");
 
-  await getAndSetUserData();
-  let wallet = getUserDataFromLocal()?.publicKey;
+  let userData = await getAndSetUserDataIfNull();
+  let wallet = userData !== undefined ? userData.publicKey : undefined
   if (wallet) wallet = wallet.toLowerCase();
   let allowed = false;
   for (const p in CONFIG.ADMINS) {
@@ -51,12 +52,12 @@ export async function createDebugUIButtons() {
     }
   }
 
-  log("allowed ", allowed, wallet);
+  log("debug.allowed ", allowed, wallet);
   if (!allowed) return;
 
   const buttonPosSTART = -350;
   let buttonPosCounter = buttonPosSTART;
-  let buttonPosY = -40; //350
+  let buttonPosY = -60//-40; //350
   const buttomWidth = 140;
   const changeButtomWidth = 130;
   const changeButtomHeight = 20;
@@ -158,7 +159,7 @@ export async function createDebugUIButtons() {
     buttonPosCounter,
     buttonPosY,
     () => {
-      refreshUserData();
+      refreshUserData('ui-hud-debugger.ReLoginPlafab');
     },
     ui.ButtonStyles.RED
   );
@@ -295,7 +296,7 @@ export async function createDebugUIButtons() {
     buttonPosCounter,
     buttonPosY,
     () => {
-      avatarSwapCTAPrompt.show(); //FIXME loginErrorPrompt.show() show wallet login error show metamask cancel error
+      REGISTRY.ui.web3ProviderRequiredPrompt.show(); //FIXME loginErrorPrompt.show() show wallet login error show metamask cancel error
     },
     ui.ButtonStyles.RED
   );
@@ -405,7 +406,7 @@ buttonPosCounter += buttomWidth //next column
     buttonPosY,
     () => {
       lastAvatarVal = !lastAvatarVal;
-      avatarSwapScript.setHideEntityEnabled(lastAvatarVal);
+      avatarSwapScript2Inst.setHideEntityEnabled(lastAvatarVal);
       avatarHiderBtn.label.value = "Tgl:AvtrMod:" + !lastAvatarVal;
     },
     ui.ButtonStyles.RED
@@ -415,24 +416,35 @@ buttonPosCounter += buttomWidth //next column
 
   buttonPosCounter += buttomWidth; //next column
 
-  const scnSwpBtn = (testButton = testControls.addButton(
-    "Tgl:ScnSwp:" + gameSceneManager.alternativeScene.sceneName.substr(0, 4),
+  const testIncCoinsLevels = (testButton = testControls.addButton(
+    "Inc:LvlgCoins",
     buttonPosCounter,
     buttonPosY,
     () => {
-      lastAvatarVal = !lastAvatarVal;
-      if (
-        gameSceneManager.activeScene === gameSceneManager.rootScene.sceneName
-      ) {
-        gameSceneManager.moveTo(gameSceneManager.alternativeScene.sceneName, REGISTRY.movePlayerTo.ALT_SCENE.position );
-        gameSceneManager.moveTo(gameSceneManager.alternativeScene.sceneName);
-        scnSwpBtn.label.value =
-          "Tgl:ScnSwp:" + gameSceneManager.rootScene.sceneName.substr(0, 4);
-      } else {
-        gameSceneManager.moveTo(gameSceneManager.rootScene.sceneName);
-        scnSwpBtn.label.value =
-          "Tgl:ScnSwp:" +
-          gameSceneManager.alternativeScene.sceneName.substr(0, 4);
+      REGISTRY.ui.staminaPanel.updateAllTimeCoins( REGISTRY.ui.staminaPanel.allTimeCoins + 1000)
+    },
+    ui.ButtonStyles.RED
+  ));
+  if (changeButtomWidth > 0) testButton.image.width = changeButtomWidth;
+  if (changeButtomHeight > 0) testButton.image.height = changeButtomHeight;
+
+  buttonPosCounter += buttomWidth; //next column
+
+
+
+  const test = (testButton = testControls.addButton(
+    "Tgl:Bars",
+    buttonPosCounter,
+    buttonPosY,
+    () => {
+      if(REGISTRY.audio.audioControlBar.isVisible()){
+
+        REGISTRY.audio.audioControlBar.mute()
+        REGISTRY.audio.audioControlBar.hide()
+      }else{
+
+        REGISTRY.audio.audioControlBar.unmute()
+        REGISTRY.audio.audioControlBar.show()
       }
     },
     ui.ButtonStyles.RED
@@ -441,6 +453,51 @@ buttonPosCounter += buttomWidth //next column
   if (changeButtomHeight > 0) testButton.image.height = changeButtomHeight;
 
   buttonPosCounter += buttomWidth; //next column
-} //END OF SHOW TEST BUTTONS
+
+
+  (testButton = testControls.addButton(
+    "SaveGame",
+    buttonPosCounter,
+    buttonPosY,
+    () => {
+      GAME_STATE.gameRoom.send("save-game",{})
+    },
+    ui.ButtonStyles.RED
+  ));
+  if (changeButtomWidth > 0) testButton.image.width = changeButtomWidth;
+  if (changeButtomHeight > 0) testButton.image.height = changeButtomHeight;
+
+  buttonPosCounter += buttomWidth; //next column
+
+
+  if (gameSceneManager.activeSceneName === SceneNames.alternativeScene){
+  const scnSwpBtn = (testButton = testControls.addButton(
+    "Tgl:ScnSwp:" + gameSceneManager.activeScene.sceneName.substr(0, 4),
+    buttonPosCounter,
+    buttonPosY,
+    () => {
+      lastAvatarVal = !lastAvatarVal;
+      if (
+        gameSceneManager.activeScene.sceneName === gameSceneManager.rootScene.sceneName
+      ) {
+        gameSceneManager.moveTo(gameSceneManager.activeScene.sceneName, REGISTRY.movePlayerTo.ALT_SCENE.position );
+        gameSceneManager.moveTo(gameSceneManager.activeScene.sceneName);
+        scnSwpBtn.label.value =
+          "Tgl:ScnSwp:" + gameSceneManager.rootScene.sceneName.substr(0, 4);
+      } else {
+        gameSceneManager.moveTo(gameSceneManager.rootScene.sceneName);
+        scnSwpBtn.label.value =
+          "Tgl:ScnSwp:" +
+          gameSceneManager.activeScene.sceneName.substr(0, 4);
+      }
+    },
+    ui.ButtonStyles.RED
+  ));
+  if (changeButtomWidth > 0) testButton.image.width = changeButtomWidth;
+  if (changeButtomHeight > 0) testButton.image.height = changeButtomHeight;
+
+  buttonPosCounter += buttomWidth; //next column
+  } 
+}//END OF SHOW TEST BUTTONS
 
 REGISTRY.ui.createDebugUIButtons = createDebugUIButtons;

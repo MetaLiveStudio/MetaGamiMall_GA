@@ -56,11 +56,12 @@ export function decodeConnectionCode(
   return "Unrecognized Code:" + code;
 }
 export function isErrorCode(code: number) {
-  log("isErrorCode ", code);
+  log("isErrorCode ENTRY", code);
   //https://docs.colyseus.io/colyseus/server/room/#table-of-websocket-close-codes
   switch (code) {
     case 1000:
     case 1001:
+      log("isErrorCode EXIT", code,false);
       return false;
       break;
     case 1002: //malformed frame
@@ -79,8 +80,10 @@ export function isErrorCode(code: number) {
     case 1015: //tls failure
     //custom
     case 4401: //unauthorized
+      log("isErrorCode EXIT", code,true);
       return true;
       break;
   }
+  log("isErrorCode EXIT", code,false);
   return false;
 }

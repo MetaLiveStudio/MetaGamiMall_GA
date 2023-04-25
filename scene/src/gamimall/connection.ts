@@ -18,6 +18,8 @@ import {
 } from "./connection-utils";
 import { CONFIG } from "src/config";
 import { GLOBAL_CANVAS } from "./resources";
+import { REGISTRY } from "src/registry";
+import { isNormalDisconnect } from "src/meta-decentrally/modules/connection/connection-utils";
 
 class ConnectionEventReg {
   onJoinActions?: (room: Room, eventName: string) => void;
@@ -52,9 +54,12 @@ export function initColyseusConnection() {
 }
 
 export async function connect(roomName: string, options: any = {}) {
+  GAME_STATE.setGameConnected("connecting")
+  
   const isPreview = CONFIG.IN_PREVIEW;
   const realm = await getCurrentRealm();
 
+  
   //
   // make sure users are matched together by the same "realm".
   //
@@ -70,6 +75,7 @@ export async function connect(roomName: string, options: any = {}) {
   options.playFabData = {
     id: GAME_STATE.playerState.playFabLoginResult?.PlayFabId,
     sessionTicket: GAME_STATE.playerState.playFabLoginResult?.SessionTicket,
+    titleId: CONFIG.PLAYFAB_TITLEID
   };
 
   log(
@@ -103,6 +109,8 @@ export async function connect(roomName: string, options: any = {}) {
     return room;
   } catch (e: any) {
     log("connect. room.event.connection error", ENDPOINT, e);
+    log("connect. room.event.connection error", ENDPOINT, "44444");
+    
     GAME_STATE.setGameConnectedCode(e.code);
     GAME_STATE.setGameErrorMsg(e);
     GAME_STATE.setGameConnected("error");
@@ -160,6 +168,7 @@ export async function reconnect(
     // });
   } catch (e: any) {
     log("reconnect room.event.connection error", ENDPOINT, e);
+    log("reconnect. room.event.connection error", ENDPOINT, "44444");
     GAME_STATE.setGameConnectedCode(e.code);
     GAME_STATE.setGameErrorMsg(e);
     GAME_STATE.setGameConnected("error");
@@ -174,16 +183,20 @@ export async function reconnect(
     throw e;
   }
 }
-export function disconnect(_consent?:boolean) {
-   
+export async function disconnect(_consent?:boolean) {
+  if(REGISTRY.intervals.connectCheckInterval) REGISTRY.intervals.connectCheckInterval.reset()
+ 
   const consent = _consent === undefined || _consent
   log("disconnect","consent",consent,"room",GAME_STATE.gameRoom)
 
   if (GAME_STATE.gameRoom !== null && GAME_STATE.gameRoom !== undefined) {
+      GAME_STATE.setGameConnected('disconnecting',"disconnect")
+
       //onDisconnect(GAME_STATE.gameRoom)
       onGameLeaveDisconnect(0)  
       try{
-        GAME_STATE.gameRoom.leave(consent)
+        await GAME_STATE.gameRoom.leave(consent)
+        GAME_STATE.setGameConnected('disconnected',"gami.disconnect") 
       }catch(e){
         log("disconnect failed calling leave",e)
       }
@@ -240,9 +253,18 @@ function updateConnectionDebugger(room: Room) {
 }
 
 const onGameLeaveDisconnect = (code: number) => {
+  log("onGameLeaveDisconnect ENTRY",code)
   //GAME_STATE.setGameRoom(null)
   GAME_STATE.setGameConnectedCode(code);
-  GAME_STATE.setGameConnected("disconnected");
+  if(isNormalDisconnect(code)){
+    GAME_STATE.setGameConnected('disconnected',"onGameLeaveDisconnect")
+  }else{
+    GAME_STATE.setGameConnected('disconnecting')
+  }
+   // GAME_STATE.setGameConnected("disconnecting");
+  //}else{
+    //GAME_STATE.setGameConnected("disconnected");
+  //}
   GAME_STATE.setGameStarted(false);
   GAME_STATE.setScreenBlockLoading(false);
   GAME_STATE.setGameHudActive(false);
@@ -291,6 +313,7 @@ function updateConnectionGame(room: Room, eventName: string) {
               log(instance, ".room.event.leave. reconnect failed", err, code);
               error(err);
               onGameLeaveDisconnect(code);
+              //GAME_STATE.setGameConnected("disconnected");
             });
       });
     }
@@ -299,7 +322,7 @@ function updateConnectionGame(room: Room, eventName: string) {
     //console.log("oops, error ocurred:");
     //console.log(message);
     const msg = "room.event.error. oops, error ocurred:" + code + " " + message;
-    log(instance, ".room.onError " + msg);
+    log(instance, ".room.onError " + msg,"44444");
     GAME_STATE.setGameErrorMsg(code + " " + message);
     GAME_STATE.setGameConnectedCode(code);
     GAME_STATE.setGameConnected("error");

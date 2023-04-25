@@ -12,6 +12,7 @@ import { isNull } from "src/utils";
 import { openRaffleGamePrompt } from "./ui-play-raffle";
 import { REGISTRY } from "src/registry";
 import { CustomOkPrompt } from "src/ui/modals";
+import { refreshUserData } from "./login-flow";
 
 export function initUIGameHud() {
   const textFont = new Font(Fonts.SansSerif);
@@ -47,8 +48,12 @@ export function initUIGameHud() {
   //loadingIcon.hide()
 
   function showLoadingUI(val: boolean, duration?: number) {
-    log("showLoadingUI START ", val, duration);
+    log("showLoadingUI START ", val, duration,"CONFIG.GAME_LOADING_SCREEN_ENABLED",CONFIG.GAME_UI_LOADING_SCREEN_ENABLED);
 
+    if(!CONFIG.GAME_UI_LOADING_SCREEN_ENABLED){
+      log("showLoadingUI disabled CONFIG.GAME_LOADING_SCREEN_ENABLED", val, duration,"CONFIG.GAME_LOADING_SCREEN_ENABLED",CONFIG.GAME_UI_LOADING_SCREEN_ENABLED);
+      return
+    }
     //log("showLoadingUI  " + loadingIcon.image.visible)
 
     if (val) {
@@ -104,7 +109,7 @@ export function initUIGameHud() {
     msg?: string,
     duration?: number
   ) {
-    log("showErrorUI START ", val, duration);
+    log("showErrorUI ENTRY ", val, code, msg, duration);
 
     if (val) {
       if (code !== undefined) {
@@ -115,7 +120,7 @@ export function initUIGameHud() {
       if (msg !== undefined) {
         errorPrompt20.text.text.value = msg;
       } else {
-        errorPrompt20.text.text.value = "";
+        errorPrompt20.text.text.value = "ERROR CODE:"+code+"";
       }
       //errorPrompt.show();
       errorPrompt20.show();
@@ -123,7 +128,6 @@ export function initUIGameHud() {
       //errorPrompt.hide();
       errorPrompt20.hide();
     }
-    REGISTRY.ui.showErrorUI = showErrorUI;
 
     //
 
@@ -135,6 +139,8 @@ export function initUIGameHud() {
       });
     }
   }
+  REGISTRY.ui.showErrorUI = showErrorUI;
+
 
   // create UI countdown
   const timeCounterPosX = -18; //-200
@@ -249,6 +255,14 @@ export function initUIGameHud() {
   GAME_STATE.addChangeListener((key: string, newVal: any, oldVal: any) => {
     logChangeListenerEntry("listener.game-hud ", key, newVal, oldVal);
 
+    const stats = GAME_STATE.playerState.playFabUserInfoHelper.stats
+    const vc = GAME_STATE.playerState.playFabUserInfoHelper.virtualCurrency
+    //const vc = GAME_STATE.playerState.playFabUserInfoHelper.virtualCurrencyGameCache
+
+    if(key == "gameCoinGCValue" || key == "gameCoinMCValue" ){
+      REGISTRY.ui.staminaPanel.updateAllTimeCoins(stats.allTimeCoins + (GAME_STATE.gameCoinGCValue + GAME_STATE.gameCoinMCValue))
+    }
+    
     switch (key) {
       //common ones on top
       case "countDownTimerValue":
@@ -258,10 +272,16 @@ export function initUIGameHud() {
       case "gameCoinGCValue":
         //coinGCCounter.set(newVal);
         REGISTRY.ui.racePanel.updateCoins(newVal);
+        REGISTRY.ui.staminaPanel.updateCoins(vc.gc + GAME_STATE.gameCoinGCValue + GAME_STATE.gameCoinRewardGCValue)//+ (newVal-oldVal))
         break;
       case "gameCoinMCValue":
         //coinMCCounter.set(newVal);
         REGISTRY.ui.racePanel.updateDollars(newVal);
+        REGISTRY.ui.staminaPanel.updateDollars(vc.mc + GAME_STATE.gameCoinMCValue + GAME_STATE.gameCoinRewardMCValue)//+ (newVal-oldVal))
+        break;
+      case "coinsCollectedEpochValue":
+        //coinMCCounter.set(newVal);
+        REGISTRY.ui.staminaPanel.updateAllTimeCoins(newVal)
         break;
       case "gameMaterial1Value":
         //coinMCCounter.set(newVal);
@@ -301,7 +321,11 @@ export function initUIGameHud() {
       case "gameConnected":
         const gameConnVal: GameConnectedStateType = newVal;
         switch (gameConnVal) {
+          case "disconnected":
+            refreshUserData('gameConnected.disconnected')
+            break;
           case "error":
+            log("showErrorUI called by gameConnectedCode.error")
             showErrorUI(
               true,
               GAME_STATE.gameConnectedCode,
@@ -309,6 +333,7 @@ export function initUIGameHud() {
             );
             break;
           default:
+            log("showErrorUI called by gameConnectedCode.default")
             showErrorUI(false);
             break;
         }
@@ -321,6 +346,7 @@ export function initUIGameHud() {
       case "gameConnectedCode":
         const code: number = newVal;
         if (isErrorCode(code)) {
+          log("showErrorUI called by gameConnectedCode")
           showErrorUI(true, code, decodeConnectionCode(code));
           break;
         }
@@ -340,55 +366,22 @@ export function initUIGameHud() {
         case "loginSuccess":
           showLobbyHud(newVal);
           showSubLobbyHud(newVal && GAME_STATE.inVox8Park);
+          break;
         //common ones on top
         case "playFabUserInfo":
           //avatarSwapScript.setAvatarSwapTriggerEnabled(avatarSwap,newVal)
-
-          let mc = -1;
-          let gc = -1;
-          let vb = -1;
-
-          let m1 = -1
-          let m2 = -1
-          let m3 = -1
-          if (
-            GAME_STATE.playerState.playFabUserInfo?.UserVirtualCurrency !==
-            undefined
-          ) {
-            mc = GAME_STATE.playerState.playFabUserInfo?.UserVirtualCurrency.MC;
-            gc = GAME_STATE.playerState.playFabUserInfo?.UserVirtualCurrency.GC;
-            vb = GAME_STATE.playerState.playFabUserInfo?.UserVirtualCurrency.VB;
-          }
-          if (
-            GAME_STATE.playerState.playFabUserInfo?.UserInventory !==
-            undefined
-          ) {
-            for(let p in GAME_STATE.playerState.playFabUserInfo?.UserInventory){
-              const itm = GAME_STATE.playerState.playFabUserInfo?.UserInventory[p]
-              //log("playFabUserInfo.playerInventory",p,itm)
-              switch(itm.ItemId){
-                case CONFIG.GAME_COIN_TYPE_MATERIAL_1_ID:
-                  m1 = itm.RemainingUses ? itm.RemainingUses : -1
-                  break;
-                case CONFIG.GAME_COIN_TYPE_MATERIAL_2_ID:
-                  m2 = itm.RemainingUses ? itm.RemainingUses : -1
-                  break;
-                case CONFIG.GAME_COIN_TYPE_MATERIAL_3_ID:
-                  m3 = itm.RemainingUses ? itm.RemainingUses : -1
-                  break;
-              }
-            }
-          }
-
-          //coinLobbyGCCounter.set(gc);
-          //coinLobbyMCCounter.set(mc);
-          //subCoinGCCounter.set(vb);
-
-          REGISTRY.ui.staminaPanel.updateCoins(gc);
-          REGISTRY.ui.staminaPanel.updateDollars(mc);
-          REGISTRY.ui.staminaPanel.updateMaterial1(m1);
-          REGISTRY.ui.staminaPanel.updateMaterial2(m2);
-          REGISTRY.ui.staminaPanel.updateMaterial3(m3);
+          //GAME_STATE.
+          const vc = GAME_STATE.playerState.playFabUserInfoHelper.virtualCurrency
+          const stats = GAME_STATE.playerState.playFabUserInfoHelper.stats
+          //consider letting gamestate set it, for now keep game logic seperate from basic
+          //player state info??? but let game logic update other direction???
+          GAME_STATE.setGameCoinsCollectedEpochValue(stats.allTimeCoins)
+          REGISTRY.ui.staminaPanel.updateAllTimeCoins(stats.allTimeCoins)
+          REGISTRY.ui.staminaPanel.updateCoins(vc.gc);
+          REGISTRY.ui.staminaPanel.updateDollars(vc.mc);
+          REGISTRY.ui.staminaPanel.updateMaterial1(vc.m1);
+          REGISTRY.ui.staminaPanel.updateMaterial2(vc.m2);
+          REGISTRY.ui.staminaPanel.updateMaterial3(vc.m3);
 
           break;
       }

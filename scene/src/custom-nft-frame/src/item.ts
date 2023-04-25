@@ -1,5 +1,6 @@
 import { isNull, loadOnSceneStartThenRemove } from "../../../src/utils";
 import * as utils from "@dcl/ecs-scene-utils";
+import { REGISTRY } from "src/registry";
 
 export type Props = {
   id: string;
@@ -66,12 +67,15 @@ export default class SignPost implements IScript<Props> {
       new utils.TriggerComponent(frameTriggerShape, {
         onCameraEnter: () => {
           //log("enter trigger",host.name)
-
-          if (!KEEP_IN_ENGINE) {
-            frame.setParent(host);
-            if (!frame.alive) engine.addEntity(frame);
-          } else {
-            if (shape) shape.visible = true;
+          if(REGISTRY.sceneMgr.activeScene.sceneName == REGISTRY.sceneMgr.rootScene.sceneName){
+            if (!KEEP_IN_ENGINE) {
+              frame.setParent(host);
+              if (!frame.alive) engine.addEntity(frame);
+            } else {
+              if (shape) shape.visible = true;
+            }
+          }else{
+            log("scene not active to show",REGISTRY.sceneMgr.activeScene,"vs",REGISTRY.sceneMgr.rootScene.sceneName,REGISTRY.sceneMgr.rootScene.name)
           }
         },
         onCameraExit: () => {

@@ -1,4 +1,7 @@
 import { createChannel } from "../node_modules/decentraland-builder-scripts/channel";
+import { isPreviewMode } from '@decentraland/EnvironmentAPI'
+import { triggerEmote, PredefinedEmote } from '@decentraland/RestrictedActions'
+import AdsharesBanner from '../node_modules/@adshares/decentraland/src/item'
 import { createInventory } from "../node_modules/decentraland-builder-scripts/inventory";
 import {
   addPets,
@@ -12,42 +15,40 @@ import {
   UserData,
 } from "@decentraland/Identity";
 //import { loadArcade } from '../arcade-games/src/game'
-
 import { logChangeListenerEntry, Logger } from "./logging";
 import { getEntityBy, getEntityByName, isNull, notNull } from "./utils";
 import { AudioControlBar } from "./dclconnect/index";
 import { loadUIBars } from "./ui-bars";
-import Script12, {
+import AvatarSwapScript, { //old name Script12 //385445f9-b94f-431a-8c67-7650c03c99cc
   disableArisa,
   enableArisa,
   prepareHostForTrigger,
   PrepareHostForTriggerResult,
-} from "../385445f9-b94f-431a-8c67-7650c03c99cc/src/item";
+} from "src/smartItems/avatar-swap/src/item"; ///from "../385445f9-b94f-431a-8c67-7650c03c99cc/src/item";
 //import * as utils from './decentralandecsutils/triggers/triggerSystem'
 //import * as sceneutils from '@dcl/ecs-scene-utils';
 import * as utils from "@dcl/ecs-scene-utils";
 import { movePlayerTo } from "@decentraland/RestrictedActions";
 //start builder script imports
-import Script1 from "../846479b0-75d3-450d-bbd6-7e6b3355a7a2/src/item";
-import Script2 from "../ef85eb18-f69c-431c-bcfd-dd51d70a604f/src/item";
-import Script3 from "../7669807e-1ae3-4d31-a2fa-dbd7a1d66fcc/src/item";
-import Script4 from "../410123a0-8213-47ee-800d-cc93cf1074cc/src/item";
-import Script5 from "../bcebce0f-1873-4148-89bc-24c2ceb9b2cc/src/item"; //bring ME BACK!!!
-import Script6 from "../ab84996d-dcdc-429c-818e-a7640239c803/src/item";
-import Script7 from "../f89ab04f-46ef-42ea-912b-b194eb8d2f02/src/item";
-import Script8 from "../8bd080c9-9954-43b2-a6ac-0b0913d298c0/src/item";
-import Script9 from "../dfebc6ff-bbd4-45dd-ae6d-f363321946cc/src/item";
-import Script10 from "../1d65b46f-f82c-4e72-839e-c695b92ddbcc/src/item";
+//import verticleWhitePadScript from "src/smartItems/verticleWhitePad/src/item"; //old name Script2
+import PianoKeysScript from "src/smartItems/piano-keys/src/item"; // old name Script3//from "../7669807e-1ae3-4d31-a2fa-dbd7a1d66fcc/src/item"; //X
+//import Script4 from "../410123a0-8213-47ee-800d-cc93cf1074cc/src/item";//not used, deleted folder // fireworks was moved to smartItems/fireworks
+import PoapBoothScript from "src/smartItems/poap-booth/src/item";//from "../bcebce0f-1873-4148-89bc-24c2ceb9b2cc/src/item"; //bring ME BACK!!!//X
+//import Script6 from "../ab84996d-dcdc-429c-818e-a7640239c803/src/item";//not used, deleted folder //moved to plaintext
+//import Script7 from "../f89ab04f-46ef-42ea-912b-b194eb8d2f02/src/item";//not used, deleted folder
+//import Script8 from "../8bd080c9-9954-43b2-a6ac-0b0913d298c0/src/item";//not used, deleted folder
+import ArrowScript from "src/smartItems/arrow/src/item";  //old name Script9//from "../dfebc6ff-bbd4-45dd-ae6d-f363321946cc/src/item";//X
+import Arrow2Script from "src/smartItems/arrow2/src/item"; //old name Script10 //X
 //import Script11 from "../80d9cb1c-2fcf-4585-8e19-e2d5621fd54d/src/item"
 
-import Script13, {
+import ToolboxScript, { //old name Script13
   createTargetList,
-} from "../683aa047-8043-40f8-8d31-ceb7ab1b1300/src/item";
-import Script14 from "../b88efbbf-2a9a-47b4-86e1-e38ecc2b433b/src/item";
-import Script15 from "../7e78cd70-5414-4ec4-be5f-198ec9879a5e/src/item";
-import Script16 from "../7d669c08-c354-45e4-b3a3-c915c8fd6b6e/src/item";
-import Script17 from "../a747f104-5434-42a8-a543-8739c24cf253/src/item";
-import Script18 from "../a5c32dfc-27c5-416b-bfbb-f66f871c8ea7/src/item";
+} from "src/smartItems/tool-box/src/item"; //old folder /683aa047-8043-40f8-8d31-ceb7ab1b1300
+//import Script14 from "../b88efbbf-2a9a-47b4-86e1-e38ecc2b433b/src/item";//not used, deleted folder
+//import Script15 from "../7e78cd70-5414-4ec4-be5f-198ec9879a5e/src/item";//not used, deleted folder// moved to signPost
+import SpawnImgURLScript from "src/smartItems/IMGPreview/src/item"; //old name Script16, old folder /7d669c08-c354-45e4-b3a3-c915c8fd6b6e//X
+import VideoScreenScript from "src/smartItems/stream-preview/src/item"; //old name Script17, old folder /a747f104-5434-42a8-a543-8739c24cf253 //X
+import LeaderBoardScript from "src/smartItems/leader-board/src/item"; //old name Script18, old folder /a5c32dfc-27c5-416b-bfbb-f66f871c8ea7 //X
 import { loadNftFrames, _scene2 } from "./nft-frames";
 import { AVATAR_SWAP_WEARABLES, CONFIG, initConfig } from "./config";
 import { GAME_STATE, initGameState } from "./state";
@@ -60,7 +61,7 @@ import {
 } from "./gamimall/leaderboard";
 
 import { Spawner } from "node_modules/decentraland-builder-scripts/spawner";
-import VersadexBillboard, { Props } from "dcl-cube/src/item";
+//import VersadexBillboard, { Props } from "dcl-cube/src/item";
 import { NPC_INSTANCES } from "./npc/npcConstants";
 import { AliceDialog } from "./npc/dialogData";
 import { GameSceneManager } from "./modules/sceneMgmt/gameSceneManager";
@@ -71,8 +72,8 @@ import {
   SubScene,
 } from "./modules/sceneMgmt/subScene";
 import { BlockObject, EthBlockFilter } from "eth-connect";
-import { NPC } from "./npcutils/index";
-import Button from "../a747f104-5434-42a8-a543-8739c24cf253/src/item";
+import { NPC } from '@dcl/npc-scene-utils'
+//import Button from "../a747f104-5434-42a8-a543-8739c24cf253/src/item"; //is VideoScreenScript
 import { OscilateComponent } from "./actions/oscilateComponent";
 import { CommonResources } from "./resources/common";
 import { initGamiMallScene } from "./gamimall/scene";
@@ -83,22 +84,32 @@ import { initUIEndGame } from "./gamimall/ui-end-game";
 import { initUILoginGame } from "./gamimall/ui-login-game";
 import { initResourceDropIns } from "./store/resources-dropin";
 import { initWearableStore } from "./store/wearables";
-import { initAltScene } from "./modules/sceneMgmt/alternativeScene";
+import { initAltScene } from "./modules/sceneMgmt/scenes/alternativeScene";
+import { startDecentrally } from "./meta-decentrally/game";
+import { addAutoPlayerLoginTrigger } from "./autologin";
+import { initSecondAltScene } from "./modules/sceneMgmt/scenes/secondAlternativeScene";
+import { SceneNames } from "./modules/sceneMgmt/scenes/sceneNames";
+import { getHelmetBalance, NftBalanceResponse, updateStoreNFTCounts } from "./store/fetch-utils";
+import { LogoBlackBackground } from "./ui/ui_background";
+import {getUserAccount} from '@decentraland/EthereumController'
+import {getParcel, ILand} from "@decentraland/ParcelIdentity";
+import {MetaViuAd, MetaViuEvent} from "src/MetaViu/MetaViuAd"
 
-// FIXME refactor so gameplay can be imported and exlicitly invoked Import the custom gameplay code.
+// FIXME refactor so gameplay can be imported and explicitly invoked Import the custom gameplay code.
 //import "./gamimall/gameplay";
 
 //START COMMON VARS
 const metadoge2dHoverText = "Mint Here";
 //END COMMON VARS
 
-export let avatarSwapScript: Script12;
+export let avatarSwapScript2InstExport: AvatarSwapScript;
 
 export let gameSceneManager: GameSceneManager;
 
 //FIXME, move somewhere better
 let mainScene: Scene;
 let alternativeScene: Scene;
+let secondaryAlternativeScene: Scene;
 
 function loadPrimaryScene() {
   const _scene = new Entity("_scene");
@@ -110,7 +121,7 @@ function loadPrimaryScene() {
     scale: new Vector3(1, 1, 1),
   });
   _scene.addComponentOrReplace(transform);
-
+/*
   const text = new Entity("text");
   engine.addEntity(text);
   text.setParent(_scene);
@@ -132,7 +143,57 @@ function loadPrimaryScene() {
   gltfShape2.isPointerBlocker = true;
   gltfShape2.visible = true;
   text.addComponentOrReplace(gltfShape2);
+*/
+  const warpToSecondAltSceneEnt = new Entity("warpToSecondAltSceneEnt");
+  warpToSecondAltSceneEnt.setParent(_scene);
+  warpToSecondAltSceneEnt.addComponent(new GLTFShape("models/Teleporter/Stageteleporter.glb"));
+  //warpToSecondAltSceneEnt.addComponent(CommonResources.RESOURCES.materials.transparent)
+  warpToSecondAltSceneEnt.addComponent(
+    new Transform({
+      position: new Vector3(48, 0, 40), //
+      scale: new Vector3(1, 1, 1),
+    })
+  );
+  warpToSecondAltSceneEnt.addComponent(
+    new OnPointerDown(
+      (e) => {
+        moveToSecondaryAltScene();
+      },
+      {
+        hoverText: "Go to Dr.SWE Cyber Party",
+      }
+    )
+  );
+  engine.addEntity(warpToSecondAltSceneEnt);
 
+//MetaViu Start
+
+const metaViuPanel = new MetaViuAd("double",101, null, 19,0.3,6,    0,90,0,  0.8,0.8,0.8)
+
+//MetaViu End
+
+/*
+  const adsharesBanner = new AdsharesBanner()
+
+  const unit2 = new Entity('unit2');
+unit2.addComponent(new Transform({
+    position: new Vector3(15, 1, 6),
+    rotation: Quaternion.Euler(0, 180, 0),
+    scale: new Vector3(2, 2, 0.1),
+}));
+engine.addEntity(unit2);
+adsharesBanner.spawn(
+    unit2,
+    {
+        payout_network: 'bsc',
+        payout_address: '0x9B3ae2dD9EAAD174cF5700420D4861A5a73a2d2A', // put your metamask address here (binance chain)
+        keywords: 'decentraland,metaverse',
+        zone_name: 'default',
+        adserver: 'https://app.web3ads.net',
+        exclude: '{"quality": ["low"], "category": ["adult"]}',
+    }
+)
+*/
   /*
   const clickArea = new Entity('clickArea')
   engine.addEntity(clickArea)
@@ -160,7 +221,7 @@ function loadPrimaryScene() {
   fireworksBox.addComponentOrReplace(gltfShape3)
   */
 
-  // Billboard
+  /* VERSADEX  Billboard
 
   const billboard = new VersadexBillboard();
   const spawner = new Spawner(billboard);
@@ -168,15 +229,16 @@ function loadPrimaryScene() {
   let versadexbox = spawner.spawn(
     "billboard",
     new Transform({
-      position: new Vector3(12, 2.5, 6.5),
+      position: new Vector3(26, 1.5, 40),
       scale: new Vector3(1, 1, 1),
     }),
     {
       id: "c6821db5-9a7c-4d81-a688-123d01acca90",
       auto_rotate: true,
     }
-  );
-
+  );*/
+// Add a new instance of the system to the engine
+/*
   const verticalWhitePad = new Entity("verticalWhitePad");
   engine.addEntity(verticalWhitePad);
   verticalWhitePad.setParent(_scene);
@@ -276,7 +338,7 @@ function loadPrimaryScene() {
     scale: new Vector3(1, 1, 1),
   });
   verticalWhitePad10.addComponentOrReplace(transform44);
-
+*/
   const floorPianoCC = new Entity("floorPianoCC");
   engine.addEntity(floorPianoCC);
   floorPianoCC.setParent(_scene);
@@ -406,9 +468,9 @@ function loadPrimaryScene() {
           script12.setAvatarSwapTriggerEnabled(avatarSwap,CONFIG.PLAYER_AVATAR_SWAP_ENABLED)
         }
       },
-      { 
+      {
         button: ActionButton.PRIMARY,
-        hoverText: 'Toggle Swap' 
+        hoverText: 'Toggle Swap'
       }
     )
   )
@@ -429,7 +491,7 @@ function loadPrimaryScene() {
   });
   pad.addComponentOrReplace(transform54);
   const gltfShape4 = new GLTFShape(
-    "c6b0fd6f-88a7-4a6c-a2fa-281706c5987e/Pad3.gltf"
+    "models/Pad3.gltf"
   );
   gltfShape4.withCollisions = true;
   gltfShape4.isPointerBlocker = true;
@@ -442,6 +504,7 @@ function loadPrimaryScene() {
   padAnimatorStat.stop();
 
   REGISTRY.entities.pad = { entity: pad, moveAnimState: padAnimatorStat };
+  REGISTRY.entities.pad.moveAnimState.speed = .6
 
   function resetPad() {
     padAnimatorStat.reset();
@@ -459,22 +522,20 @@ function loadPrimaryScene() {
   }
 
   resetPad(); //so in intial state
-  
+
   const padSummon = new Entity("padSummon");
   engine.addEntity(padSummon);
   padSummon.setParent(_scene);
-  
+
   //16+8.7, 24-.3, 48+4
   //these coords here would be exact placement of a cube entity
   const transform54X = new Transform({
-    position: new Vector3(48,0,40),
+    position: new Vector3(48, 0, 40),
     rotation: new Quaternion(0, 0, 0, 1),
     scale: new Vector3(1, 1, 1),
   });
-  padSummon.addComponentOrReplace(transform54X)
-  const gltfShapeCS21 = new GLTFShape(
-    "models/summonpad.glb"
-  );
+  padSummon.addComponentOrReplace(transform54X);
+  const gltfShapeCS21 = new GLTFShape("models/summonpad.glb");
   padSummon.addComponentOrReplace(gltfShapeCS21);
 
   padSummon.addComponent(
@@ -880,7 +941,7 @@ function loadPrimaryScene() {
   engine.addEntity(npcPlaceHolder);
   npcPlaceHolder.setParent(_scene);
   const transform79 = new Transform({
-    position: new Vector3(30, 22.873924255371094, 56.5),
+    position: new Vector3(30, 23.4, 56.5),
     rotation: new Quaternion(0, 0, 0, 1),
     scale: new Vector3(1, 1, 1),
   });
@@ -939,7 +1000,7 @@ function loadPrimaryScene() {
     scale: new Vector3(1, 1, 1)
   })
   XwaypointCE24.addComponentOrReplace(xxTransform78)
-    
+
   const XwaypointCE25 = new Entity('XwaypointCE25')
   engine.addEntity(XwaypointCE25)
   XwaypointCE25.setParent(_scene)
@@ -1051,7 +1112,7 @@ function loadPrimaryScene() {
   engine.addEntity(npcPlaceHolder4);
   npcPlaceHolder4.setParent(_scene);
   const transform84 = new Transform({
-    position: new Vector3(56.5, 30.32171058654785, 14),
+    position: new Vector3(56.5, 31, 14),
     rotation: new Quaternion(0, 0, 0, 1),
     scale: new Vector3(1, 1, 1),
   });
@@ -1081,8 +1142,8 @@ function loadPrimaryScene() {
   engine.addEntity(npcPlaceHolder2);
   npcPlaceHolder2.setParent(_scene);
   const transform89 = new Transform({
-    position: new Vector3(12, 0.5, 33),
-    rotation: Quaternion.Euler(0, 180, 0),
+    position: new Vector3(7.5, 0.5, 38),
+    rotation: Quaternion.Euler(0, 160, 0),
     scale: new Vector3(1.5, 1.5, 1.5),
   });
   npcPlaceHolder2.addComponentOrReplace(transform89);
@@ -1116,7 +1177,7 @@ function loadPrimaryScene() {
     scale: new Vector3(1, 1, 1),
   });
   toolboxCE.addComponentOrReplace(transform117);
-
+  /*
   const platformColors2 = new Entity("platformColors2");
   engine.addEntity(platformColors2);
   platformColors2.setParent(_scene);
@@ -1134,7 +1195,7 @@ function loadPrimaryScene() {
   gltfShape5.visible = true;
   platformColors2.addComponentOrReplace(gltfShape5);
 
-  /*
+
   const exhbitionPad = new Entity('exhbitionPad')
   engine.addEntity(exhbitionPad)
   exhbitionPad.setParent(_scene)
@@ -1251,7 +1312,7 @@ function loadPrimaryScene() {
   const XtransformX159 = new Transform({
     position: new Vector3(16, 23, 12),
     rotation: new Quaternion(0, 0, 0, 1),
-    scale: new Vector3(7, 7, 7) 
+    scale: new Vector3(7, 7, 7)
   })
   exhbitionPad9.addComponentOrReplace(XtransformX159)
   const gltfShape6 = new GLTFShape("33724bb2-5b8f-4663-9e3b-7548168e846d/Exhbition pad.glb")
@@ -1291,7 +1352,7 @@ function loadPrimaryScene() {
     rotation: new Quaternion(-1.0371813407043448e-14, 0.5609248280525208, -6.686744313810777e-8, -0.827866792678833),
     scale: new Vector3(5.8107452392578125, 4.640761852264404, 2.066225528717041)
   })
-  signpostTree.addComponentOrReplace(transform130) 
+  signpostTree.addComponentOrReplace(transform130)
   */
   //Mvfw singpostTree end
 
@@ -1374,7 +1435,7 @@ function loadPrimaryScene() {
     rotation: new Quaternion(3.615880737325517e-15, -0.7071068286895752, 8.429368847373553e-8, -0.7071068286895752),
     scale: new Vector3(3.000016212463379, 3, 3.000016212463379)
   })
-  signpostTree9.addComponentOrReplace(transform138) 
+  signpostTree9.addComponentOrReplace(transform138)
 
   const signpostTree10 = new Entity('signpostTree10')
   engine.addEntity(signpostTree10)
@@ -1425,7 +1486,7 @@ function loadPrimaryScene() {
     scale: new Vector3(3.830857515335083, 3.8308181762695312, 3.830857515335083)
   })
   signpostTree14.addComponentOrReplace(transform143)
-  
+
 
   const xsignpostTree100 = new Entity("signpostTree100");
   engine.addEntity(xsignpostTree100);
@@ -1441,36 +1502,36 @@ function loadPrimaryScene() {
     scale: new Vector3(1.8, 2.5, 3.830857515335083),
   });
   xsignpostTree100.addComponentOrReplace(xtransform200);*/
+/*
+  const imageFromURL = new Entity("imageFromURL");
+  engine.addEntity(imageFromURL);
+  imageFromURL.setParent(_scene);
+  const transformPCLongPosterL = new Transform({
+    position: new Vector3(12.925, 1.95, 20.5),
+    rotation: Quaternion.Euler(0, 80.37 + 180, 0),
+    scale: new Vector3(10.1, 3, 1),
+  });
+  imageFromURL.addComponentOrReplace(transformPCLongPosterL);
+
+  const imageFromURL2 = new Entity("imageFromURL2");
+  engine.addEntity(imageFromURL2);
+  imageFromURL2.setParent(_scene);
+  const transformPCLongPosterR = new Transform({
+    position: new Vector3(12.925 - 9.8, 1.95, 20.5),
+    rotation: Quaternion.Euler(0, 180 - 80.37, 0),
+    scale: new Vector3(10.1, 3, 1),
+  });
+  imageFromURL2.addComponentOrReplace(transformPCLongPosterR);
   /*
-  const imageFromURL = new Entity('imageFromURL')
-  engine.addEntity(imageFromURL)
-  imageFromURL.setParent(_scene)
-  const transform144 = new Transform({
-    position: new Vector3(34.5, 1.4011707305908203, 54.15150451660156),
-    rotation: new Quaternion(6.969842370217532e-15, -1, 1.1920928244535389e-7, -7.450580596923828e-9),
-    scale: new Vector3(8.67827033996582, 7.934318542480469, 8.751551628112793)
-  })
-  imageFromURL.addComponentOrReplace(transform144)
-
-  const imageFromURL2 = new Entity('imageFromURL2')
-  engine.addEntity(imageFromURL2)
-  imageFromURL2.setParent(_scene)
-  const transform145 = new Transform({
-    position: new Vector3(48, 25, 56.5),
-    rotation: new Quaternion(-7.105429898699844e-15, 3.5762786865234375e-7, -3.529153287966033e-14, -1),
-    scale: new Vector3(5.045204162597656, 4.61269998550415, 3.7467544078826904)
-  })
-  imageFromURL2.addComponentOrReplace(transform145)
-
-  const imageFromURL3 = new Entity('imageFromURL3')
-  engine.addEntity(imageFromURL3)
-  imageFromURL3.setParent(_scene)
-  const transform146 = new Transform({
-    position: new Vector3(47.5, 52, 56.5),
-    rotation: new Quaternion(-7.105429898699844e-15, 3.5762786865234375e-7, -3.529153287966033e-14, -1),
-    scale: new Vector3(5.352777004241943, 4.8939056396484375, 3.9751691818237305)
-  })
-  imageFromURL3.addComponentOrReplace(transform146)
+  const imageFromURL3 = new Entity("imageFromURL3");
+  engine.addEntity(imageFromURL3);
+  imageFromURL3.setParent(_scene);
+  const transformteleportpointposter = new Transform({
+    position: new Vector3(14.05, 1.85, 57.8),
+    rotation: Quaternion.Euler(0, 75 + 180, 0),
+    scale: new Vector3(3.8, 5, 3.9751691818237305),
+  });
+  imageFromURL3.addComponentOrReplace(transformteleportpointposter);
 
   const imageFromURL4 = new Entity('imageFromURL4')
   engine.addEntity(imageFromURL4)
@@ -1490,7 +1551,7 @@ function loadPrimaryScene() {
     rotation: new Quaternion(-7.105429898699844e-15, 3.5762786865234375e-7, -3.529153287966033e-14, -1),
     scale: new Vector3(4.994663238525391, 4.566491603851318, 3.7092204093933105)
   })
-  imageFromURL5.addComponentOrReplace(transform148) 
+  imageFromURL5.addComponentOrReplace(transform148)
 
   const imageFromURL6 = new Entity('imageFromURL6')
   engine.addEntity(imageFromURL6)
@@ -1962,7 +2023,7 @@ function loadPrimaryScene() {
   // effects images end
 
   // Add NFTAsian Start
-
+  /*
   const NFTAsian = new Entity("NFTAsian");
   engine.addEntity(NFTAsian);
   NFTAsian.setParent(_scene);
@@ -1977,7 +2038,7 @@ function loadPrimaryScene() {
   gltfShapeCS3.isPointerBlocker = true;
   gltfShapeCS3.visible = true;
   NFTAsian.addComponentOrReplace(gltfShapeCS3);
-
+*/
   // Add NFTAsian End
 
   // Fashion week poster start
@@ -2037,7 +2098,7 @@ function loadPrimaryScene() {
   engine.addEntity(videoStream1);
   videoStream1.setParent(_scene);
   const transformv1 = new Transform({
-    position: new Vector3(11.8, 5.2, 40.25),
+    position: new Vector3(16, 5.2, 40),
     rotation: Quaternion.Euler(38, -90, 0),
     scale: new Vector3(2.7, 3.4, 2.75),
   });
@@ -2056,7 +2117,7 @@ function loadPrimaryScene() {
   gltfShape10.withCollisions = true
   gltfShape10.isPointerBlocker = true
   gltfShape10.visible = true
-  helmetText.addComponentOrReplace(gltfShape10) 
+  helmetText.addComponentOrReplace(gltfShape10)
   */
   /*
   const signpostTree15 = new Entity('signpostTree15')
@@ -2067,7 +2128,7 @@ function loadPrimaryScene() {
     rotation: new Quaternion(1.5888430942870372e-16, 0.8586313128471375, -1.0235680747427978e-7, -0.512593686580658),
     scale: new Vector3(1.6338529586791992, 3.1564252376556396, 2.845235586166382)
   })
-  signpostTree15.addComponentOrReplace(transform154) 
+  signpostTree15.addComponentOrReplace(transform154)
 
   const signpostTree16 = new Entity("signpostTree16");
   engine.addEntity(signpostTree16);
@@ -2128,7 +2189,7 @@ function loadPrimaryScene() {
     ),
   });
   signpostTree18.addComponentOrReplace(transform157);*/
-
+  
   const main = new Entity("main");
   engine.addEntity(main);
   main.setParent(_scene);
@@ -2139,40 +2200,1502 @@ function loadPrimaryScene() {
   });
   main.addComponentOrReplace(transform158);
   const gltfShape11 = new GLTFShape(
-    "ead231c4-4d7d-474c-8df9-22c47615d1a2/main.glb"
+    "models/mains/main.glb"
   );
   gltfShape11.withCollisions = true;
   gltfShape11.isPointerBlocker = true;
   gltfShape11.visible = true;
   main.addComponentOrReplace(gltfShape11);
 
-  const teleportermoon = new Entity("teleportermoon");
-  engine.addEntity(teleportermoon);
-  teleportermoon.setParent(_scene);
+//loadMainBuildingFn() //call imme
+
+  const teleportermuscle = new Entity("teleportermuscle");
+  engine.addEntity(teleportermuscle);
+  teleportermuscle.setParent(_scene);
   const transformCS20 = new Transform({
     position: new Vector3(48, 0, 40),
     rotation: new Quaternion(0, 0, 0, 1),
     scale: new Vector3(1, 1, 1),
   });
-  teleportermoon.addComponentOrReplace(transformCS20);
-  const gltfShapeCS20 = new GLTFShape(
-    "models/Teleporter/Moonsquare.glb"
-  );
+  teleportermuscle.addComponentOrReplace(transformCS20);
+  const gltfShapeCS20 = new GLTFShape("models/Teleporter/Musclesquare.glb");
   gltfShapeCS20.withCollisions = true;
   gltfShapeCS20.isPointerBlocker = true;
   gltfShapeCS20.visible = true;
-  teleportermoon.addComponentOrReplace(gltfShapeCS20);
+  teleportermuscle.addComponentOrReplace(gltfShapeCS20);
+  teleportermuscle.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 56, y: 5, z: 48 }, { x: 8, y: 1, z: 8 });
+      },
+      { hoverText: "Go to Muscle Square" }
+    )
+  );
+
+  const teleportermoon = new Entity("teleportermoon");
+  engine.addEntity(teleportermoon);
+  teleportermoon.setParent(_scene);
+  const transformCS24 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  teleportermoon.addComponentOrReplace(transformCS24);
+  const gltfShapeCS24 = new GLTFShape("models/Teleporter/Moonsquare.glb");
+  teleportermoon.addComponentOrReplace(gltfShapeCS24);
   teleportermoon.addComponent(
     new OnPointerDown(
       (e) => {
-        movePlayerTo({ x: 24, y: 26, z:48 }, { x: 8, y: 1, z: 8 })
+        movePlayerTo({ x: 24, y: 26, z: 48 }, { x: 8, y: 1, z: 8 });
       },
       { hoverText: "Go to Moon Square" }
     )
-  )
-  
-  engine.addEntity(teleportermoon)
+  );
 
+  const teleportermars = new Entity("teleportermars");
+  engine.addEntity(teleportermars);
+  teleportermars.setParent(_scene);
+  const transformCS25 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  teleportermars.addComponentOrReplace(transformCS25);
+  const gltfShapeCS25 = new GLTFShape("models/Teleporter/Marssquare.glb");
+  teleportermars.addComponentOrReplace(gltfShapeCS25);
+  teleportermars.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 37, y: 32, z: 55 }, { x: 8, y: 1, z: 8 });
+      },
+      { hoverText: "Go to Mars Square" }
+    )
+  );
+
+  const teleporterheaven = new Entity("teleporterheaven");
+  engine.addEntity(teleporterheaven);
+  teleporterheaven.setParent(_scene);
+  const transformCS26 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  teleporterheaven.addComponentOrReplace(transformCS26);
+  const gltfShapeCS26 = new GLTFShape("models/Teleporter/Heavensquare.glb");
+  teleporterheaven.addComponentOrReplace(gltfShapeCS26);
+  teleporterheaven.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 24, y: 51, z: 51 }, { x: 8, y: 1, z: 8 });
+      },
+      { hoverText: "Go to Heaven Square" }
+    )
+  );
+
+  const teleportermuscleback = new Entity("teleportermuscleback");
+  engine.addEntity(teleportermuscleback);
+  teleportermuscleback.setParent(_scene);
+  const transformCS28 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  teleportermuscleback.addComponentOrReplace(transformCS28);
+  const gltfShapeCS28 = new GLTFShape("models/Teleporter/Musclesquareback.glb");
+  teleportermuscleback.addComponentOrReplace(gltfShapeCS28);
+  teleportermuscleback.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 40, y: 2, z: 2 }, { x: 40, y: 2, z: 8 });
+      },
+      { hoverText: "Go to Entrance Teleport Point" }
+    )
+  );
+
+  const Moonsquareback = new Entity("Moonsquareback");
+  engine.addEntity(Moonsquareback);
+  Moonsquareback.setParent(_scene);
+  const transformCS29 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  Moonsquareback.addComponentOrReplace(transformCS29);
+  const gltfShapeCS29 = new GLTFShape("models/Teleporter/Moonsquareback.glb");
+  Moonsquareback.addComponentOrReplace(gltfShapeCS29);
+  Moonsquareback.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 40, y: 2, z: 2 }, { x: 40, y: 2, z: 8 });
+      },
+      { hoverText: "Go to Entrance Teleport Point" }
+    )
+  );
+
+  const Marssquareback = new Entity("Marssquareback");
+  engine.addEntity(Marssquareback);
+  Marssquareback.setParent(_scene);
+  const transformCS30 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  Marssquareback.addComponentOrReplace(transformCS30);
+  const gltfShapeCS30 = new GLTFShape("models/Teleporter/Marssquareback.glb");
+  Marssquareback.addComponentOrReplace(gltfShapeCS30);
+  Marssquareback.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 40, y: 2, z: 2 }, { x: 40, y: 2, z: 8 });
+      },
+      { hoverText: "Go to Entrance Teleport Point" }
+    )
+  );
+
+  const Heavensquareback = new Entity("Heavensquareback");
+  engine.addEntity(Heavensquareback);
+  Heavensquareback.setParent(_scene);
+  const transformCS31 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  Heavensquareback.addComponentOrReplace(transformCS31);
+  const gltfShapeCS31 = new GLTFShape("models/Teleporter/Heavensquareback.glb");
+  Heavensquareback.addComponentOrReplace(gltfShapeCS31);
+  Heavensquareback.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 40, y: 2, z: 2 }, { x: 40, y: 2, z: 8 });
+      },
+      { hoverText: "Go to Entrance Teleport Point" }
+    )
+  );
+
+  const Goldtier = new Entity("Goldtier");
+  engine.addEntity(Goldtier);
+  Goldtier.setParent(_scene);
+  const transformCS32 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  Goldtier.addComponentOrReplace(transformCS32);
+  const gltfShapeCS32 = new GLTFShape("models/Adsboxes/Goldtier.glb");
+  Goldtier.addComponentOrReplace(gltfShapeCS32);
+  Goldtier.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 40, y: 2, z: 11.5 }, { x: 40, y: 1.8, z: 40 });
+      },
+      { hoverText: "Teleport and check brand rewards at the Rewards Center" }
+    )
+  );
+
+  const Silvertier = new Entity("Silvertier");
+  engine.addEntity(Silvertier);
+  Silvertier.setParent(_scene);
+  const transformCS33 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  Silvertier.addComponentOrReplace(transformCS33);
+  const gltfShapeCS33 = new GLTFShape("models/Adsboxes/Silvertier.glb");
+  Silvertier.addComponentOrReplace(gltfShapeCS33);
+  Silvertier.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x:17.7, y: 2, z: 27.5 }, { x: 8, y: 1, z: 8 });
+      },
+      { hoverText: "Teleport and check brand rewards at the Rewards Center" }
+    )
+  );
+
+  const SP1Teleportertorewardscenter = new Entity("SP1Teleportertorewardscenter");
+  engine.addEntity(SP1Teleportertorewardscenter);
+  SP1Teleportertorewardscenter.setParent(_scene);
+  const transformCS34 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  SP1Teleportertorewardscenter.addComponentOrReplace(transformCS34);
+  const gltfShapeCS34 = new GLTFShape("models/Adsshops/SP1Teleportertorewardscenter.glb");
+  SP1Teleportertorewardscenter.addComponentOrReplace(gltfShapeCS34);
+  SP1Teleportertorewardscenter.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 40, y: 2, z: 11.5 }, { x: 40, y: 1.8, z: 40 });
+      },
+      { hoverText: "Teleport and check brand rewards at the Rewards Center" }
+    )
+  );
+
+  const SP2Teleportertorewardscenter = new Entity("SP2Teleportertorewardscenter");
+  engine.addEntity(SP2Teleportertorewardscenter);
+  SP2Teleportertorewardscenter.setParent(_scene);
+  const transformCS35 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  SP2Teleportertorewardscenter.addComponentOrReplace(transformCS35);
+  const gltfShapeCS35 = new GLTFShape("models/Adsshops/SP2Teleportertorewardscenter.glb");
+  SP2Teleportertorewardscenter.addComponentOrReplace(gltfShapeCS35);
+  SP2Teleportertorewardscenter.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 40, y: 2, z: 11.5 }, { x: 40, y: 1.8, z: 40 });
+      },
+      { hoverText: "Teleport and check brand rewards at the Rewards Center" }
+    )
+  );
+
+  const SP3Teleportertorewardscenter = new Entity("SP3Teleportertorewardscenter");
+  engine.addEntity(SP3Teleportertorewardscenter);
+  SP3Teleportertorewardscenter.setParent(_scene);
+  const transformCS36 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  SP3Teleportertorewardscenter.addComponentOrReplace(transformCS36);
+  const gltfShapeCS36 = new GLTFShape("models/Adsshops/SP3Teleportertorewardscenter.glb");
+  SP3Teleportertorewardscenter.addComponentOrReplace(gltfShapeCS36);
+  SP3Teleportertorewardscenter.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 40, y: 2, z: 11.5 }, { x: 40, y: 1.8, z: 40 });
+      },
+      { hoverText: "Teleport and check brand rewards at the Rewards Center" }
+    )
+  );
+
+  const SP4Teleportertorewardscenter = new Entity("SP4Teleportertorewardscenter");
+  engine.addEntity(SP4Teleportertorewardscenter);
+  SP4Teleportertorewardscenter.setParent(_scene);
+  const transformCS37 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  SP4Teleportertorewardscenter.addComponentOrReplace(transformCS37);
+  const gltfShapeCS37 = new GLTFShape("models/Adsshops/SP4Teleportertorewardscenter.glb");
+  SP4Teleportertorewardscenter.addComponentOrReplace(gltfShapeCS37);
+  SP4Teleportertorewardscenter.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 40, y: 2, z: 11.5 }, { x: 40, y: 1.8, z: 40 });
+      },
+      { hoverText: "Teleport and check brand rewards at the Rewards Center" }
+    )
+  );
+
+  const SP5Teleportertorewardscenter = new Entity("SP5Teleportertorewardscenter");
+  engine.addEntity(SP5Teleportertorewardscenter);
+  SP5Teleportertorewardscenter.setParent(_scene);
+  const transformCS38 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  SP5Teleportertorewardscenter.addComponentOrReplace(transformCS38);
+  const gltfShapeCS38 = new GLTFShape("models/Adsshops/SP5Teleportertorewardscenter.glb");
+  SP5Teleportertorewardscenter.addComponentOrReplace(gltfShapeCS38);
+  SP5Teleportertorewardscenter.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 40, y: 2, z: 45 }, { x: 50, y: 1.8, z: 0 });
+      },
+      { hoverText: "Teleport and check brand rewards at the Rewards Center" }
+    )
+  );
+
+  const SP6Teleportertorewardscenter = new Entity("SP6Teleportertorewardscenter");
+  engine.addEntity(SP6Teleportertorewardscenter);
+  SP6Teleportertorewardscenter.setParent(_scene);
+  const transformCS39 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  SP6Teleportertorewardscenter.addComponentOrReplace(transformCS39);
+  const gltfShapeCS39 = new GLTFShape("models/Adsshops/SP6Teleportertorewardscenter.glb");
+  SP6Teleportertorewardscenter.addComponentOrReplace(gltfShapeCS39);
+  SP6Teleportertorewardscenter.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 40, y: 2, z: 45 }, { x: 50, y: 1.8, z: 0 });
+      },
+      { hoverText: "Teleport and check brand rewards at the Rewards Center" }
+    )
+  );
+
+  const SP7Teleportertorewardscenter = new Entity("SP7Teleportertorewardscenter");
+  engine.addEntity(SP7Teleportertorewardscenter);
+  SP7Teleportertorewardscenter.setParent(_scene);
+  const transformCS40 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  SP7Teleportertorewardscenter.addComponentOrReplace(transformCS40);
+  const gltfShapeCS40 = new GLTFShape("models/Adsshops/SP7Teleportertorewardscenter.glb");
+  SP7Teleportertorewardscenter.addComponentOrReplace(gltfShapeCS40);
+  SP7Teleportertorewardscenter.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 40, y: 2, z: 45 }, { x: 50, y: 1.8, z: 0 });
+      },
+      { hoverText: "Teleport and check brand rewards at the Rewards Center" }
+    )
+  );
+
+  const SP8Teleportertorewardscenter = new Entity("SP8Teleportertorewardscenter");
+  engine.addEntity(SP8Teleportertorewardscenter);
+  SP8Teleportertorewardscenter.setParent(_scene);
+  const transformCS41 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  SP8Teleportertorewardscenter.addComponentOrReplace(transformCS41);
+  const gltfShapeCS41 = new GLTFShape("models/Adsshops/SP8Teleportertorewardscenter.glb");
+  SP8Teleportertorewardscenter.addComponentOrReplace(gltfShapeCS41);
+  SP8Teleportertorewardscenter.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 40, y: 2, z: 45 }, { x: 50, y: 1.8, z: 0 });
+      },
+      { hoverText: "Teleport and check brand rewards at the Rewards Center" }
+    )
+  );
+
+  const SP9Teleportertorewardscenter = new Entity("SP9Teleportertorewardscenter");
+  engine.addEntity(SP9Teleportertorewardscenter);
+  SP9Teleportertorewardscenter.setParent(_scene);
+  const transformCS42 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  SP9Teleportertorewardscenter.addComponentOrReplace(transformCS42);
+  const gltfShapeCS42 = new GLTFShape("models/Adsshops/SP9Teleportertorewardscenter.glb");
+  SP9Teleportertorewardscenter.addComponentOrReplace(gltfShapeCS42);
+  SP9Teleportertorewardscenter.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 40, y: 2, z: 45 }, { x: 50, y: 1.8, z: 0 });
+      },
+      { hoverText: "Teleport and check brand rewards at the Rewards Center" }
+    )
+  );
+
+  const SP10Teleportertorewardscenter = new Entity("SP10Teleportertorewardscenter");
+  engine.addEntity(SP10Teleportertorewardscenter);
+  SP10Teleportertorewardscenter.setParent(_scene);
+  const transformCS43 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  SP10Teleportertorewardscenter.addComponentOrReplace(transformCS43);
+  const gltfShapeCS43 = new GLTFShape("models/Adsshops/SP10Teleportertorewardscenter.glb");
+  SP10Teleportertorewardscenter.addComponentOrReplace(gltfShapeCS43);
+  SP10Teleportertorewardscenter.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 40, y: 2, z: 45 }, { x: 50, y: 1.8, z: 0 });
+      },
+      { hoverText: "Teleport and check brand rewards at the Rewards Center" }
+    )
+  );
+
+  const SP11Teleportertorewardscenter = new Entity("SP11Teleportertorewardscenter");
+  engine.addEntity(SP11Teleportertorewardscenter);
+  SP11Teleportertorewardscenter.setParent(_scene);
+  const transformCS44 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  SP11Teleportertorewardscenter.addComponentOrReplace(transformCS44);
+  const gltfShapeCS44 = new GLTFShape("models/Adsshops/SP11Teleportertorewardscenter.glb");
+  SP11Teleportertorewardscenter.addComponentOrReplace(gltfShapeCS44);
+  SP11Teleportertorewardscenter.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 40, y: 2, z: 45 }, { x: 50, y: 1.8, z: 0 });
+      },
+      { hoverText: "Teleport and check brand rewards at the Rewards Center" }
+    )
+  );
+
+  const SP12Teleportertorewardscenter = new Entity("SP12Teleportertorewardscenter");
+  engine.addEntity(SP12Teleportertorewardscenter);
+  SP12Teleportertorewardscenter.setParent(_scene);
+  const transformCS45 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  SP12Teleportertorewardscenter.addComponentOrReplace(transformCS45);
+  const gltfShapeCS45 = new GLTFShape("models/Adsshops/SP12Teleportertorewardscenter.glb");
+  SP12Teleportertorewardscenter.addComponentOrReplace(gltfShapeCS45);
+  SP12Teleportertorewardscenter.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 40, y: 2, z: 45 }, { x: 50, y: 1.8, z: 0 });
+      },
+      { hoverText: "Teleport and check brand rewards at the Rewards Center" }
+    )
+  );
+
+  const TeleporterL1 = new Entity("TeleporterL1");
+  engine.addEntity(TeleporterL1);
+  TeleporterL1.setParent(_scene);
+  const transformCS46 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TeleporterL1.addComponentOrReplace(transformCS46);
+  const gltfShapeCS46 = new GLTFShape("models/Rewards/TeleporterL1.glb");
+  TeleporterL1.addComponentOrReplace(gltfShapeCS46);
+  TeleporterL1.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 11.6, y: 11, z: 22.7 }, { x: 50, y: 1.8, z: 0 }) ;
+      },
+      { hoverText: "Teleport to brand's shop" }
+    )
+  );
+
+  const TeleporterL2 = new Entity("TeleporterL2");
+  engine.addEntity(TeleporterL2);
+  TeleporterL2.setParent(_scene);
+  const transformCS47 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TeleporterL2.addComponentOrReplace(transformCS47);
+  const gltfShapeCS47 = new GLTFShape("models/Rewards/TeleporterL2.glb");
+  TeleporterL2.addComponentOrReplace(gltfShapeCS47);
+  TeleporterL2.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 12, y: 24, z: 49.7 }, { x: 50, y: 1.8, z: 0 });
+      },
+      { hoverText: "Teleport to brand's shop" }
+    )
+  );
+
+  const TeleporterL3 = new Entity("TeleporterL3");
+  engine.addEntity(TeleporterL3);
+  TeleporterL3.setParent(_scene);
+  const transformCS48 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TeleporterL3.addComponentOrReplace(transformCS48);
+  const gltfShapeCS48 = new GLTFShape("models/Rewards/TeleporterL3.glb");
+  TeleporterL3.addComponentOrReplace(gltfShapeCS48);
+  TeleporterL3.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 16.3, y: 51, z: 50 }, { x: 50, y: 1.8, z: 0 });
+      },
+      { hoverText: "Teleport to brand's shop" }
+    )
+  );
+
+  const TeleporterL4 = new Entity("TeleporterL4");
+  engine.addEntity(TeleporterL4);
+  TeleporterL4.setParent(_scene);
+  const transformCS49 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TeleporterL4.addComponentOrReplace(transformCS49);
+  const gltfShapeCS49 = new GLTFShape("models/Rewards/TeleporterL4.glb");
+  TeleporterL4.addComponentOrReplace(gltfShapeCS49);
+  TeleporterL4.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 42.82, y: 32, z: 47.73 }, { x: 50, y: 1.8, z: 0 });
+      },
+      { hoverText: "Teleport to brand's shop" }
+    )
+  );
+
+  const TeleporterL5 = new Entity("TeleporterL5");
+  engine.addEntity(TeleporterL5);
+  TeleporterL5.setParent(_scene);
+  const transformCS50 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TeleporterL5.addComponentOrReplace(transformCS50);
+  const gltfShapeCS50 = new GLTFShape("models/Rewards/TeleporterL5.glb");
+  TeleporterL5.addComponentOrReplace(gltfShapeCS50);
+  TeleporterL5.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 55.87, y: 14, z: 71.89 }, { x: 50, y: 1.8, z: 0 });
+      },
+      { hoverText: "Teleport to brand's shop" }
+    )
+  );
+  
+  const TeleporterL6 = new Entity("TeleporterL6");
+  engine.addEntity(TeleporterL6);
+  TeleporterL6.setParent(_scene);
+  const transformCS51 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TeleporterL6.addComponentOrReplace(transformCS51);
+  const gltfShapeCS51 = new GLTFShape("models/Rewards/TeleporterL6.glb");
+  TeleporterL6.addComponentOrReplace(gltfShapeCS51);
+  TeleporterL6.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 70.49, y: 2.5, z: 79.19 }, { x: 50, y: 1.8, z: 0 });
+      },
+      { hoverText: "Teleport to brand's shop" }
+    )
+  );
+
+  const TeleporterR1 = new Entity("TeleporterR1");
+  engine.addEntity(TeleporterR1);
+  TeleporterR1.setParent(_scene);
+  const transformCS52 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TeleporterR1.addComponentOrReplace(transformCS52);
+  const gltfShapeCS52 = new GLTFShape("models/Rewards/TeleporterR1.glb");
+  TeleporterR1.addComponentOrReplace(gltfShapeCS52);
+  TeleporterR1.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 12, y: 24, z: 37.2 }, { x: 50, y: 1.8, z: 0 });
+      },
+      { hoverText: "Teleport to brand's shop" }
+    )
+  );
+
+  const TeleporterR2 = new Entity("TeleporterR2");
+  engine.addEntity(TeleporterR2);
+  TeleporterR2.setParent(_scene);
+  const transformCS53 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TeleporterR2.addComponentOrReplace(transformCS53);
+  const gltfShapeCS53 = new GLTFShape("models/Rewards/TeleporterR2.glb");
+  TeleporterR2.addComponentOrReplace(gltfShapeCS53);
+  TeleporterR2.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 12, y: 24, z: 62.5 }, { x: 50, y: 1.8, z: 0 });
+      },
+      { hoverText: "Teleport to brand's shop" }
+    )
+  );
+
+  const TeleporterR3 = new Entity("TeleporterR3");
+  engine.addEntity(TeleporterR3);
+  TeleporterR3.setParent(_scene);
+  const transformCS54 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TeleporterR3.addComponentOrReplace(transformCS54);
+  const gltfShapeCS54 = new GLTFShape("models/Rewards/TeleporterR3.glb");
+  TeleporterR3.addComponentOrReplace(gltfShapeCS54);
+  TeleporterR3.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 16.3, y: 51, z: 60 }, { x: 50, y: 1.8, z: 0 });
+      },
+      { hoverText: "Teleport to brand's shop" }
+    )
+  );
+
+  const TeleporterR4 = new Entity("TeleporterR4");
+  engine.addEntity(TeleporterR4);
+  TeleporterR4.setParent(_scene);
+  const transformCS55 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TeleporterR4.addComponentOrReplace(transformCS55);
+  const gltfShapeCS55 = new GLTFShape("models/Rewards/TeleporterR4.glb");
+  TeleporterR4.addComponentOrReplace(gltfShapeCS55);
+  TeleporterR4.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 55, y: 32, z: 47.73 }, { x: 50, y: 1.8, z: 0 });
+      },
+      { hoverText: "Teleport to brand's shop" }
+    )
+  );
+
+  const TeleporterR5 = new Entity("TeleporterR5");
+  engine.addEntity(TeleporterR5);
+  TeleporterR5.setParent(_scene);
+  const transformCS56 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TeleporterR5.addComponentOrReplace(transformCS56);
+  const gltfShapeCS56 = new GLTFShape("models/Rewards/TeleporterR5.glb");
+  TeleporterR5.addComponentOrReplace(gltfShapeCS56);
+  TeleporterR5.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 55.87, y: 14, z: 40.2 }, { x: 50, y: 1.8, z: 0 });
+      },
+      { hoverText: "Teleport to brand's shop" }
+    )
+  );
+
+  const TeleporterR6 = new Entity("TeleporterR6");
+  engine.addEntity(TeleporterR6);
+  TeleporterR6.setParent(_scene);
+  const transformCS57 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TeleporterR6.addComponentOrReplace(transformCS57);
+  const gltfShapeCS57 = new GLTFShape("models/Rewards/TeleporterR6.glb");
+  TeleporterR6.addComponentOrReplace(gltfShapeCS57);
+  TeleporterR6.addComponent(
+    new OnPointerDown(
+      (e) => {
+        movePlayerTo({ x: 70.49, y: 2.5, z: 66 }, { x: 50, y: 1.8, z: 0 });
+      },
+      { hoverText: "Teleport to brand's shop" }
+    )
+  );
+
+  const TwitterL1 = new Entity("TwitterL1");
+  TwitterL1.setParent(_scene);
+  const transformCS58 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterL1.addComponentOrReplace(transformCS58);
+  const gltfShapeCS58 = new GLTFShape("models/Rewards/Sociallinks/TwitterL1.glb");
+  TwitterL1.addComponentOrReplace(gltfShapeCS58);
+  TwitterL1.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/decentraland")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(TwitterL1);
+
+  const TwitterL2 = new Entity("TwitterL2");
+  TwitterL2.setParent(_scene);
+  const transformCS59 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterL2.addComponentOrReplace(transformCS59);
+  const gltfShapeCS59 = new GLTFShape("models/Rewards/Sociallinks/TwitterL2.glb");
+  TwitterL2.addComponentOrReplace(gltfShapeCS59);
+  TwitterL2.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/HashKey_DX")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(TwitterL2);
+
+  const TwitterL3 = new Entity("TwitterL3");
+  TwitterL3.setParent(_scene);
+  const transformCS60 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterL3.addComponentOrReplace(transformCS60);
+  const gltfShapeCS60 = new GLTFShape("models/Rewards/Sociallinks/TwitterL3.glb");
+  TwitterL3.addComponentOrReplace(gltfShapeCS60);
+  TwitterL3.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/Polybasic_Team")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(TwitterL3);
+
+  const TwitterL4 = new Entity("TwitterL4");
+  TwitterL4.setParent(_scene);
+  const transformCS61 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterL4.addComponentOrReplace(transformCS61);
+  const gltfShapeCS61 = new GLTFShape("models/Rewards/Sociallinks/TwitterL4.glb");
+  TwitterL4.addComponentOrReplace(gltfShapeCS61);
+  TwitterL4.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/DigiFun_")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(TwitterL4);
+
+  const TwitterL5 = new Entity("TwitterL5");
+  TwitterL5.setParent(_scene);
+  const transformCS62 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterL5.addComponentOrReplace(transformCS62);
+  const gltfShapeCS62 = new GLTFShape("models/Rewards/Sociallinks/TwitterL5.glb");
+  TwitterL5.addComponentOrReplace(gltfShapeCS62);
+  TwitterL5.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/SpanishMuseum")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(TwitterL5);
+
+  const TwitterL6 = new Entity("TwitterL6");
+  TwitterL6.setParent(_scene);
+  const transformCS63 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterL6.addComponentOrReplace(transformCS63);
+  const gltfShapeCS63 = new GLTFShape("models/Rewards/Sociallinks/TwitterL6.glb");
+  TwitterL6.addComponentOrReplace(gltfShapeCS63);
+  TwitterL6.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/Metalivestudio")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(TwitterL6);
+
+  const TwitterR1 = new Entity("TwitterR1");
+  TwitterR1.setParent(_scene);
+  const transformCS64 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterR1.addComponentOrReplace(transformCS64);
+  const gltfShapeCS64 = new GLTFShape("models/Rewards/Sociallinks/TwitterR1.glb");
+  TwitterR1.addComponentOrReplace(gltfShapeCS64);
+  TwitterR1.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/DecentralGames")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(TwitterR1);
+
+  const TwitterR2 = new Entity("TwitterR2");
+  TwitterR2.setParent(_scene);
+  const transformCS65 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterR2.addComponentOrReplace(transformCS65);
+  const gltfShapeCS65 = new GLTFShape("models/Rewards/Sociallinks/TwitterR2.glb");
+  TwitterR2.addComponentOrReplace(gltfShapeCS65);
+  TwitterR2.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/Galxe")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(TwitterR2);
+
+  const TwitterR3 = new Entity("TwitterR3");
+  TwitterR3.setParent(_scene);
+  const transformCS66 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterR3.addComponentOrReplace(transformCS66);
+  const gltfShapeCS66 = new GLTFShape("models/Rewards/Sociallinks/TwitterR3.glb");
+  TwitterR3.addComponentOrReplace(gltfShapeCS66);
+  TwitterR3.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/MimicShhans")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(TwitterR3);
+
+  const TwitterR4 = new Entity("TwitterR4");
+  TwitterR4.setParent(_scene);
+  const transformCS67 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterR4.addComponentOrReplace(transformCS67);
+  const gltfShapeCS67 = new GLTFShape("models/Rewards/Sociallinks/TwitterR4.glb");
+  TwitterR4.addComponentOrReplace(gltfShapeCS67);
+  TwitterR4.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/creatordaocc")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(TwitterR4);
+
+  const TwitterR5 = new Entity("TwitterR5");
+  TwitterR5.setParent(_scene);
+  const transformCS68 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterR5.addComponentOrReplace(transformCS68);
+  const gltfShapeCS68 = new GLTFShape("models/Rewards/Sociallinks/TwitterR5.glb");
+  TwitterR5.addComponentOrReplace(gltfShapeCS68);
+  TwitterR5.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/adsharesNet")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(TwitterR5);
+
+  const TwitterR6 = new Entity("TwitterR6");
+  TwitterR6.setParent(_scene);
+  const transformCS69 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterR6.addComponentOrReplace(transformCS69);
+  const gltfShapeCS69 = new GLTFShape("models/Rewards/Sociallinks/TwitterR6.glb");
+  TwitterR6.addComponentOrReplace(gltfShapeCS69);
+  TwitterR6.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/wildernessp2e")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(TwitterR6);
+
+  const TwitterS1 = new Entity("TwitterS1");
+  TwitterS1.setParent(_scene);
+  const transformCS70 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterS1.addComponentOrReplace(transformCS70);
+  const gltfShapeCS70 = new GLTFShape("models/Rewards/Sociallinks/TwitterS1.glb");
+  TwitterS1.addComponentOrReplace(gltfShapeCS70);
+  TwitterS1.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/soulmagicnft")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(TwitterS1);
+
+  const TwitterS2 = new Entity("TwitterS2");
+  TwitterS2.setParent(_scene);
+  const transformCS71 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterS2.addComponentOrReplace(transformCS71);
+  const gltfShapeCS71 = new GLTFShape("models/Rewards/Sociallinks/TwitterS2.glb");
+  TwitterS2.addComponentOrReplace(gltfShapeCS71);
+  TwitterS2.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/Apes3D")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(TwitterS2);
+
+  const TwitterS3 = new Entity("TwitterS3");
+  TwitterS3.setParent(_scene);
+  const transformCS72 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterS3.addComponentOrReplace(transformCS72);
+  const gltfShapeCS72 = new GLTFShape("models/Rewards/Sociallinks/TwitterS3.glb");
+  TwitterS3.addComponentOrReplace(gltfShapeCS72);
+  TwitterS3.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/GameApeFC")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(TwitterS3);
+
+  const TwitterS4 = new Entity("TwitterS4");
+  TwitterS4.setParent(_scene);
+  const transformCS73 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterS4.addComponentOrReplace(transformCS73);
+  const gltfShapeCS73 = new GLTFShape("models/Rewards/Sociallinks/TwitterS4.glb");
+  TwitterS4.addComponentOrReplace(gltfShapeCS73);
+  TwitterS4.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/GolfcraftGame")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(TwitterS4);
+
+  const TwitterS5 = new Entity("TwitterS5");
+  TwitterS5.setParent(_scene);
+  const transformCS74 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterS5.addComponentOrReplace(transformCS74);
+  const gltfShapeCS74 = new GLTFShape("models/Rewards/Sociallinks/TwitterS5.glb");
+  TwitterS5.addComponentOrReplace(gltfShapeCS74);
+  TwitterS5.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/MultiverseDAO")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(TwitterS5);
+
+  const TwitterS6 = new Entity("TwitterS6");
+  TwitterS6.setParent(_scene);
+  const transformCS75 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterS6.addComponentOrReplace(transformCS75);
+  const gltfShapeCS75 = new GLTFShape("models/Rewards/Sociallinks/TwitterS6.glb");
+  TwitterS6.addComponentOrReplace(gltfShapeCS75);
+  TwitterS6.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/SlavikFruitFarm")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(TwitterS6);
+
+  const TwitterS7 = new Entity("TwitterS7");
+  TwitterS7.setParent(_scene);
+  const transformCS76 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterS7.addComponentOrReplace(transformCS76);
+  const gltfShapeCS76 = new GLTFShape("models/Rewards/Sociallinks/TwitterS7.glb");
+  TwitterS7.addComponentOrReplace(gltfShapeCS76);
+  TwitterS7.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/Metacat007")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(TwitterS7);
+
+  const TwitterS8 = new Entity("TwitterS8");
+  TwitterS8.setParent(_scene);
+  const transformCS77 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterS8.addComponentOrReplace(transformCS77);
+  const gltfShapeCS77 = new GLTFShape("models/Rewards/Sociallinks/TwitterS8.glb");
+  TwitterS8.addComponentOrReplace(gltfShapeCS77);
+  TwitterS8.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/polygonalmind")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(TwitterS8);
+
+  const TwitterS9 = new Entity("TwitterS9");
+  TwitterS9.setParent(_scene);
+  const transformCS78 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterS9.addComponentOrReplace(transformCS78);
+  const gltfShapeCS78 = new GLTFShape("models/Rewards/Sociallinks/TwitterS9.glb");
+  TwitterS9.addComponentOrReplace(gltfShapeCS78);
+  TwitterS9.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/metapolyorg")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(TwitterS9);
+
+  const TwitterS10 = new Entity("TwitterS10");
+  TwitterS10.setParent(_scene);
+  const transformCS79 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterS10.addComponentOrReplace(transformCS79);
+  const gltfShapeCS79 = new GLTFShape("models/Rewards/Sociallinks/TwitterS10.glb");
+  TwitterS10.addComponentOrReplace(gltfShapeCS79);
+  TwitterS10.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/ZeitgeistPM")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(TwitterS10);
+
+  const TwitterS11 = new Entity("TwitterS11");
+  TwitterS11.setParent(_scene);
+  const transformCS80 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterS11.addComponentOrReplace(transformCS80);
+  const gltfShapeCS80 = new GLTFShape("models/Rewards/Sociallinks/TwitterS11.glb");
+  TwitterS11.addComponentOrReplace(gltfShapeCS80);
+  TwitterS11.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/Chinese_ApeClub")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(TwitterS11);
+
+  const TwitterS12 = new Entity("TwitterS12");
+  TwitterS12.setParent(_scene);
+  const transformCS81 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  TwitterS12.addComponentOrReplace(transformCS81);
+  const gltfShapeCS81 = new GLTFShape("models/Rewards/Sociallinks/TwitterS12.glb");
+  TwitterS12.addComponentOrReplace(gltfShapeCS81);
+  TwitterS12.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/MetaGamiMall")
+      },
+      { hoverText: "Check Brand's Discord" })
+    );
+  engine.addEntity(TwitterS12);
+
+  const DiscordL1 = new Entity("DiscordL1");
+  DiscordL1.setParent(_scene);
+  const transformCS82 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  DiscordL1.addComponentOrReplace(transformCS82);
+  const gltfShapeCS82 = new GLTFShape("models/Rewards/Sociallinks/DiscordL1.glb");
+  DiscordL1.addComponentOrReplace(gltfShapeCS82);
+  DiscordL1.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://discord.com/invite/zCRh5ps")
+      },
+      { hoverText: "Check Brand's Twitter" })
+    );
+  engine.addEntity(DiscordL1);
+
+  const DiscordL2 = new Entity("DiscordL2");
+  DiscordL2.setParent(_scene);
+  const transformCS83 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  DiscordL2.addComponentOrReplace(transformCS83);
+  const gltfShapeCS83 = new GLTFShape("models/Rewards/Sociallinks/DiscordL2.glb");
+  DiscordL2.addComponentOrReplace(gltfShapeCS83);
+  DiscordL2.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://www.hashkey.id/credential/metamineevent")
+      },
+      { hoverText: "Claim Hashkey OST as a prove of attendence" })
+    );
+  engine.addEntity(DiscordL2);
+
+  const DiscordL3 = new Entity("DiscordL3");
+  DiscordL3.setParent(_scene);
+  const transformCS84 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  DiscordL3.addComponentOrReplace(transformCS84);
+  const gltfShapeCS84 = new GLTFShape("models/Rewards/Sociallinks/DiscordL3.glb");
+  DiscordL3.addComponentOrReplace(gltfShapeCS84);
+  DiscordL3.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://discord.com/invite/m3gwaqRaWB")
+      },
+      { hoverText: "Check Brand's Discord" })
+    );
+  engine.addEntity(DiscordL3);
+
+  const DiscordL4 = new Entity("DiscordL4");
+  DiscordL4.setParent(_scene);
+  const transformCS85 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  DiscordL4.addComponentOrReplace(transformCS85);
+  const gltfShapeCS85 = new GLTFShape("models/Rewards/Sociallinks/DiscordL4.glb");
+  DiscordL4.addComponentOrReplace(gltfShapeCS85);
+  DiscordL4.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://discord.com/invite/6tArQY6WGu")
+      },
+      { hoverText: "Check Brand's Discord" })
+    );
+  engine.addEntity(DiscordL4);
+
+  const DiscordL5 = new Entity("DiscordL5");
+  DiscordL5.setParent(_scene);
+  const transformCS86 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  DiscordL5.addComponentOrReplace(transformCS86);
+  const gltfShapeCS86 = new GLTFShape("models/Rewards/Sociallinks/DiscordL5.glb");
+  DiscordL5.addComponentOrReplace(gltfShapeCS86);
+  DiscordL5.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://discord.com/invite/6tjupkaWm3")
+      },
+      { hoverText: "Check Brand's Discord" })
+    );
+  engine.addEntity(DiscordL5);
+
+  const DiscordL6 = new Entity("DiscordL6");
+  DiscordL6.setParent(_scene);
+  const transformCS87 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  DiscordL6.addComponentOrReplace(transformCS87);
+  const gltfShapeCS87 = new GLTFShape("models/Rewards/Sociallinks/DiscordL6.glb");
+  DiscordL6.addComponentOrReplace(gltfShapeCS87);
+  DiscordL6.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://twitter.com/MetaGamiMall")
+      },
+      { hoverText: "Check Brand's Discord" })
+    );
+  engine.addEntity(DiscordL6);
+
+  const DiscordR1 = new Entity("DiscordR1");
+  DiscordR1.setParent(_scene);
+  const transformCS88 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  DiscordR1.addComponentOrReplace(transformCS88);
+  const gltfShapeCS88 = new GLTFShape("models/Rewards/Sociallinks/DiscordR1.glb");
+  DiscordR1.addComponentOrReplace(gltfShapeCS88);
+  DiscordR1.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://discord.com/invite/cvbSNzY")
+      },
+      { hoverText: "Check Brand's Discord" })
+    );
+  engine.addEntity(DiscordR1);
+
+  const DiscordR2 = new Entity("DiscordR2");
+  DiscordR2.setParent(_scene);
+  const transformCS89 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  DiscordR2.addComponentOrReplace(transformCS89);
+  const gltfShapeCS89 = new GLTFShape("models/Rewards/Sociallinks/DiscordR2.glb");
+  DiscordR2.addComponentOrReplace(gltfShapeCS89);
+  DiscordR2.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://discord.com/invite/galxe")
+      },
+      { hoverText: "Check Brand's Discord" })
+    );
+  engine.addEntity(DiscordR2);
+
+  const DiscordR3 = new Entity("DiscordR3");
+  DiscordR3.setParent(_scene);
+  const transformCS90 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  DiscordR3.addComponentOrReplace(transformCS90);
+  const gltfShapeCS90 = new GLTFShape("models/Rewards/Sociallinks/DiscordR3.glb");
+  DiscordR3.addComponentOrReplace(gltfShapeCS90);
+  DiscordR3.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://discord.com/invite/mimicshhans")
+      },
+      { hoverText: "Check Brand's Discord" })
+    );
+  engine.addEntity(DiscordR3);
+
+  const DiscordR4 = new Entity("DiscordR4");
+  DiscordR4.setParent(_scene);
+  const transformCS91 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  DiscordR4.addComponentOrReplace(transformCS91);
+  const gltfShapeCS91 = new GLTFShape("models/Rewards/Sociallinks/DiscordR4.glb");
+  DiscordR4.addComponentOrReplace(gltfShapeCS91);
+  DiscordR4.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://discord.com/invite/creatordao")
+      },
+      { hoverText: "Check Brand's Discord" })
+    );
+  engine.addEntity(DiscordR4);
+
+  const DiscordR5 = new Entity("DiscordR5");
+  DiscordR5.setParent(_scene);
+  const transformCS92 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  DiscordR5.addComponentOrReplace(transformCS92);
+  const gltfShapeCS92 = new GLTFShape("models/Rewards/Sociallinks/DiscordR5.glb");
+  DiscordR5.addComponentOrReplace(gltfShapeCS92);
+  DiscordR5.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://discord.com/invite/KqW98MbAce")
+      },
+      { hoverText: "Check Brand's Discord" })
+    );
+  engine.addEntity(DiscordR5);
+
+  const DiscordR6 = new Entity("DiscordR6");
+  DiscordR6.setParent(_scene);
+  const transformCS93 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  DiscordR6.addComponentOrReplace(transformCS93);
+  const gltfShapeCS93 = new GLTFShape("models/Rewards/Sociallinks/DiscordR6.glb");
+  DiscordR6.addComponentOrReplace(gltfShapeCS93);
+  DiscordR6.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://discord.com/invite/nEadSFW3")
+      },
+      { hoverText: "Check Brand's Discord" })
+    );
+  engine.addEntity(DiscordR6);
+
+  const stagediamond = new Entity("stagediamond");
+  engine.addEntity(stagediamond);
+  stagediamond.setParent(_scene);
+  const transformCS94 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  stagediamond.addComponentOrReplace(transformCS94);
+  const gltfShapeCS94 = new GLTFShape("models/Teleporter/Stagediamond.glb");
+  stagediamond.addComponentOrReplace(gltfShapeCS94);
+  engine.addEntity(stagediamond);
+
+const loadPlantFn = ()=>{
+  const plant = new Entity("plant");
+  engine.addEntity(plant);
+  plant.setParent(_scene);
+  const transformCS95 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  plant.addComponentOrReplace(transformCS95);
+  const gltfShapeCS95 = new GLTFShape("models/mains/plants.glb");
+  plant.addComponentOrReplace(gltfShapeCS95);
+  engine.addEntity(plant);
+};//END loadPlantFn
+handleDelayLoad(CONFIG.DELAY_LOAD_PLANT, 
+  "plant", 
+  loadPlantFn);
+
+  const loadSquareFn = ()=>{
+  const squares = new Entity("squares");
+  engine.addEntity(squares);
+  squares.setParent(_scene);
+  const transformCS96 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  squares.addComponentOrReplace(transformCS96);
+  const gltfShapeCS96 = new GLTFShape("models/mains/squares.glb");
+  squares.addComponentOrReplace(gltfShapeCS96);
+  engine.addEntity(squares);
+  }//END loadSquareFn
+  handleDelayLoad(CONFIG.DELAY_LOAD_SQUARES, 
+  "square", 
+    loadSquareFn
+  );
+
+  const loadWearablesFn = ()=>{
+  const wearables = new Entity("wearables");
+  engine.addEntity(wearables);
+  wearables.setParent(_scene);
+  const transformCS97 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  wearables.addComponentOrReplace(transformCS97);
+  const gltfShapeCS97 = new GLTFShape("models/Rewards/metaminewearables.glb");
+  wearables.addComponentOrReplace(gltfShapeCS97);
+  engine.addEntity(wearables);
+ };
+ handleDelayLoad(CONFIG.DELAY_LOAD_WEARABLES, 
+  "wearables", 
+  loadWearablesFn
+  ); 
+
+  const barrier = new Entity("barrier");
+  engine.addEntity(barrier);
+  barrier.setParent(_scene);
+  const transformCS98 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  barrier.addComponentOrReplace(transformCS98);
+  const gltfShapeCS98 = new GLTFShape("models/mains/Barrier.glb");
+  barrier.addComponentOrReplace(gltfShapeCS98);
+  engine.addEntity(barrier);
+
+  const cyberrunlobby = new Entity("cyberrunlobby");
+  engine.addEntity(cyberrunlobby);
+  cyberrunlobby.setParent(_scene);
+  const transformCS22 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  cyberrunlobby.addComponentOrReplace(transformCS22);
+  const gltfShapeCS22 = new GLTFShape("models/lobby_building.glb");
+  cyberrunlobby.addComponentOrReplace(gltfShapeCS22);
+  engine.addEntity(cyberrunlobby);
+/*
+  const musclesquareupdownpad = new Entity("musclesquareupdownpad");
+  engine.addEntity(musclesquareupdownpad);
+  musclesquareupdownpad.setParent(_scene);
+  const transformCS23 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  musclesquareupdownpad.addComponentOrReplace(transformCS23);
+  const gltfShapeCS23 = new GLTFShape("models/mains/musclesquareupdownpad.glb");
+  musclesquareupdownpad.addComponentOrReplace(gltfShapeCS23);
+  engine.addEntity(musclesquareupdownpad);
+
+  const stage = new Entity("stage");
+  engine.addEntity(stage);
+  stage.setParent(_scene);
+  const transformCS27 = new Transform({
+    position: new Vector3(48, 0, 40),
+    rotation: new Quaternion(0, 0, 0, 1),
+    scale: new Vector3(1, 1, 1),
+  });
+  stage.addComponentOrReplace(transformCS27);
+  const gltfShapeCS27 = new GLTFShape("models/Teleporter/stage.glb");
+  stage.addComponentOrReplace(gltfShapeCS27);
+  engine.addEntity(stage);
 
   // Add mini games
   /*const movingball = new Entity("movingball");
@@ -2259,8 +3782,8 @@ function loadPrimaryScene() {
   gltfShapeCS19.withCollisions = true;
   gltfShapeCS19.isPointerBlocker = true;
   gltfShapeCS19.visible = true;
-  rotatingpadcollider.addComponentOrReplace(gltfShapeCS19); 
-  
+  rotatingpadcollider.addComponentOrReplace(gltfShapeCS19);
+
 
   if (true) {
     //block scope
@@ -2286,7 +3809,7 @@ function loadPrimaryScene() {
     );
   }
   */
-
+  /*
   // Add voxboardpark start
   const voxboardpark = new Entity("voxboardpark");
   engine.addEntity(voxboardpark);
@@ -2302,11 +3825,11 @@ function loadPrimaryScene() {
   gltfShapeCS1.isPointerBlocker = true;
   gltfShapeCS1.visible = true;
   voxboardpark.addComponentOrReplace(gltfShapeCS1);
-
+*/
   // Add voxboard park end
 
   // Add entrance Start
-
+/*
   const rewardL1 = new Entity("rewardL1");
   engine.addEntity(rewardL1);
   rewardL1.setParent(_scene);
@@ -2425,10 +3948,9 @@ function loadPrimaryScene() {
   gltfShapeCS16.withCollisions = true;
   gltfShapeCS16.isPointerBlocker = true;
   gltfShapeCS16.visible = true;
-  rewardR4.addComponentOrReplace(gltfShapeCS16);
-
+  rewardR4.addComponentOrReplace(gltfShapeCS16);  
+*/
   const rewardmd = new Entity("rewardmd");
-  engine.addEntity(rewardmd);
   rewardmd.setParent(_scene);
   const transformCS17 = new Transform({
     position: new Vector3(48, 0, 40),
@@ -2436,11 +3958,169 @@ function loadPrimaryScene() {
     scale: new Vector3(1, 1, 1),
   });
   rewardmd.addComponentOrReplace(transformCS17);
-  const gltfShapeCS17 = new GLTFShape("models/Rewards/rewardmd.gltf");
-  gltfShapeCS17.withCollisions = true;
-  gltfShapeCS17.isPointerBlocker = true;
-  gltfShapeCS17.visible = true;
+  const gltfShapeCS17 = new GLTFShape("models/Rewards/rewardmd.glb");
   rewardmd.addComponentOrReplace(gltfShapeCS17);
+  /*rewardmd.addComponentOrReplace(
+    new OnPointerDown(
+      (e) => {
+        openExternalURL("https://www.metadoge.art")
+      },
+      { hoverText: "Check more information on website" })
+    );
+  engine.addEntity(rewardmd);*/
+
+// Add auto dance
+
+  const danceAreas: any = [
+    {
+      transform: {
+        position: new Vector3(40, 0, 8),
+        scale: new Vector3(15, 4, 15)
+      },
+      type: PredefinedEmote.ROBOT
+    }]
+  
+  ////// DEBUG FLAG - Set to true to view all dance areas
+  const DEBUG_FLAG = false
+  
+  
+  ///// This system acts on the danceAreas defined above
+  
+  class DanceSystem {
+    length = 11
+    timer = 2
+    routine: any
+    danceFunction: () => void = () => {
+      //   log('pointer Up')
+      this.dance()
+    }
+  
+    routines: PredefinedEmote[] = [
+      PredefinedEmote.ROBOT,
+      PredefinedEmote.TIK,
+      PredefinedEmote.TEKTONIK,
+      PredefinedEmote.HAMMER,
+      PredefinedEmote.HEAD_EXPLODDE,
+      PredefinedEmote.HANDS_AIR,
+      PredefinedEmote.DISCO,
+      PredefinedEmote.DAB
+    ]
+  
+    constructor(routine: PredefinedEmote) {
+      this.routine = routine
+    }
+  
+    update(dt: number) {
+      if (this.timer > 0) {
+        this.timer -= dt
+      } else {
+        this.dance()
+      }
+    }
+    dance() {
+      this.timer = this.length
+      if (this.routine === 'all') {
+        const rand = Math.floor(Math.random() * (this.routine.length - 0) + 0)
+        void triggerEmote({ predefined: this.routines[rand] })
+      } else {
+        void triggerEmote({ predefined: this.routine })
+      }
+    }
+    addEvents() {
+      Input.instance.subscribe(
+        'BUTTON_UP',
+        ActionButton.FORWARD,
+        false,
+        this.danceFunction
+      )
+  
+      Input.instance.subscribe(
+        'BUTTON_UP',
+        ActionButton.BACKWARD,
+        false,
+        this.danceFunction
+      )
+  
+      Input.instance.subscribe(
+        'BUTTON_UP',
+        ActionButton.RIGHT,
+        false,
+        this.danceFunction
+      )
+  
+      Input.instance.subscribe(
+        'BUTTON_UP',
+        ActionButton.LEFT,
+        false,
+        this.danceFunction
+      )
+    }
+    removeEvents() {
+      Input.instance.unsubscribe(
+        'BUTTON_UP',
+        ActionButton.FORWARD,
+        this.danceFunction
+      )
+  
+      Input.instance.unsubscribe(
+        'BUTTON_UP',
+        ActionButton.BACKWARD,
+        this.danceFunction
+      )
+  
+      Input.instance.unsubscribe(
+        'BUTTON_UP',
+        ActionButton.RIGHT,
+        this.danceFunction
+      )
+  
+      Input.instance.unsubscribe(
+        'BUTTON_UP',
+        ActionButton.LEFT,
+        this.danceFunction
+      )
+    }
+  }
+  
+  for (const i in danceAreas) {
+    const area = new Entity('dance-' + i);
+    area.setParent(_scene);
+    area.addComponent(new Transform(danceAreas[i].transform))
+  
+    void executeTask(async () => {
+      if (DEBUG_FLAG && (await isPreviewMode())) {
+        area.addComponent(new BoxShape())
+        area.getComponent(BoxShape).withCollisions = false
+      }
+    })
+  
+    engine.addEntity(area)
+    const dsystem = new DanceSystem(danceAreas[i].type)
+  
+    area.addComponent(
+      new utils.TriggerComponent(
+        new utils.TriggerBoxShape(
+          new Vector3(
+            area.getComponent(Transform).scale.x,
+            area.getComponent(Transform).scale.y,
+            area.getComponent(Transform).scale.z
+          ),
+          new Vector3(0, 2.5, 0)
+        ),
+        {
+          enableDebug: false,
+          onCameraEnter: () => {
+            engine.addSystem(dsystem)
+            dsystem.addEvents()
+          },
+          onCameraExit: () => {
+            dsystem.removeEvents()
+            engine.removeSystem(dsystem)
+          }
+        }
+      )
+    )
+  }  
 
   /*
   const dogehead = new Entity("dogehead");
@@ -2478,7 +4158,7 @@ function loadPrimaryScene() {
   // Add entrance end
 
   // Add Metaparty Start
-
+  /*
   const Metaparty = new Entity("Metaparty");
   engine.addEntity(Metaparty);
   Metaparty.setParent(_scene);
@@ -2493,7 +4173,7 @@ function loadPrimaryScene() {
   gltfShapeCS4.isPointerBlocker = true;
   gltfShapeCS4.visible = true;
   Metaparty.addComponentOrReplace(gltfShapeCS4);
-
+*/
   // Add Metaparty end
 
   // Add entrancepad Start
@@ -2651,7 +4331,7 @@ function loadPrimaryScene() {
   //START CUSTOM Zeitgeist//START CUSTOM Zeitgeist//START CUSTOM Zeitgeist
 
   const loadNonPrimaryScene = () => {
-    const ufo = new Entity("ufo");
+    /*const ufo = new Entity("ufo");
     engine.addEntity(ufo);
     ufo.setParent(_scene);
     const transform129 = new Transform({
@@ -2668,7 +4348,7 @@ function loadPrimaryScene() {
     gltfShape8.visible = true;
     ufo.addComponentOrReplace(gltfShape8);
 
-    /*
+
     const background = new Entity('background')
     engine.addEntity(background)
     background.setParent(_scene)
@@ -2698,7 +4378,7 @@ function loadPrimaryScene() {
     XgltfShape100.withCollisions = true
     XgltfShape100.isPointerBlocker = true
     XgltfShape100.visible = true
-    xZeitgeist.addComponentOrReplace(XgltfShape100) 
+    xZeitgeist.addComponentOrReplace(XgltfShape100)
 
 
       //END CUSTOM Zeitgeist //END CUSTOM Zeitgeist
@@ -2717,7 +4397,7 @@ function loadPrimaryScene() {
       XgltfShape201.visible = true;
       xAdversting_walls.addComponentOrReplace(XgltfShape201);
     };
-  
+
     */
   };
   //loadNonPrimaryScene()
@@ -2766,7 +4446,7 @@ function loadPrimaryScene() {
   XgltfShape205.withCollisions = true
   XgltfShape205.isPointerBlocker = true
   XgltfShape205.visible = true
-  xNFTFrame.addComponentOrReplace(XgltfShape205) 
+  xNFTFrame.addComponentOrReplace(XgltfShape205)
 
   const xNFTFrame2 = new Entity('NFTFrame2')
   engine.addEntity(xNFTFrame2)
@@ -2790,7 +4470,7 @@ function loadPrimaryScene() {
     scale: new Vector3(1, 1, 1)
   })
   xNFTFrame3.addComponentOrReplace(Xtransform207)
-  xNFTFrame3.addComponentOrReplace(XgltfShape205) 
+  xNFTFrame3.addComponentOrReplace(XgltfShape205)
 
   const xNFTFrame4 = new Entity('NFTFrame4')
   engine.addEntity(xNFTFrame4)
@@ -2802,7 +4482,7 @@ function loadPrimaryScene() {
     scale: new Vector3(1, 1, 1)
   })
   xNFTFrame4.addComponentOrReplace(Xtransform208)
-  xNFTFrame4.addComponentOrReplace(XgltfShape205) 
+  xNFTFrame4.addComponentOrReplace(XgltfShape205)
 
 
   const xNFTFrame5 = new Entity('NFTFrame5')
@@ -2815,7 +4495,7 @@ function loadPrimaryScene() {
     scale: new Vector3(1, 1, 1)
   })
   xNFTFrame5.addComponentOrReplace(Xtransform209)
-  xNFTFrame5.addComponentOrReplace(XgltfShape205) 
+  xNFTFrame5.addComponentOrReplace(XgltfShape205)
 
   for(const p in HQnftFrames){
     const nftFrame = HQnftFrames[p]
@@ -2824,7 +4504,7 @@ function loadPrimaryScene() {
         //openNFTDialog(wearableNTF, null)
         openExternalURL(CONFIG.URL_METADOGE_NFT_2D)
       },
-      { 
+      {
         button: ActionButton.PRIMARY,
         hoverText: metadoge2dHoverText
       }
@@ -2849,7 +4529,7 @@ function loadPrimaryScene() {
   XgltfShape101.withCollisions = true
   XgltfShape101.isPointerBlocker = true
   XgltfShape101.visible = true
-  xKusama.addComponentOrReplace(XgltfShape101) 
+  xKusama.addComponentOrReplace(XgltfShape101)
   */
   //END CUSTOM Kusama //END CUSTOM Kusama
 
@@ -2868,7 +4548,7 @@ function loadPrimaryScene() {
   XgltfShape102.withCollisions = true
   XgltfShape102.isPointerBlocker = true
   XgltfShape102.visible = true
-  xPolkadot.addComponentOrReplace(XgltfShape102) 
+  xPolkadot.addComponentOrReplace(XgltfShape102)
   */
   //END CUSTOM Polkadot //END CUSTOM Polkadot
 
@@ -2896,7 +4576,7 @@ function loadPrimaryScene() {
   const xMDPWearableHelmet = new Entity('xMDPWearableHelmet')
   engine.addEntity(xMDPWearableHelmet)
   xMDPWearableHelmet.setParent(_scene)
-  const xgltfShape = new GLTFShape("models/wearables/mucledoge_skin.glb") 
+  const xgltfShape = new GLTFShape("models/wearables/mucledoge_skin.glb")
   xgltfShape.withCollisions = true
   xgltfShape.isPointerBlocker = true
   xgltfShape.visible = true
@@ -2923,9 +4603,9 @@ function loadPrimaryScene() {
         //openNFTDialog(wearableNTF, null)
         openExternalURL(helmetMarketUrl)
       },
-      { 
+      {
         button: ActionButton.PRIMARY,
-        hoverText: 'Visit Decentraland Marketplace' 
+        hoverText: 'Visit Decentraland Marketplace'
       }
     )
   )
@@ -2976,7 +4656,7 @@ function loadPrimaryScene() {
 
   // y - 48.44706726074219
   /*
-  const XnpcPlaceHolder2 = new Entity('XnpcPlaceHolder2') 
+  const XnpcPlaceHolder2 = new Entity('XnpcPlaceHolder2')
   engine.addEntity(XnpcPlaceHolder2)
   XnpcPlaceHolder2.setParent(_scene)
   //XnpcPlaceHolder2.addComponent(new BoxShape())
@@ -2989,12 +4669,12 @@ function loadPrimaryScene() {
   XnpcPlaceHolder2.addComponentOrReplace(Xtransform89)
 
   /*
-  const XnpcPlaceHolderSale2 = new Entity('XnpcPlaceHolderSale2') 
-  engine.addEntity(XnpcPlaceHolderSale2) 
+  const XnpcPlaceHolderSale2 = new Entity('XnpcPlaceHolderSale2')
+  engine.addEntity(XnpcPlaceHolderSale2)
   XnpcPlaceHolderSale2.setParent(_scene)
   //XnpcPlaceHolder2.addComponent(new BoxShape())
   const XtransformXnpcPlaceHolderSale289 = new Transform({
-    position: new Vector3(73, 48.44706726074219, 36),      
+    position: new Vector3(73, 48.44706726074219, 36),
     //position: new Vector3(82, 1, 36.5),
     rotation: Quaternion.Euler(0,-45,0),
     scale: new Vector3(1, 1, 1)
@@ -3088,7 +4768,7 @@ function loadPrimaryScene() {
     //openExternalURL(helmetMarketUrl)
     if (hasSkyMazeCriteria()) {
       log(METHOD_NAME + " calling lightUpAllKeys");
-      script3.lightUpAllKeys(skyMazeDisappearCheatDelay, "thick");
+      pianoKeysScriptInst.lightUpAllKeys(skyMazeDisappearCheatDelay, "thick");
     } else {
       log(METHOD_NAME + " need a helmet");
       visitMarketForHelmet();
@@ -3224,9 +4904,9 @@ function loadPrimaryScene() {
   /*
   XsignpostTreeSkyMaze.addComponent(new OnPointerDown(
     skyMazePeek,
-      { 
+      {
         button: ActionButton.POINTER,
-        hoverText: 'Take a Peek. Show Entire Maze' 
+        hoverText: 'Take a Peek. Show Entire Maze'
       }
     )
   )*/
@@ -3236,7 +4916,7 @@ function loadPrimaryScene() {
   xCheatBoxSkyMaze.setParent(_scene)
   xCheatBoxSkyMaze.addComponent(new BoxShape())
   const xTransformxCheatBoxSkyMaze = new Transform({
-    position: new Vector3(70, 48.44706726074219, 38),      
+    position: new Vector3(70, 48.44706726074219, 38),
     rotation: new Quaternion(0, 0, 0, 1),
     scale: new Vector3(1, 1, 1)
   })
@@ -3245,9 +4925,9 @@ function loadPrimaryScene() {
 
   xCheatBoxSkyMaze.addComponent(new OnPointerDown(
       skyMazePeek,
-      { 
+      {
         button: ActionButton.POINTER,
-        hoverText: 'Take a Peek. Show Entire Maze' 
+        hoverText: 'Take a Peek. Show Entire Maze'
       }
     )
   )*/
@@ -3258,11 +4938,11 @@ function loadPrimaryScene() {
   hideAvatarSkyMaze.setParent(_scene)
   hideAvatarSkyMaze.addComponent(new BoxShape()) //preview where modifier is
   const xTransformxhideAvatarSkyMaze = new Transform({
-    //position: new Vector3(16+10, 50, 21),    
-    position: new Vector3(16+10, 50, 21),    
+    //position: new Vector3(16+10, 50, 21),
+    position: new Vector3(16+10, 50, 21),
     rotation: new Quaternion(0, 0, 0, 1),
     //scale: new Vector3(30, 6, 40)
-    scale: new Vector3(1, 1, 1) 
+    scale: new Vector3(1, 1, 1)
   })
 
   let avatarModifierAreaComp = new AvatarModifierArea({
@@ -3281,7 +4961,7 @@ function loadPrimaryScene() {
   /*
   tubeContainerShape.addComponent(new OnPointerDown(
       visitMarketForHelmet,
-      { 
+      {
         button: ActionButton.PRIMARY,
         hoverText: visitMarketHoverText
       }
@@ -3773,168 +5453,46 @@ function loadPrimaryScene() {
   //END BELIEVER BRIDGE//END BELIEVER BRIDGE//END BELIEVER BRIDGE
 
   //START GET HELMET COUNT
-
-  type NftBalanceResponse = {
-    balance?: number;
-    owner?: string;
-    queryTime?: number;
-  };
-
-  //https://us-central1-sandbox-query-blockchain.cloudfunctions.net/blockChainQueryApp/hello-world
-  const customBaseUrl =
-    "https://us-central1-sandbox-query-blockchain.cloudfunctions.net";
-  async function getHelmetBalance(
-    profile: string,
-    version: string,
-    ownerAddress?: string | null
-  ): Promise<NftBalanceResponse> {
-    const METHOD_NAME = "getHelmetBalance";
-    const resultPromise = executeTask(async () => {
-      let response = null;
-      //https://us-central1-sandbox-query-blockchain.cloudfunctions.net/blockChainQueryApp/get-account-nft-balance?network=
-      //https://us-central1-sandbox-query-blockchain.cloudfunctions.net/blockChainQueryApp/get-account-nft-balance?network=matic&ownerAddress=WALLET-HERE&limit=9&logLevel=debug&storage=cacheX&multiCall=true&contractId=dcl-mtdgpnks
-      const callUrl =
-        customBaseUrl +
-        "/blockChainQueryApp/get-account-nft-balance?" +
-        //const callUrl= customBaseUrl + '/blockChainQueryApp/hello-world?'
-        "&network=" +
-        "matic" +
-        "&limit=" +
-        10 +
-        "&contractId=" +
-        "dcl-mtdgpnks" +
-        "&profile=" +
-        profile +
-        "&version=" +
-        version +
-        "&ownerAddress=" +
-        ownerAddress +
-        "&_unique=" +
-        new Date().getTime();
-
-      try {
-        log(METHOD_NAME + " calling " + callUrl);
-        response = await fetch(callUrl, {
-          //headers: { "Content-Type": "application/json" },
-          method: "GET",
-          //body: JSON.stringify(myBody),
-        });
-        if (response.status == 200) {
-          let json = await response.json();
-
-          //log(json)
-          log(METHOD_NAME + " reponse ", json);
-          return json;
-        } else {
-          let json = await response.json();
-          //log("NFTRepository reponse " + response.status + " " + response.statusText)
-          log(
-            METHOD_NAME +
-              " error reponse to reach URL status:" +
-              response.status +
-              " text:" +
-              response.statusText +
-              " json:" +
-              JSON.stringify(json)
-          );
-          //throw new Error(response.status + " " + response.statusText)
-          return {
-            errorMsg: response.status + " " + response.statusText + " " + json,
-          };
-        }
-      } catch (e) {
-        log(METHOD_NAME + ".failed to reach URL " + e + " " + response);
-        throw e;
-      }
-    });
-
-    return resultPromise;
-  }
-
   const profile = "metacity";
   const version = "1";
-  const subMethodPublicKeyPromise = "XXpublicKeyPromise: ";
+  let helmetNftBalance: NftBalanceResponse;
   const subMethodConfigPromise = "XXconfigPromise: ";
 
-  let publicKey: string | null = null;
-  let helmetNftBalance: NftBalanceResponse;
-  const publicKeyRequest = executeTask(async () => {
-    await getAndSetUserData();
+  const getHelmetBalanceRequest = executeTask(async () => {
+    let userData = getUserDataFromLocal();
+    let publicKey:undefined|string
+    if(!userData){
+      await getAndSetUserData();
+      userData = getUserDataFromLocal();
 
-    const userData = getUserDataFromLocal();
-    let publicKey = null;
-    if (userData !== null) {
-      publicKey = userData.publicKey;
+      publicKey = userData.publicKey
     }
-    log(
-      subMethodPublicKeyPromise + " publicKeyRequest response " + publicKey,
-      userData
-    );
 
-    return publicKey;
-  })
+    let config = await getHelmetBalance(profile, version, publicKey);
+
+    log(subMethodConfigPromise + " response ", config);
+
+    return config;
+  });
+
+  getHelmetBalanceRequest
     .catch(function (error) {
-      log(subMethodPublicKeyPromise + " failed getting public key " + error);
-      publicKey = "error";
+      log(
+        subMethodConfigPromise + "ERROR#1 getting balance" + error,
+        error
+      );
+
       return null;
     })
-    .then(function (value: string | null) {
+    .then(function (value: NftBalanceResponse | null) {
+      log(subMethodConfigPromise + "balance CONFIG answer ", value);
       if (value !== null) {
-        publicKey = value;
-      } else {
-        publicKey = "";
+        helmetNftBalance = value;
       }
-      log(
-        subMethodPublicKeyPromise + "got and setting public key " + publicKey,
-        null
-      );
-      const retValBlank = isNull(publicKey) || publicKey == "";
-      if (retValBlank) {
-        log(
-          subMethodPublicKeyPromise +
-            "MISSING public key " +
-            publicKey +
-            " exiting",
-          null
-        );
-      }
-      //START GET HELMET COUNT
 
-      const configRequest = executeTask(async () => {
-        let config = await getHelmetBalance(profile, version, publicKey);
+      updateHelmetDependants(helmetNftBalance);
 
-        log(subMethodConfigPromise + " response ", config);
-
-        return config;
-      });
-
-      configRequest
-        .catch(function (error) {
-          log(
-            subMethodConfigPromise + "ERROR#1 getting balance" + error,
-            error
-          );
-          log(
-            subMethodConfigPromise + "ERROR#2 getting balance" + error,
-            error
-          );
-          log(
-            subMethodConfigPromise + "ERROR#3 getting balance" + error,
-            error
-          );
-
-          return null;
-        })
-        .then(function (value: NftBalanceResponse | null) {
-          log(subMethodConfigPromise + "balance CONFIG answer ", value);
-          if (value !== null) {
-            helmetNftBalance = value;
-          }
-
-          updateHelmetDependants(helmetNftBalance);
-
-          return helmetNftBalance;
-        });
+      return helmetNftBalance;
     });
 
   function hasSkyMazeCriteria(): boolean {
@@ -4047,7 +5605,7 @@ function loadPrimaryScene() {
       },
     },
   ];
-  const aliceFollowStopActions = [
+  const aliceFollowStopActions: Actions = [
     {
       entityName: "toolboxCE",
       actionId: "tweenControlAction",
@@ -4152,8 +5710,8 @@ function loadPrimaryScene() {
 
   const CONTEST_TASKS = "";
   /*
-        " 1/ Please follow our Twitters (MetaLiveStudio & Metdogepunks) " 
-        +"\n 2/ Tweet your selfie that was taken in the city " 
+        " 1/ Please follow our Twitters (MetaLiveStudio & Metdogepunks) "
+        +"\n 2/ Tweet your selfie that was taken in the city "
         +"\n 3/ @MetaLiveStudio @Metadogepunks and 3 of your friends."*/
 
   const CONTEST_MSG2 = ""; //"To participate in our giveaway, \n" + CONTEST_TASKS
@@ -4166,7 +5724,7 @@ function loadPrimaryScene() {
     toolboxCE,
     channelBus
   );
-  let autoStart = [
+  let autoStart: Actions = [
     //{"entityName":"toolboxCE","actionId":"facePlayer","values":{"target":"npc-alice","lockMode":"quaternion","lockX":false,"lockY":false,"lockZ":false,"curve":"linear","repeatAction":"relative","trackingType":"follow","speed":20,"multiplayer":false,"onComplete":[]}}
     //,{"entityName":"toolboxCE","actionId":"moveToPlayer","values":{"target":"npc-alice","lockX":false,"lockY":false,"lockZ":false,"moveNoCloserThan":2,"percentOfDistanceToTravel":100,"curve":"linear","repeatAction":"relative","trackingType":"follow","speed":20,"multiplayer":false,"onComplete":[]}}
     {
@@ -4191,24 +5749,23 @@ function loadPrimaryScene() {
     //,{"entityName":"toolboxCE","actionId":"scale","values":{"target":"XfloorPianoCC52","x":0.5,"y":1,"z":1,"curve":"linear","repeatAction":"reverse","speed":3,"multiplayer":false,"onComplete":[]}}
   ];
 
-  const script1 = new Script1();
-  const script2 = new Script2();
-  const script3 = new Script3();
-  const script4 = new Script4();
-  const script5 = new Script5();
-  const script6 = new Script6();
-  const script7 = new Script7();
-  const script8 = new Script8();
-  const script9 = new Script9();
-  const script10 = new Script10();
+  //const verticleWhitePadScriptInst = new verticleWhitePadScript();
+  const pianoKeysScriptInst = new PianoKeysScript();//was script3
+  //const script4 = new Script4();
+  const poapBoothScriptInst = new PoapBoothScript();//was script5
+  //const script6 = new Script6();
+  //const script7 = new Script7();
+  //const script8 = new Script8();
+  const arrowScriptInst = new ArrowScript();//was script9
+  const arrow2ScriptInst = new Arrow2Script();//was script10
   //const script11 = new Script11()
-  const script12 = new Script12();
-  const script13 = new Script13();
-  const script14 = new Script14();
-  const script15 = new Script15();
-  const script16 = new Script16();
-  const script17 = new Script17();
-  const script18 = new Script18();
+  const avatarSwapScript2Inst = new AvatarSwapScript();//was script12
+  const toolboxScriptInst = new ToolboxScript();//was script13
+  //const script14 = new Script14();
+  //const script15 = new Script15();
+  const spawnImgURLScriptInst = new SpawnImgURLScript();//was script16
+  const videoScreenScriptInst = new VideoScreenScript();//was script17
+  const leaderBoardScriptInst = new LeaderBoardScript();//was script18
 
   //todo: Ina comment this block during the error cleaning, is options necesary? incompatible with init button
   /* script1.init(options);
@@ -4229,31 +5786,31 @@ function loadPrimaryScene() {
   script17.init(options);
   script18.init(options); */
   //Added init without options
-  script1.init();
-  script2.init();
-  script3.init();
-  script4.init();
-  script5.init();
-  script6.init();
-  script7.init();
-  script8.init();
-  script9.init();
-  script10.init();
-  script12.init();
-  script13.init();
-  script14.init();
-  script15.init();
-  script16.init();
-  script17.init();
-  script18.init();
 
-  script13.spawn(toolboxCE, { loggingLevel: "WARN" }, toolboxChannel);
+  //verticleWhitePadScriptInst.init();
+  pianoKeysScriptInst.init();
+  //script4.init();
+  poapBoothScriptInst.init();
+  //script6.init();
+  //script7.init();
+  //script8.init();
+  arrowScriptInst.init();
+  arrow2ScriptInst.init();
+  avatarSwapScript2Inst.init();
+  toolboxScriptInst.init();
+  //script14.init();
+  //script15.init();
+  spawnImgURLScriptInst.init();
+  videoScreenScriptInst.init();
+  leaderBoardScriptInst.init();
 
-  const toolboxScript: Script13 = script13;
+  toolboxScriptInst.spawn(toolboxCE, { loggingLevel: "WARN" }, toolboxChannel);
 
-  avatarSwapScript = script12;
+  //const ToolboxScript: toolboxScript = toolboxScriptInst;
 
-  const pianoFloorScript = script3;
+  avatarSwapScript2InstExport = avatarSwapScript2Inst;
+
+  const pianoFloorScript = pianoKeysScriptInst;
   //CUSTOM TRIGGER AREA FOR EVENT
   if (false) {
     //block scope
@@ -4293,7 +5850,7 @@ function loadPrimaryScene() {
     );
   }
   //
- 
+
   //START CUSTOM TRIGGER FOR VOXPARK
   if (false) {
     const trigger = new utils.TriggerBoxShape(
@@ -4336,7 +5893,7 @@ function loadPrimaryScene() {
     for(const p in rewardLookup){
       const targetItm = rewardLookup[p]
       const entities:IEntity[] = getEntityBy(targetItm)
-      
+
       for(const p in entities){
         let entity = entities[p]
 
@@ -4360,20 +5917,20 @@ function loadPrimaryScene() {
       row = 1
     }
     //const ent = rewardHeadEntities[p] as Entity
-    
+
     const boxReward = new Entity('boxReward'+row + ","+col)
     boxReward.addComponent(new BoxShape())
     engine.addEntity(boxReward)
     boxReward.setParent(_scene)
-    
+
     boxReward.addComponentOrReplace(new Transform({
       //{ position: new Vector3( 34.648681640625 , 3.3254482746124268 , 17.1937255859375 ) },HIT ENTITY:  main(Ecl) POS:  {position: {…}, rotation: {…}, scale: {…}}
         position: new Vector3(17.2+ (col*5), 2.3, 34.6 + (row*10.5) ),
         rotation: new Quaternion(0, 0, 0, 1),
         scale: new Vector3(1, 1, 1)
       }))
-    
-      
+
+
     boxReward.addComponent(keepRotatingComp)
 
     col++
@@ -4381,8 +5938,8 @@ function loadPrimaryScene() {
     //ent.addComponent(keepRotatingComp)
   }
   */
-
-  script2.spawn(
+/*
+  verticleWhitePadScriptInst.spawn(
     verticalWhitePad,
     {
       distance: 13,
@@ -4397,7 +5954,7 @@ function loadPrimaryScene() {
     },
     createChannel(channelId, verticalWhitePad, channelBus)
   );
-  script2.spawn(
+  verticleWhitePadScriptInst.spawn(
     verticalWhitePad2,
     {
       distance: 9,
@@ -4412,7 +5969,7 @@ function loadPrimaryScene() {
     },
     createChannel(channelId, verticalWhitePad2, channelBus)
   );
-  script2.spawn(
+  verticleWhitePadScriptInst.spawn(
     verticalWhitePad3,
     {
       distance: 25,
@@ -4427,7 +5984,7 @@ function loadPrimaryScene() {
     },
     createChannel(channelId, verticalWhitePad3, channelBus)
   );
-  script2.spawn(
+  verticleWhitePadScriptInst.spawn(
     verticalWhitePad4,
     {
       distance: 17,
@@ -4442,7 +5999,7 @@ function loadPrimaryScene() {
     },
     createChannel(channelId, verticalWhitePad4, channelBus)
   );
-  script2.spawn(
+  verticleWhitePadScriptInst.spawn(
     verticalWhitePad5,
     {
       distance: 31,
@@ -4457,7 +6014,7 @@ function loadPrimaryScene() {
     },
     createChannel(channelId, verticalWhitePad5, channelBus)
   );
-  script2.spawn(
+  verticleWhitePadScriptInst.spawn(
     verticalWhitePad6,
     {
       distance: 35,
@@ -4472,7 +6029,7 @@ function loadPrimaryScene() {
     },
     createChannel(channelId, verticalWhitePad6, channelBus)
   );
-  script2.spawn(
+  verticleWhitePadScriptInst.spawn(
     verticalWhitePad7,
     {
       distance: 17,
@@ -4487,7 +6044,7 @@ function loadPrimaryScene() {
     },
     createChannel(channelId, verticalWhitePad7, channelBus)
   );
-  script2.spawn(
+  verticleWhitePadScriptInst.spawn(
     verticalWhitePad8,
     {
       distance: 56,
@@ -4502,7 +6059,7 @@ function loadPrimaryScene() {
     },
     createChannel(channelId, verticalWhitePad8, channelBus)
   );
-  script2.spawn(
+  verticleWhitePadScriptInst.spawn(
     verticalWhitePad9,
     {
       distance: 52,
@@ -4517,7 +6074,7 @@ function loadPrimaryScene() {
     },
     createChannel(channelId, verticalWhitePad9, channelBus)
   );
-  script2.spawn(
+  verticleWhitePadScriptInst.spawn(
     verticalWhitePad10,
     {
       distance: 30,
@@ -4531,7 +6088,7 @@ function loadPrimaryScene() {
       ],
     },
     createChannel(channelId, verticalWhitePad10, channelBus)
-  );
+  );*/
   /*
   const loadFireWorks = ()=>{
     log("loadFireWorks")
@@ -4547,7 +6104,7 @@ function loadPrimaryScene() {
   //script5.spawn(poapBooth, {"enableClickable":true,"clickButton":"POINTER","enabled":true,"visible":true,"enabledClickSound":true,"hoverTextEnabled":"Get Attendance Token"+"\n\n"+CONTEST_MSG2,"hoverTextDisabled":"Press Disabled","serviceUrl":"https://us-central1-sandbox-poap.cloudfunctions.net/app/","eventName":"meta-city-event0"}, createChannel(channelId, poapBooth, channelBus))
   //hprivos poap service
   //http://time-time.net/times/time-zones/world-time-zones.php helpful to get current time to add a few min to test
-  script5.spawn(
+  poapBoothScriptInst.spawn(
     poapBooth,
     {
       serviceUrl: "https://www.metadoge.art/api/dcl/claim/poap",
@@ -4577,7 +6134,7 @@ function loadPrimaryScene() {
 
   const loadFloorPianos = () => {
     log("loadFloorPianos");
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC4,
       {
         active: false,
@@ -4601,7 +6158,7 @@ function loadPrimaryScene() {
       createChannel(channelId, floorPianoCC4, channelBus)
     );
 
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC,
       {
         enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -4625,7 +6182,7 @@ function loadPrimaryScene() {
       createChannel(channelId, floorPianoCC, channelBus)
     );
 
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC2,
       {
         enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -4648,7 +6205,7 @@ function loadPrimaryScene() {
       },
       createChannel(channelId, floorPianoCC2, channelBus)
     );
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC3,
       {
         enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -4671,7 +6228,7 @@ function loadPrimaryScene() {
       },
       createChannel(channelId, floorPianoCC3, channelBus)
     );
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC5,
       {
         enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -4694,7 +6251,7 @@ function loadPrimaryScene() {
       },
       createChannel(channelId, floorPianoCC5, channelBus)
     );
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC6,
       {
         enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -4717,7 +6274,7 @@ function loadPrimaryScene() {
       },
       createChannel(channelId, floorPianoCC6, channelBus)
     );
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC7,
       {
         enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -4740,7 +6297,7 @@ function loadPrimaryScene() {
       },
       createChannel(channelId, floorPianoCC7, channelBus)
     );
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC8,
       {
         enableClickable: true,
@@ -4763,7 +6320,7 @@ function loadPrimaryScene() {
       },
       createChannel(channelId, floorPianoCC8, channelBus)
     );
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC9,
       {
         enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -4786,7 +6343,7 @@ function loadPrimaryScene() {
       },
       createChannel(channelId, floorPianoCC9, channelBus)
     );
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC10,
       {
         enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -4809,7 +6366,7 @@ function loadPrimaryScene() {
       },
       createChannel(channelId, floorPianoCC10, channelBus)
     );
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC11,
       {
         enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -4832,7 +6389,7 @@ function loadPrimaryScene() {
       },
       createChannel(channelId, floorPianoCC11, channelBus)
     );
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC12,
       {
         enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -4855,7 +6412,7 @@ function loadPrimaryScene() {
       },
       createChannel(channelId, floorPianoCC12, channelBus)
     );
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC13,
       {
         enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -4878,7 +6435,7 @@ function loadPrimaryScene() {
       },
       createChannel(channelId, floorPianoCC13, channelBus)
     );
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC14,
       {
         enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -4901,7 +6458,7 @@ function loadPrimaryScene() {
       },
       createChannel(channelId, floorPianoCC14, channelBus)
     );
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC15,
       {
         enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -4924,7 +6481,7 @@ function loadPrimaryScene() {
       },
       createChannel(channelId, floorPianoCC15, channelBus)
     );
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC16,
       {
         enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -4947,7 +6504,7 @@ function loadPrimaryScene() {
       },
       createChannel(channelId, floorPianoCC16, channelBus)
     );
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC17,
       {
         enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -4970,7 +6527,7 @@ function loadPrimaryScene() {
       },
       createChannel(channelId, floorPianoCC17, channelBus)
     );
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC18,
       {
         enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -4993,7 +6550,7 @@ function loadPrimaryScene() {
       },
       createChannel(channelId, floorPianoCC18, channelBus)
     );
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC19,
       {
         enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -5016,7 +6573,7 @@ function loadPrimaryScene() {
       },
       createChannel(channelId, floorPianoCC19, channelBus)
     );
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC20,
       {
         enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -5039,7 +6596,7 @@ function loadPrimaryScene() {
       },
       createChannel(channelId, floorPianoCC20, channelBus)
     );
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC21,
       {
         enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -5062,7 +6619,7 @@ function loadPrimaryScene() {
       },
       createChannel(channelId, floorPianoCC21, channelBus)
     );
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC22,
       {
         enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -5085,7 +6642,7 @@ function loadPrimaryScene() {
       },
       createChannel(channelId, floorPianoCC22, channelBus)
     );
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC23,
       {
         enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -5108,7 +6665,7 @@ function loadPrimaryScene() {
       },
       createChannel(channelId, floorPianoCC23, channelBus)
     );
-    script3.spawn(
+    pianoKeysScriptInst.spawn(
       floorPianoCC24,
       {
         enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -5150,12 +6707,12 @@ function loadPrimaryScene() {
 
   //END MUSCLE DOGE MNAUAL PATH//END MUSCLE DOGE MNAUAL PATH//END MUSCLE DOGE MNAUAL PATH
 
-  script9.spawn(
+  arrowScriptInst.spawn(
     npcPlaceHolder,
     { active: false, npcName: "Moon Doge" },
     createChannel(channelId, npcPlaceHolder, channelBus)
   );
-  script10.spawn(
+  arrow2ScriptInst.spawn(
     waypointCE,
     {
       active: false,
@@ -5164,7 +6721,7 @@ function loadPrimaryScene() {
     },
     createChannel(channelId, waypointCE, channelBus)
   );
-  script10.spawn(
+  arrow2ScriptInst.spawn(
     waypointCE2,
     {
       active: false,
@@ -5173,7 +6730,7 @@ function loadPrimaryScene() {
     },
     createChannel(channelId, waypointCE2, channelBus)
   );
-  script10.spawn(
+  arrow2ScriptInst.spawn(
     waypointCE3,
     {
       active: false,
@@ -5182,22 +6739,22 @@ function loadPrimaryScene() {
     },
     createChannel(channelId, waypointCE3, channelBus)
   );
-  script9.spawn(
+  arrowScriptInst.spawn(
     npcPlaceHolder3,
     { active: false, npcName: "DogeGod" },
     createChannel(channelId, npcPlaceHolder3, channelBus)
   );
-  script9.spawn(
+  arrowScriptInst.spawn(
     npcPlaceHolder4,
     { active: false, npcName: "MarsDoge" },
     createChannel(channelId, npcPlaceHolder4, channelBus)
   );
-  script9.spawn(
+  arrowScriptInst.spawn(
     npcPlaceHolder5,
     { active: false, npcName: "MuscleDoge" },
     createChannel(channelId, npcPlaceHolder5, channelBus)
   );
-  script10.spawn(
+  arrow2ScriptInst.spawn(
     waypointCE4,
     {
       active: false,
@@ -5206,13 +6763,13 @@ function loadPrimaryScene() {
     },
     createChannel(channelId, waypointCE4, channelBus)
   );
-  script9.spawn(
+  arrowScriptInst.spawn(
     npcPlaceHolder2,
     { active: false, npcName: "LilDoge" },
     createChannel(channelId, npcPlaceHolder2, channelBus)
   );
   //script9.spawn(XnpcPlaceHolder2, {"active":false,"npcEnabled":true,"npcName":"LilDoge2"}, createChannel(channelId, XnpcPlaceHolder2, channelBus))
-  script10.spawn(
+  arrow2ScriptInst.spawn(
     waypointCE5,
     {
       active: false,
@@ -5222,7 +6779,7 @@ function loadPrimaryScene() {
     createChannel(channelId, waypointCE5, channelBus)
   );
 
-  script10.spawn(
+  arrow2ScriptInst.spawn(
     waypointCERedBall1,
     {
       active: false,
@@ -5231,7 +6788,7 @@ function loadPrimaryScene() {
     },
     createChannel(channelId, waypointCERedBall1, channelBus)
   );
-  script10.spawn(
+  arrow2ScriptInst.spawn(
     waypointCERedBall1b,
     {
       active: false,
@@ -5240,7 +6797,7 @@ function loadPrimaryScene() {
     },
     createChannel(channelId, waypointCERedBall1b, channelBus)
   );
-  script10.spawn(
+  arrow2ScriptInst.spawn(
     waypointCERedBall2,
     {
       active: false,
@@ -5249,7 +6806,7 @@ function loadPrimaryScene() {
     },
     createChannel(channelId, waypointCERedBall2, channelBus)
   );
-  script10.spawn(
+  arrow2ScriptInst.spawn(
     waypointCERedBall2b,
     {
       active: false,
@@ -5259,7 +6816,7 @@ function loadPrimaryScene() {
     createChannel(channelId, waypointCERedBall2b, channelBus)
   );
 
-  script12.spawn(
+  avatarSwapScript2Inst.spawn(
     avatarSwap,
     {
       enabled: AVATAR_SWAP_ENABLED && GAME_STATE.avatarSwapEnabled,
@@ -5274,7 +6831,7 @@ function loadPrimaryScene() {
     createChannel(channelId, avatarSwap, channelBus)
   );
   //script14.spawn(externalLink, {"url":"https://https://www.metadoge.art/#mint"}, createChannel(channelId, externalLink, channelBus))
-  /*script15.spawn(signpostTree, {"text":"","fontSize":60}, createChannel(channelId, signpostTree, channelBus)) 
+  /*script15.spawn(signpostTree, {"text":"","fontSize":60}, createChannel(channelId, signpostTree, channelBus))
   script15.spawn(signpostTree2, {"text":"Rent Me !!!","fontSize":60}, createChannel(channelId, signpostTree2, channelBus))
   script15.spawn(signpostTree3, {"text":"Rent Me !!!","fontSize":60}, createChannel(channelId, signpostTree3, channelBus))
   script15.spawn(signpostTree4, {"text":"Rent Me !!!","fontSize":60}, createChannel(channelId, signpostTree4, channelBus))
@@ -5288,10 +6845,22 @@ function loadPrimaryScene() {
   script15.spawn(signpostTree14, {"text":"Rent Me !!!","fontSize":60}, createChannel(channelId, signpostTree14, channelBus)) */
 
   const loadImageFromURl = () => {
-    log("loadImageFromURl");
-    //script16.spawn(imageFromURL, {"image":"https://i.imgur.com/qXcIg6yl.jpg"}, createChannel(channelId, imageFromURL, channelBus))
-    //script16.spawn(imageFromURL2, {"image":"https://i.imgur.com/qXcIg6y.jpg"}, createChannel(channelId, imageFromURL2, channelBus))
-    //script16.spawn(imageFromURL3, {"image":"https://i.imgur.com/qXcIg6y.jpg"}, createChannel(channelId, imageFromURL3, channelBus))
+   /* log("loadImageFromURl");
+    spawnImgURLScriptInst.spawn(
+      imageFromURL,
+      { image: "https://i.imgur.com/s3g1oiXl.jpg" },
+      createChannel(channelId, imageFromURL, channelBus)
+    );
+    spawnImgURLScriptInst.spawn(
+      imageFromURL2,
+      { image: "https://i.imgur.com/yd9Kyh3l.jpg" },
+      createChannel(channelId, imageFromURL2, channelBus)
+    );
+    spawnImgURLScriptInst.spawn(
+      imageFromURL3,
+      { image: "https://i.imgur.com/hLL37Gkl.png" },
+      createChannel(channelId, imageFromURL3, channelBus)
+    );*/
     //script16.spawn(imageFromURL4, {"image":"https://i.imgur.com/qXcIg6y.jpg"}, createChannel(channelId, imageFromURL4, channelBus))
     //script16.spawn(imageFromURL5, {"image":"https://i.imgur.com/qXcIg6y.jpg"}, createChannel(channelId, imageFromURL5, channelBus))
     /*
@@ -5352,11 +6921,8 @@ function loadPrimaryScene() {
     //script16.spawn(imageFromURL51, {"image":"https://i.imgur.com/zFRQ74Jl.png","clickable":true,"externalLink":CONFIG.URL_METADOGE_NFT_2D,"hoverText":metadoge2dHoverText},createChannel(channelId, imageFromURL51, channelBus))
     // Fashion week poster end
   };
-  handleDelayLoad(
-    CONFIG.DELAY_LOAD_IMAGE_FROM_URLS,
-    "loadImageFromURl",
-    loadImageFromURl
-  );
+ 
+ 
 
   //script9.spawn(npcPlaceHolder6, {"active":false,"npcEnabled":true,"npcName":"LilDoge"}, createChannel(channelId, npcPlaceHolder6, channelBus))
   //script7.spawn(twitterButtonLink2, {"url":"https://twitter.com/metadogeNFT","bnw":true,"name":"MetaDoge"}, createChannel(channelId, twitterButtonLink2, channelBus))
@@ -5421,7 +6987,7 @@ function loadPrimaryScene() {
   });
   const LEADERBOARD_SUPER_DOGIO_TEXT_SCALE = new Vector3(0.7, 0.7, 0.7);
   const LEADERBOARD_SUPER_DOGIO_FONT_COLOR = Color3.White();
-  const LEADER_BOARD_SUPER_DOGIO_TITLE = undefined; //"Super Dogerio"
+  const LEADER_BOARD_SUPER_DOGIO_TITLE: string = undefined; //"Super Dogerio"
 
   LEADERBOARD_REGISTRY.hourly = makeLeaderboard(
     leaderboardBigHourly,
@@ -5473,10 +7039,10 @@ function loadPrimaryScene() {
     }),
     LEADERBOARD_SUPER_DOGIO_FONT_COLOR
   );
-
+    /*
   LEADERBOARD_REGISTRY.hourlyVoxSkate = makeLeaderboard(
     leaderboardVoxBigHourly,
-    script18.model,
+    leaderBoardScriptInst.model,
     "Leaderboard (Hourly)",
     "sk8craft",
     leaderBoardPlaceHolderText,
@@ -5492,7 +7058,7 @@ function loadPrimaryScene() {
 
   LEADERBOARD_REGISTRY.dailyVoxSkate = makeLeaderboard(
     leaderboardVoxBigDaily,
-    script18.model,
+    leaderBoardScriptInst.model,
     "Leaderboard (Daily)",
     "sk8craft",
     leaderBoardPlaceHolderText,
@@ -5508,7 +7074,7 @@ function loadPrimaryScene() {
 
   LEADERBOARD_REGISTRY.weeklyVoxSkate = makeLeaderboard(
     leaderboardVoxBigWeekly,
-    script18.model,
+    leaderBoardScriptInst.model,
     "Leaderboard (Weekly)",
     "sk8craft",
     leaderBoardPlaceHolderText,
@@ -5521,18 +7087,19 @@ function loadPrimaryScene() {
       scale: new Vector3(0.6, 0.6, 0.6),
     })
   );
-
+    */
+   
   //const curentPlayer = {DisplayName:"You",Position:-1,StatValue:-1}
   //LEADERBOARD_REGISTRY.daily.setCurrentPlayer(curentPlayer)
   //LEADERBOARD_REGISTRY.weekly.setCurrentPlayer(curentPlayer)
   const leaderBoardArr = [
     LEADERBOARD_REGISTRY.daily,
     LEADERBOARD_REGISTRY.weekly,
-    LEADERBOARD_REGISTRY.hourly,
+    LEADERBOARD_REGISTRY.hourly,/*
     LEADERBOARD_REGISTRY.dailyVoxSkate,
     LEADERBOARD_REGISTRY.weeklyVoxSkate,
-    LEADERBOARD_REGISTRY.hourlyVoxSkate,
-  ];
+    LEADERBOARD_REGISTRY.hourlyVoxSkate,*/
+  ]; 
   for (const p in leaderBoardArr) {
     const board = leaderBoardArr[p];
 
@@ -5542,7 +7109,7 @@ function loadPrimaryScene() {
 
   const loadSkyMaze = () => {
     if (enableSkyMazeInEngine) {
-      script10.spawn(
+      arrow2ScriptInst.spawn(
         XwaypointSkyMax1CE25,
         {
           active: true,
@@ -5552,7 +7119,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XwaypointSkyMax1CE25, channelBus)
       );
-      script10.spawn(
+      arrow2ScriptInst.spawn(
         XwaypointSkyMax2CE25,
         {
           active: true,
@@ -5562,7 +7129,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XwaypointSkyMax2CE25, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC25,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -5594,7 +7161,7 @@ function loadPrimaryScene() {
 
       //script15.spawn(XsignpostTreeSkyMaze, {"text":"Own a Doge Head Helmet?\nSupporter of can take peek at the maze","fontSize":20,"clickable":true,"onClickFn":skyMazePeek,"hoverText":"Take a Peek. Show Entire Maze"}, createChannel(channelId, XsignpostTreeSkyMaze, channelBus))
 
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC26,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -5620,7 +7187,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC26, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC27,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -5646,7 +7213,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC27, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC28,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -5672,7 +7239,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC28, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC34,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -5698,7 +7265,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC34, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC29,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -5724,7 +7291,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC29, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC31,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -5750,7 +7317,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC31, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC30,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -5776,7 +7343,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC30, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC32,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -5802,7 +7369,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC32, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC33,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -5828,7 +7395,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC33, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC35,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -5854,7 +7421,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC35, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC36,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -5880,7 +7447,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC36, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC37,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -5906,7 +7473,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC37, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC38,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -5932,7 +7499,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC38, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC39,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -5958,7 +7525,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC39, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC40,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -5984,7 +7551,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC40, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC41,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -6010,7 +7577,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC41, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC42,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -6036,7 +7603,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC42, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC43,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -6062,7 +7629,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC43, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC44,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -6088,7 +7655,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC44, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC45,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -6114,7 +7681,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC45, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC47,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -6140,7 +7707,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC47, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC48,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -6166,7 +7733,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC48, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC49,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -6192,7 +7759,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC49, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC50,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -6218,7 +7785,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC50, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC52,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -6244,7 +7811,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC52, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC53,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -6270,7 +7837,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC53, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC54,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -6296,7 +7863,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC54, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC55,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -6322,7 +7889,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC55, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC56,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -6348,7 +7915,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC56, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC57,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -6374,7 +7941,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC57, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC58,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -6400,7 +7967,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC58, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC46,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -6426,7 +7993,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC46, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC59,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -6452,7 +8019,7 @@ function loadPrimaryScene() {
         },
         createChannel(channelId, XfloorPianoCC59, channelBus)
       );
-      script3.spawn(
+      pianoKeysScriptInst.spawn(
         XfloorPianoCC51,
         {
           enableClickable: ENABLE_CLICKABLE_PIANO_KEYS,
@@ -6481,10 +8048,11 @@ function loadPrimaryScene() {
     }
   };
 
-  //loadSkyMaze()
+  //loadSkyMaze() 
 
   let videoControlBar: AudioControlBar;
-  let videoButton: Button;
+  let videoButton: VideoScreenScript;
+  const videoScreenKey = videoStream1.name + "-screen";
   const loadAudioAndVideoBars = () => {
     log("loadAudioAndVideoBars");
 
@@ -6492,30 +8060,33 @@ function loadPrimaryScene() {
     const backgroundSource: AudioSource = new AudioSource(
       new AudioClip("sounds/the-jaunt-fascinating-earthbound.mp3")
     );
-    const audioControlBar = new AudioControlBar(backgroundSource, 10); // start at 100% because sound is positional
+    const audioControlBar = new AudioControlBar(backgroundSource, 5); // start at 100% because sound is positional
     //engine.addEntity(audioControlBar)
     audioControlBar.setOffset(0); //want top
 
+    REGISTRY.audio.rootSceneBG = backgroundSource
+    REGISTRY.audio.audioControlBar = audioControlBar
+
     const regularPlay =
-      "https://player.vimeo.com/external/700721034.m3u8?s=89cf4bdb786c9b61ec45e698fc95626d023a23f3";
+      "https://player.vimeo.com/external/771748199.m3u8?s=2441b45a426c5d2325cce573e0b231c5cc857916";
     //"https://player.vimeo.com/external/691600656.m3u8?s=c947ea55bb629c7585341e3c9c749fc0fa2afc1b"//mario
 
     const eventPlay =
-      "https://player.vimeo.com/external/733906526.m3u8?s=38856d3e7ab7add22326275dc78c80b6630e168f";
+      "https://player.vimeo.com/external/771748199.m3u8?s=2441b45a426c5d2325cce573e0b231c5cc857916";
 
     //THIS IS THE REAL START END TIME
-    const eventStart = new Date(Date.parse("2022-07-26T12:00:00+00:00"));
-    const eventEnd = new Date(Date.parse("2022-08-15T12:00:00+00:00"));
+    const eventStart = new Date(Date.parse("2022-08-5T8:00:00+00:00"));
+    const eventEnd = new Date(Date.parse("2022-08-20T8:00:00+00:00"));
     //UNCOMMENT ME (comment out above) TO TEST SHOW STARTING IN 10 SECONDS ENDING AFTER 40 SECONDS
     //const eventStart = new Date(Date.now() + 10*1000)//new Date(Date.parse("2022-05-01T12:00:00+00:00"))
     //const eventEnd = new Date(Date.now() + 50*1000)//new Date(Date.parse("2022-05-02T12:00:00+00:00"))
 
     const videoToPlay = regularPlay; //regularPlay
-
-    videoButton = script17.spawn(
+ 
+    videoButton = videoScreenScriptInst.spawn(
       videoStream1,
       {
-        startOn: false,
+        startOn: true,
         onClickText: "Play/Pause video",
         volume: 0,
         onClick: [
@@ -6526,16 +8097,19 @@ function loadPrimaryScene() {
       createChannel(channelId, videoStream1, channelBus)
     );
 
-    const videoScreenKey = videoStream1.name + "-screen";
-    const videoSource = script17.video[videoScreenKey];
+    
+    const videoSource = videoScreenScriptInst.video[videoScreenKey];
 
     videoControlBar: AudioControlBar;
-    log("trying to add videoConrolBar " + videoSource, script17.video);
+    log("trying to add videoConrolBar " + videoSource, videoScreenScriptInst.video);
     if (videoSource !== null && videoSource !== undefined) {
       log("adding videoConrolBar " + videoSource);
       videoControlBar = new AudioControlBar(videoSource, 20); // start at 100% because sound is positional
       //engine.addEntity(videoControlBar)
       videoControlBar.setOffset(30); //want second if exists
+
+
+      REGISTRY.videoTextures.videoControlBar = videoControlBar
 
       videoSource.loop = true;
     }
@@ -6567,24 +8141,24 @@ function loadPrimaryScene() {
           removeSystem = true;
 
           if (this.started) {
-            if (script17.video[videoScreenKey]) {
-              script17.video[videoScreenKey].playing = false;
+            if (videoScreenScriptInst.video[videoScreenKey]) {
+              videoScreenScriptInst.video[videoScreenKey].playing = false;
             }
             //revert back
-            script17.video[videoScreenKey] = new VideoTexture(
+            videoScreenScriptInst.video[videoScreenKey] = new VideoTexture(
               new VideoClip(regularPlay)
             );
-            script17.materials[videoScreenKey].albedoTexture =
-              script17.video[videoScreenKey];
-            script17.materials[videoScreenKey].specularIntensity = 0;
-            script17.materials[videoScreenKey].roughness = 1;
-            script17.materials[videoScreenKey].metallic = 0;
-            script17.materials[videoScreenKey].emissiveTexture =
-              script17.video[videoScreenKey];
-            script17.video[videoScreenKey].playing = true;
-            script17.video[videoScreenKey].loop = true;
+            videoScreenScriptInst.materials[videoScreenKey].albedoTexture =
+              videoScreenScriptInst.video[videoScreenKey];
+            videoScreenScriptInst.materials[videoScreenKey].specularIntensity = 0;
+            videoScreenScriptInst.materials[videoScreenKey].roughness = 1;
+            videoScreenScriptInst.materials[videoScreenKey].metallic = 0;
+            videoScreenScriptInst.materials[videoScreenKey].emissiveTexture =
+              videoScreenScriptInst.video[videoScreenKey];
+            videoScreenScriptInst.video[videoScreenKey].playing = true;
+            videoScreenScriptInst.video[videoScreenKey].loop = true;
 
-            videoControlBar.updateSource(script17.video[videoScreenKey]);
+            videoControlBar.updateSource(videoScreenScriptInst.video[videoScreenKey]);
             videoControlBar.setVolume(20);
           }
         } else if (eventEnd.getTime() > now && eventStart.getTime() < now) {
@@ -6595,24 +8169,24 @@ function loadPrimaryScene() {
           log("event started!!!", eventStart, eventEnd);
           this.started = true;
 
-          if (script17.video[videoScreenKey]) {
-            script17.video[videoScreenKey].playing = false;
+          if (videoScreenScriptInst.video[videoScreenKey]) {
+            videoScreenScriptInst.video[videoScreenKey].playing = false;
           }
 
-          script17.video[videoScreenKey] = new VideoTexture(
+          videoScreenScriptInst.video[videoScreenKey] = new VideoTexture(
             new VideoClip(eventPlay)
           );
-          script17.materials[videoScreenKey].albedoTexture =
-            script17.video[videoScreenKey];
-          script17.materials[videoScreenKey].specularIntensity = 0;
-          script17.materials[videoScreenKey].roughness = 1;
-          script17.materials[videoScreenKey].metallic = 0;
-          script17.materials[videoScreenKey].emissiveTexture =
-            script17.video[videoScreenKey];
-          script17.video[videoScreenKey].playing = true;
-          script17.video[videoScreenKey].loop = true;
+          videoScreenScriptInst.materials[videoScreenKey].albedoTexture =
+            videoScreenScriptInst.video[videoScreenKey];
+          videoScreenScriptInst.materials[videoScreenKey].specularIntensity = 0;
+          videoScreenScriptInst.materials[videoScreenKey].roughness = 1;
+          videoScreenScriptInst.materials[videoScreenKey].metallic = 0;
+          videoScreenScriptInst.materials[videoScreenKey].emissiveTexture =
+            videoScreenScriptInst.video[videoScreenKey];
+          videoScreenScriptInst.video[videoScreenKey].playing = true;
+          videoScreenScriptInst.video[videoScreenKey].loop = true;
 
-          videoControlBar.updateSource(script17.video[videoScreenKey]);
+          videoControlBar.updateSource(videoScreenScriptInst.video[videoScreenKey]);
           videoControlBar.setVolume(50);
 
           //removeSystem = true
@@ -6630,6 +8204,7 @@ function loadPrimaryScene() {
     log("adding runof show");
     engine.addSystem(new RunOfShow());
 
+    /*
     const entityBGSoundWrapper = new Entity("backgroundSource");
     entityBGSoundWrapper.addComponent(backgroundSource);
     engine.addEntity(entityBGSoundWrapper);
@@ -6641,6 +8216,8 @@ function loadPrimaryScene() {
         scale: new Vector3(1, 1, 1),
       })
     );
+    entityBGSoundWrapper.setParent(_scene)
+    */
     //entityBGSoundWrapper.addComponent(new BoxShape())
   };
 
@@ -6703,14 +8280,14 @@ function loadPrimaryScene() {
         if (GAME_STATE.avatarSwapEnabled == false) {
           log("PLAYER_AVATAR_SWAP_ENABLED enable swap");
           GAME_STATE.setAvatarSwapEnabled(true);
-          avatarSwapScript.setAvatarSwapTriggerEnabled(
+          avatarSwapScript2Inst.setAvatarSwapTriggerEnabled(
             avatarSwap,
             GAME_STATE.avatarSwapEnabled
           );
         } else {
           log("PLAYER_AVATAR_SWAP_ENABLED disable swap");
           GAME_STATE.setAvatarSwapEnabled(false);
-          avatarSwapScript.setAvatarSwapTriggerEnabled(
+          avatarSwapScript2Inst.setAvatarSwapTriggerEnabled(
             avatarSwap,
             GAME_STATE.avatarSwapEnabled
           );
@@ -6735,9 +8312,9 @@ function loadPrimaryScene() {
       if(this.counter >= CONFIG.CHECK_INTERVAL_CHECK_PLAYER_CHANGED){
         this.counter = 0 // reset counter
         log("check if players changed")
-        
+
         checkIfPlayerAvatarSwap()
-        
+
       }
     }
   }
@@ -6752,11 +8329,11 @@ function loadPrimaryScene() {
     switch (key) {
       //common ones on top
       case "avatarSwapEnabled":
-        avatarSwapScript.setAvatarSwapTriggerEnabled(avatarSwap, newVal);
+        avatarSwapScript2Inst.setAvatarSwapTriggerEnabled(avatarSwap, newVal);
         break;
 
       case "metaDogeSwapEnabled":
-        avatarSwapScript.setAvatarSwapTriggerEnabled(avatarSwap, newVal);
+        avatarSwapScript2Inst.setAvatarSwapTriggerEnabled(avatarSwap, newVal);
         break;
       case "personalAssistantEnabled":
         if (newVal) {
@@ -6769,23 +8346,23 @@ function loadPrimaryScene() {
   });
 
   log("SCENE LOADED");
-  const rootEntities: Entity[] = [_scene,npcs_parent, _scene2]; //versadexbox,
+  const rootEntities: Entity[] = [_scene, npcs_parent, _scene2]; //versadexbox,
 
   const mainSubScene = new SubScene(0, "mainScene", [
     new SceneEntity("mainScene", rootEntities),
   ]);
-  REGISTRY.entities.rootScene = _scene
+  REGISTRY.entities.rootScene = _scene;
   mainSubScene.rootEntity = _scene;
 
   /*
   var callback = (type: string) : void => {
-    if (type=="show"){ 
+    if (type=="show"){
       if(videoButton){
         clickVideo()
         videoControlBar.setVolume(20)
       }
       log("test show")
-    } else if (type =="hide"){  
+    } else if (type =="hide"){
       log("test hide")
       clickVideo()
       videoControlBar.mute()
@@ -6796,21 +8373,44 @@ function loadPrimaryScene() {
 
   //ask to leave visible, its in blue dome
 
-  function moveToAltScene(){
+  function moveToAltScene() {
     if (
-      gameSceneManager.activeScene !== gameSceneManager.alternativeScene.sceneName
-    ) { 
-      gameSceneManager.moveTo(gameSceneManager.alternativeScene.sceneName, REGISTRY.movePlayerTo.ALT_SCENE.position,REGISTRY.movePlayerTo.ALT_SCENE.cameraDir );
+      gameSceneManager.activeScene.sceneName !== SceneNames.alternativeScene
+    ) {
+      gameSceneManager.moveTo(
+        SceneNames.alternativeScene,
+        REGISTRY.movePlayerTo.ALT_SCENE.position,
+        REGISTRY.movePlayerTo.ALT_SCENE.cameraDir
+      );
     } else {
       //gameSceneManager.moveTo(gameSceneManager.alternativeScene.sceneName, new Vector3( 15,2,63 ) );
-      log("already in ")
+      log("already in ");
+      //gameSceneManager.moveTo(gameSceneManager.rootScene.sceneName);
+    }
+  }
+
+  function moveToSecondaryAltScene() {
+    if (
+      gameSceneManager.activeScene.sceneName !==
+      SceneNames.secondaryAlternativeScene
+    ) {
+      
+      new LogoBlackBackground().show()
+      gameSceneManager.moveTo(
+        SceneNames.secondaryAlternativeScene,
+        REGISTRY.movePlayerTo.ALT_SCENE.position,
+        REGISTRY.movePlayerTo.ALT_SCENE.cameraDir
+      );
+    } else {
+      //gameSceneManager.moveTo(gameSceneManager.alternativeScene.sceneName, new Vector3( 15,2,63 ) );
+      log("already in ");
       //gameSceneManager.moveTo(gameSceneManager.rootScene.sceneName);
     }
   }
   /*
   const warpToAltSceneEnt2 = new Entity("127");
   warpToAltSceneEnt2.addComponent(new BoxShape());
-  warpToAltSceneEnt2.addComponent(new Transform({ 
+  warpToAltSceneEnt2.addComponent(new Transform({
     position: new Vector3(16-4.5, 1, 48+.25), //24-.3
     scale: new Vector3(1.2,1.2,1.2)
   }));
@@ -6829,10 +8429,10 @@ function loadPrimaryScene() {
   const warpToAltSceneEnt = new Entity("127");
   warpToAltSceneEnt.setParent(_scene)
   warpToAltSceneEnt.addComponent(new BoxShape());
-  warpToAltSceneEnt.addComponent(new Transform({ 
+  warpToAltSceneEnt.addComponent(new Transform({
     position: new Vector3(48+.25, 1, 16-4.5), //24-.3
     scale: new Vector3(1.2,1.2,1.2)
-  })); 
+  }));
   warpToAltSceneEnt.addComponent(
     new OnPointerDown(
       (e) => {
@@ -6846,68 +8446,145 @@ function loadPrimaryScene() {
   engine.addEntity(warpToAltSceneEnt);*/
 
   //coords to summon pad 16+8.7, 24-.3, 48+4
-  
-  const warpToAltSceneEnt = new Entity("127");
-  warpToAltSceneEnt.setParent(_scene)
-  warpToAltSceneEnt.addComponent(new BoxShape());
-  warpToAltSceneEnt.addComponent(CommonResources.RESOURCES.materials.transparent)
-  warpToAltSceneEnt.addComponent(new Transform({ 
-    position: new Vector3(16+32.2,24-.3, 48+20.5), //
-    scale: new Vector3(1.2,1.2,1.2)
-  })); 
+/*
+  const warpToAltSceneEnt = new Entity("warpToAltSceneEnt");
+  warpToAltSceneEnt.setParent(_scene);
+  const gltfShapeCS94 = new GLTFShape("models/Teleporter/Stageteleporter.glb");
+  warpToAltSceneEnt.addComponentOrReplace(gltfShapeCS94);
+  /*warpToAltSceneEnt.addComponent(
+    CommonResources.RESOURCES.materials.transparent
+  );
+  warpToAltSceneEnt.addComponent(
+    new Transform({
+      position: new Vector3(26, 1, 6), //
+      scale: new Vector3(1, 1, 1),
+    })
+  );
   warpToAltSceneEnt.addComponent(
     new OnPointerDown(
       (e) => {
-        moveToAltScene()
+        moveToAltScene();
       },
       {
-        hoverText: "Go to New Dimension",
+        hoverText: "Go to Planet Stage",
       }
     )
   );
   engine.addEntity(warpToAltSceneEnt);
-
-  function clickVideo() {
+*/
+  function setVideoPlaying(val?:boolean) {
     //videoButton.toggle(videoStream1,true)
     //videoButton.video.values.playing = true
     //videoButton.toggle(videoButton.video,true)
-    if(videoButton){
-      videoButton.clickVideo();
-    }else{
-      log("warn clickVideo videoButton is null",videoButton)
+    if (videoButton) {
+      //videoButton.clickVideo(val);
+      videoButton.toggleByName(videoScreenKey,val)
+    } else {
+      log("warn clickVideo videoButton is null", videoButton);
     }
-    
   }
 
-  mainScene = new Scene("mainScene", mainSubScene);
+  mainScene = new Scene(SceneNames.rootScene, mainSubScene);
   mainScene.addOnHideListener((entityWrap: BaseEntityWrapper) => {
-    log("test hide");
-    clickVideo();
-    if(videoControlBar) videoControlBar.mute();
+    log("gamemanager.mainscene hide");
+    setVideoPlaying(false);
+    if (videoControlBar) videoControlBar.mute();
+    if(REGISTRY.audio.rootSceneBG) REGISTRY.audio.rootSceneBG.playing = false
+
+    if(REGISTRY.audio.audioControlBar) {
+      REGISTRY.audio.audioControlBar.mute()
+      REGISTRY.audio.audioControlBar.hide()
+      //REGISTRY.audio.audioControlBar.
+    }
+
+    if(REGISTRY.videoTextures.videoControlBar) {
+      //REGISTRY.videoTextures.videoControlBar.mute()
+      //REGISTRY.videoTextures.videoControlBar.hide()
+    }
   });
   mainScene.addOnShowListener((entityWrap: BaseEntityWrapper) => {
     if (videoButton) {
-      clickVideo();
+      setVideoPlaying(true);
       videoControlBar.setVolume(20);
+ 
+      if(REGISTRY.videoTextures.videoControlBar){
+        REGISTRY.videoTextures.videoControlBar.updateSource( videoButton.video[videoScreenKey] )
+        REGISTRY.videoTextures.videoControlBar.unmute()
+        REGISTRY.videoTextures.videoControlBar.setVolume(30)
+        REGISTRY.videoTextures.videoControlBar.show()
+      } 
     }
-    log("test show");
+    if(REGISTRY.audio.rootSceneBG) REGISTRY.audio.rootSceneBG.playing = true
+    
+    if(REGISTRY.audio.audioControlBar){
+      REGISTRY.audio.audioControlBar.unmute()
+      REGISTRY.audio.audioControlBar.setVolume(5)
+      REGISTRY.audio.audioControlBar.show()
+    } 
+    log("gamemanager.mainscene test show");
   });
 
-  handleDelayLoad(CONFIG.DELAY_LOAD_NFT_FRAMES, "loadNftFrames", ()=>{ log("loadNftFrames was commented out") });
+  handleDelayLoad(CONFIG.DELAY_LOAD_NFT_FRAMES, "loadNftFrames", () => {
+    log("loadNftFrames was commented out");
+  });
   //handleDelayLoad(CONFIG.DELAY_LOAD_NFT_FRAMES, "loadNftFrames", loadNftFrames); //removed as of july21 2022
 }
 //end loadPrimaryScene load main scene//end loadPrimaryScene load main scene
 //end loadPrimaryScene load main scene//end loadPrimaryScene load main scene
 
 function loadAltScene() {
-  initAltScene()
+  initAltScene();
   const altSubScene = new SubScene(0, "rootalternativeScene", [
-    new SceneEntity("rootalternativeScene", REGISTRY.entities.alternativeScene), 
+    new SceneEntity("rootalternativeScene", REGISTRY.entities.alternativeScene),
   ]);
-  alternativeScene = new Scene("alternativeScene", altSubScene);
+  alternativeScene = new Scene(SceneNames.alternativeScene, altSubScene);
+  
+  alternativeScene.addOnHideListener((entityWrap: BaseEntityWrapper) => {
+    log("gamemanager.alternativeScene hide");
+
+  });
+  alternativeScene.addOnShowListener((entityWrap: BaseEntityWrapper) => {
+ 
+    log("gamemanager.alternativeScene show",REGISTRY.videoTextures.secondaryAlternativeScene.playing);
+  });
 }
+
+function loadSecondAltScene() {
+  initSecondAltScene();
+  const secondAltSubScene = new SubScene(0, "secondaryrootalternativeScene", [
+    new SceneEntity(
+      "secondaryrootalternativeScene",
+      REGISTRY.entities.secondaryAlternativeScene
+    ),
+  ]);
+  secondaryAlternativeScene = new Scene(
+    SceneNames.secondaryAlternativeScene,
+    secondAltSubScene
+  );
+
+  secondaryAlternativeScene.addOnHideListener((entityWrap: BaseEntityWrapper) => {
+    log("gamemanager.secondaryAlternativeScene hide");
+    if(REGISTRY.videoTextures.secondaryAlternativeScene !== undefined ){
+      REGISTRY.videoTextures.secondaryAlternativeScene.playing = false 
+    }
+  });
+  secondaryAlternativeScene.addOnShowListener((entityWrap: BaseEntityWrapper) => {
+    if(REGISTRY.videoTextures.secondaryAlternativeScene !== undefined ){
+      REGISTRY.videoTextures.secondaryAlternativeScene.playing = true
+      if(REGISTRY.videoTextures.videoControlBar){
+        REGISTRY.videoTextures.videoControlBar.updateSource( REGISTRY.videoTextures.secondaryAlternativeScene )
+      }
+    }
+    
+    log("gamemanager.secondaryAlternativeScene show",REGISTRY.videoTextures.secondaryAlternativeScene.playing);
+  });
+}
+
 function initGameSceneMgr() {
-  gameSceneManager = new GameSceneManager(mainScene, alternativeScene);
+  gameSceneManager = new GameSceneManager(mainScene, [
+    alternativeScene,
+    secondaryAlternativeScene,
+  ]);
   gameSceneManager.start();
   REGISTRY.sceneMgr = gameSceneManager;
 }
@@ -6960,7 +8637,9 @@ class RaycastSystem implements ISystem {
   }
 }
 function initRaycastSystem() {
-  engine.addSystem(new RaycastSystem());
+  const system = new RaycastSystem();
+  REGISTRY.sceneMgr.rootScene.addSystem(system);
+  engine.addSystem(system);
 }
 async function start() {
   await initConfig();
@@ -6969,14 +8648,22 @@ async function start() {
   loadPrimaryScene();
   initGamiMallScene();
   loadAltScene();
+  loadSecondAltScene();
   initGameSceneMgr();
   initResourceDropIns();
+
+  executeTask(async () => {
+    updateStoreNFTCounts()
+  })
+
   initWearableStore();
   initUIGameHud();
   initUIStartGame();
   initUIEndGame();
   initUIStartGame();
   initUILoginGame();
+  startDecentrally();
+  addAutoPlayerLoginTrigger();
 
   handleDelayLoad(1000, "initRaycastSystem()", initRaycastSystem);
 

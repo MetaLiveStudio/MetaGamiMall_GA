@@ -8,6 +8,7 @@ import {
 } from "./gamimall/playfab_sdk/playfab.types";
 import { REGISTRY } from "./registry";
 import { GAME_STATE, initGameState } from "./state";
+import { CheckMultiplierResultType, fetchMultiplier } from "./store/fetch-utils";
 import { LoginPanel, RacePanel, StaminaPanel } from "./ui/ui_background";
 import { concatString, pushStrToArr } from "./utils";
 //import { avatarSwap, avatarSwapScript } from "./game";
@@ -71,12 +72,20 @@ export function loadUIBars() {
 
   REGISTRY.ui.loginPanel = new LoginPanel();
   REGISTRY.ui.loginPanel.show();
-
+ 
   REGISTRY.ui.racePanel = new RacePanel();
   //REGISTRY.ui.racePanel.show();
   REGISTRY.ui.racePanel.updateCoins("x 100");
 
   REGISTRY.ui.staminaPanel = new StaminaPanel();
+
+  //fetch and add multiplier
+  fetchMultiplier().then((res:CheckMultiplierResultType)=>{
+    if(res !== undefined && res.ok && res.multiplier){
+      REGISTRY.ui.staminaPanel.setMultiplier( res.multiplier )
+
+    }
+  })
 
   function doAvatarSwap() {
     log(

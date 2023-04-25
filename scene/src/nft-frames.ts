@@ -7,7 +7,7 @@ import { getEntityByName, isNull, notNull } from "./utils";
 
 import * as utils from "@dcl/ecs-scene-utils";
 
-import OOTBNTFScript from "../80d9cb1c-2fcf-4585-8e19-e2d5621fd54d/src/item";
+//import OOTBNTFScript from "/80d9cb1c-2fcf-4585-8e19-e2d5621fd54d/src/item"; //no longer used , was out of the box NFTShape smart item
 import CustomNFTScript from "src/custom-nft-frame/src/item";
 import { CONFIG } from "./config";
 import { handleDelayLoad } from "./delay-loader";

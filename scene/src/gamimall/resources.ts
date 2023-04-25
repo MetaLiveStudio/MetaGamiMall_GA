@@ -82,7 +82,7 @@ export const RESOURCES = {
     ownerAddress: "0xECbb8C195Cc4AFD2966cB86C191F050d28AEdcdD",
     service: {
       fetchLimit: 999, //999
-      customBaseUrl: null, //test domain?
+      //customBaseUrl: null, //test domain?
       netType: "test", //when blank service should fallback to PROD
       contractAddress: "", //testnet monstercat final 150 tokens
       //contractId: "",
@@ -109,8 +109,8 @@ export const RESOURCES = {
   },
   model: {},
   resourceUris: {
-    use_external_sprite_sheet: false,
-    sprite_sheet: null,
+    use_external_sprite_sheet: false
+    //,sprite_sheet: null,
   },
   textures: {
     //sprite_sheet: spriteSheetTexture,

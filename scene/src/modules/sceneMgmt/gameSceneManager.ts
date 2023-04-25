@@ -1,30 +1,49 @@
 import { movePlayerTo } from "@decentraland/RestrictedActions";
 import { Scene } from "./scene";
 export class GameSceneManager {
-  activeScene: string;
+  cName: string;
+  activeScene: Scene
+  activeSceneName: string
   rootScene: Scene;
-  alternativeScene: Scene;
-  constructor(rootScene: Scene, altScene: Scene) {
+  alternativeScene: Scene[];
+  constructor(rootScene: Scene, altScene: Scene[]) {
     this.rootScene = rootScene;
-    this.activeScene = rootScene.sceneName;
+    this.activeSceneName = this.rootScene.sceneName;
+    this.activeScene = rootScene
     this.alternativeScene = altScene;
-    this.activeScene = this.rootScene.sceneName;
   }
 
   start() {
-    this.alternativeScene.hide();
+    this.alternativeScene.forEach(scene => scene.hide());
     this.rootScene.show();
   }
 
-  moveTo(scene: string,movePos?:Vector3,cameraDir?:Vector3) {
+  hideAllScenes(){
+    this.activeScene = undefined
+    this.rootScene.hide();
+    this.alternativeScene.forEach(scene => scene.hide());
+  }
+  
+  moveTo(scene: string, movePos?:Vector3,cameraDir?:Vector3) {
+    log("GameSceneManager moveTo",scene,movePos)
     if (this.rootScene.sceneName == scene) {
-      this.alternativeScene.hide();
+      log("GameSceneManager moveTo.moving to rootScene")
+      this.alternativeScene.forEach(scene => scene.hide());
       this.rootScene?.show();
-      this.activeScene = this.rootScene.sceneName;
+      this.activeScene = this.rootScene
+      this.activeSceneName = this.rootScene.sceneName;
     } else {
-      this.alternativeScene.show();
       this.rootScene.hide();
-      this.activeScene = this.alternativeScene.sceneName;
+      this.alternativeScene.forEach(altScene =>{
+        if(altScene.sceneName === scene){
+          this.activeSceneName = altScene.sceneName;
+          this.activeScene = altScene
+          altScene.show()
+
+        }else{
+          altScene.hide()
+        }}
+        )
     }
     
     if(movePos !== undefined){

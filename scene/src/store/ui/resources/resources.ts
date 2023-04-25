@@ -1,14 +1,17 @@
+import { CommonResources } from "src/meta-decentrally/resources/common";
 import resourcesDropin from "../../resources-dropin";
 
 const resourcesDropinBaseDir = resourcesDropin.baseDir;
 const modelFolder = resourcesDropinBaseDir + "models/menu/";
 
-export let roundedSquareAlpha = new Texture(
+export let roundedSquareAlpha = CommonResources.RESOURCES.textures.roundedSquareAlpha.texture
+/*export let roundedSquareAlpha = new Texture(
   resourcesDropinBaseDir + "images/rounded_alpha_square.png"
-);
+);*/
+/*
 export let dummySceneBG = new Texture(
   resourcesDropinBaseDir + "images/dummy_scene.png"
-);
+);*/
 
 //MENU
 export let wardrobeShape = new BoxShape(); //not needed right now avoid heave load //new GLTFShape(modelFolder + "wardrobe.glb")

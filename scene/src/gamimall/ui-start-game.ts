@@ -87,9 +87,9 @@ export function initUIStartGame() {
     modalWidth: -200,
   };
   const startGamePrompt20 = new CustomOptionsPrompt(
-    "Start Game",
+    "Collect Coins",
     gameTutorialImgDesc,
-    "Start Game",
+    "Collect Coins",
     "",
     "Cancel",
     "",

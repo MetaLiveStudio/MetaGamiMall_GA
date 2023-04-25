@@ -74,6 +74,9 @@ const gameTutorialImgTexture = RESOURCES.textures.gameTutorialBg;
 const gameTutorialImgDesc =
   "You must login first.  To login click the 'Login button'.  Make sure you sign the login signature request that pops up.";
 
+const gameTutorialImgDescNoWallet =
+  "You must login first.  To login click the 'Login button'.  ";
+
 export function initUILoginGame() {
   let buttonPosY = BUTTON_POS_Y;
 
@@ -81,9 +84,10 @@ export function initUILoginGame() {
     width: 420,
     modalWidth: -200,
   };
+  
   const web3ProviderRequiredPrompt = new CustomOptionsPrompt(
-    "Login",
-    gameTutorialImgDesc,
+    "Wallet Required",
+    "A Digital Wallet is required to perform this action.",
     "Get Metamask",
     "",
     "Cancel",
@@ -168,8 +172,19 @@ export function initUILoginGame() {
   function openloginGamePrompt() {
     //loginGamePrompt.show();
 
-    if (GAME_STATE.playerState.dclUserData?.hasConnectedWeb3) {
+    
+    if (
+      CONFIG.LOGIN_FLOW_TYPE == 'dclSignedFetch' ||
+      (CONFIG.LOGIN_FLOW_TYPE == 'signedTypeV4' && GAME_STATE.playerState.dclUserData?.hasConnectedWeb3)) {
       web3ProviderRequiredPrompt.hide();
+
+      if(CONFIG.LOGIN_FLOW_TYPE == 'dclSignedFetch'){
+        loginGamePrompt20.text.text.value = gameTutorialImgDescNoWallet
+      }else{
+        loginGamePrompt20.text.text.value = gameTutorialImgDesc
+      }
+      
+
       loginGamePrompt20.show();
 
       //btnGetMetaMask.hide();
@@ -199,7 +214,7 @@ export function initUILoginGame() {
 
   REGISTRY.ui.openloginGamePrompt = openloginGamePrompt;
   REGISTRY.ui.hideloginGamePrompt = hideloginGamePrompt;
-
+  REGISTRY.ui.web3ProviderRequiredPrompt = web3ProviderRequiredPrompt
   //This listener make monkey not work
   /* GAME_STATE.playerState.addChangeListener(
   (key: string, newVal: any, oldVal: any) => {
@@ -233,5 +248,6 @@ export function initUILoginGame() {
     }
   }
 );
- */
+ */ 
+
 }

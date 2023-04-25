@@ -16,6 +16,22 @@ export function getAndSetUserDataIfNullNoWait() {
   }
 }
 
+
+export async function getAndSetUserDataIfNull() {
+  if (!getUserDataFromLocal()) {
+    await getAndSetUserData(); //not calling await, hoping its fast
+  }
+  return  GAME_STATE.playerState.dclUserData
+}
+
+
+export async function getAndSetRealmDataIfNull() {
+  if (!getRealmDataFromLocal()) {
+    await setRealm(); //not calling await, hoping its fast
+  }
+  return  GAME_STATE.playerState.dclUserRealm
+}
+
 export function getUserDataFromLocal(): UserData | null {
   return GAME_STATE.playerState.dclUserData;
 }

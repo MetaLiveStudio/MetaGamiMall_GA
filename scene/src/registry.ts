@@ -1,9 +1,11 @@
+import { AudioControlBar } from "./dclconnect/index";
 import { CustomPrompt } from "./dcl-scene-ui-workaround/CustomPrompt";
 import { GameSceneManager } from "./modules/sceneMgmt/gameSceneManager";
 import {
   CustomClaimArgs,
   CustomOkPrompt,
   CustomOptionsPrompt,
+  LevelUpPrompt,
 } from "./ui/modals";
 import {
   GameToolsPanel,
@@ -11,23 +13,35 @@ import {
   RacePanel,
   StaminaPanel,
 } from "./ui/ui_background";
+import { IntervalUtil } from "./meta-decentrally/modules/interval-util";
 
 /*
 some ugly trickery to get around cyclic dependencies
 */
 
+
+export class RegistryVideoTexutres {
+  secondaryAlternativeScene!: VideoTexture;
+  videoControlBar!: AudioControlBar
+}
+export class RegistryAudio {
+  rootSceneBG!: AudioSource;
+  audioControlBar!: AudioControlBar
+}
 export class RegistryEntities {
   pad!: {
     entity: Entity;
     moveAnimState: AnimationState;
   };
   alternativeScene!: Entity;
+  secondaryAlternativeScene!: Entity;
   rootScene!: Entity;
 }
 export class Registry2dUI {
   loadingPrompt!: CustomOkPrompt;
   showLoadingUI!: (val: boolean, duration?: number) => void;
   errorPrompt!: CustomOkPrompt;
+  levelUpPrompt!: LevelUpPrompt
   showErrorUI!: (
     val: boolean,
     code?: number,
@@ -53,6 +67,7 @@ export class Registry2dUI {
 
   openloginGamePrompt!: () => void;
   hideloginGamePrompt!: () => void;
+  web3ProviderRequiredPrompt!:CustomOptionsPrompt
 
   createDebugUIButtons!: () => void;
 
@@ -79,16 +94,22 @@ export class RegistryMovePlayerTo {
     cameraDir: new Vector3(40, 16, 40),
   };
 }
+
+export class RegistryIntervals {
+  connectCheckInterval: IntervalUtil
+}
 export class Registry {
   ui: Registry2dUI = new Registry2dUI();
   entities: RegistryEntities = new RegistryEntities();
+  videoTextures: RegistryVideoTexutres = new RegistryVideoTexutres();
+  audio: RegistryAudio = new RegistryAudio()
   toggles: RegistryToggles = new RegistryToggles();
   sceneMgr!: GameSceneManager;
   movePlayerTo: RegistryMovePlayerTo = new RegistryMovePlayerTo();
+  intervals:RegistryIntervals = new RegistryIntervals()
 }
 
 export let REGISTRY: Registry;
-
 export function initRegistry() {
   log("initRegistry called");
   if (REGISTRY === undefined) {

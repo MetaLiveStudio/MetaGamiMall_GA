@@ -1,4 +1,4 @@
-import { ImageSection } from "src/npcutils/index";
+import { ImageSection } from '@dcl/npc-scene-utils'
 
 export type WearableBoothInitArgs = {
   sceneId?: string;
@@ -33,7 +33,7 @@ export type MotionDataType = {
 export type NFTUIDataPriceType='VirtualCurrency'|'Material'
 
 export type NFTUIDataCost = {
-  price: number, 
+  price: number,
   type: NFTUIDataPriceType
   id: string,
   label: string
@@ -52,6 +52,12 @@ export type NFTUIData = {
   detailsFontSize: number;
   directLink: string;
   directLinkFontSize: number;
+  showStockQty?:boolean //defaults to true
+  qtyCurrent?:number;
+  qtyTotal?:number;
+  claimWindowEnabled?:boolean,//defaults to false
+  claimStartMS?: number,
+  claimEndMS?: number,
 };
 export type FeaturedEntityData = {
   shapeName: string;

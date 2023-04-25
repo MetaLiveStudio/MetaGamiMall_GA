@@ -2,7 +2,8 @@
   "display": {
     "title": "Meta GamiMall ",
     "favicon": "favicon_asset",
-    "navmapThumbnail": "scene-thumbnail.png"
+    "navmapThumbnail": "scene-thumbnail.png",
+    "description":"MetaGamiMall is a Metaverse Gamifi-Mall for games, exhibitions & social. Meta GamiMall is operated by MetaLiveStudio and MetaDoge. Currently, we are holding a huge event called MetaMine, where players and brands meet with each other."
   },
   "owner": "",
   "contact": {
@@ -63,11 +64,15 @@
       "name": "spawn1",
       "default": true,
       "position": {
-        "x": [43, 45],
-        "y": [1, 1],
-        "z": [0, 2]
-      }
+        "x": 40,
+        "y": 0,
+        "z": 0.5 },
+        "cameraTarget": {
+          "x": 39.5,
+          "y": 3.4,
+          "z": 40
+        }
     }
   ],
-  "requiredPermissions": ["ALLOW_TO_MOVE_PLAYER_INSIDE_SCENE"]
+  "requiredPermissions": ["ALLOW_TO_MOVE_PLAYER_INSIDE_SCENE","ALLOW_TO_TRIGGER_AVATAR_EMOTE"]
 }

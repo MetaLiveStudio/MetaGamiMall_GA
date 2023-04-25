@@ -8,8 +8,13 @@ import * as UI from "@dcl/ui-scene-utils";
 import * as ECS from "@dcl/ecs-scene-utils";
 import { WearableMenuItem } from "../ui/menuItemWearable";
 import { GAME_STATE } from "src/state";
-import { CONFIG } from "src/config";
+import { CONFIG, initConfig } from "src/config";
 import { CustomOkPrompt, CustomOptionsPrompt } from "src/ui/modals";
+import { REGISTRY } from "src/registry";
+import { NFTUIData } from "../types";
+import { convertDateToYMDHMS } from "src/utils";
+
+initConfig()
 
 export async function createComponents() {}
 
@@ -21,9 +26,27 @@ const somethingWentWrongWithBuyPrompt = new CustomOkPrompt(
 ); //new UI.OkPrompt("Sorry, you do not have enough MetaCash", undefined, undefined, true);//new UI.OkPrompt("Purchased failed.\nPlease try again.", undefined, undefined, true);
 somethingWentWrongWithBuyPrompt.hide();
 
+const CLAIM_CURRENCY = CONFIG.GAME_COIN_TYPE_GC//GAME_STATE.playerState.playFabUserInfo?.UserVirtualCurrency?.GC
+let CLAIM_CURRENCY_LABEL = ""
+switch(CLAIM_CURRENCY){
+  case CONFIG.GAME_COIN_TYPE_GC:
+    CLAIM_CURRENCY_LABEL = "Coins"
+  default: 
+  ""
+}
+
+const notInClaimableWindowPrompt = new CustomOkPrompt(
+  "Claim Not Active",
+  "Sorry, this cannot be claimed at this time",
+  "OK",
+  () => {}
+); //new UI.OkPrompt("Sorry, you do not have enough MetaCash", undefined, undefined, true);
+notInClaimableWindowPrompt.hide();
+
+
 const notEnoughVcPrompt = new CustomOkPrompt(
   "Lack of Funds",
-  "Sorry, you do not have enough MetaCash",
+  "Sorry, you do not have enough " + CLAIM_CURRENCY_LABEL,
   "OK",
   () => {}
 ); //new UI.OkPrompt("Sorry, you do not have enough MetaCash", undefined, undefined, true);
@@ -66,7 +89,7 @@ const purchaseSuccess = new CustomOptionsPrompt(
 
 const confirmPurchase = new CustomOptionsPrompt(
   "Confirm Purchase",
-  `You are about to buy an item for\n 00 MetaCash`,
+  `Please claim at the announced time with\n 00 MetaCash`,
   "OK",
   "",
   "Cancel",
@@ -134,25 +157,51 @@ export async function buyVC(
   blockchainId: string,
   price: string,
   currency?: string,
-  item?: WearableMenuItem
+  item?: WearableMenuItem,
+  nftUIData?: NFTUIData
 ) {
+  if (!GAME_STATE.playerState.dclUserData?.hasConnectedWeb3) {
+    REGISTRY.ui.web3ProviderRequiredPrompt.show()
+    return
+  }
+  if(nftUIData.claimWindowEnabled !== undefined && nftUIData.claimWindowEnabled === true){
+    const args = nftUIData
+    const now = Date.now()
+    const expired = args.claimEndMS >= 0 && args.claimEndMS < now
+    if( args.claimStartMS >= 0 && args.claimStartMS > now && !expired){
+      //this.claimWindow.text.value = claimWindowDateToYMDHMS( new Date(nftUIData.claimStartMS) )
+      //notInClaimableWindowPrompt.title.text.value = "Claim Not Active"
+      notInClaimableWindowPrompt.text.text.value = "Sorry, this cannot be claimed until after " + convertDateToYMDHMS( new Date(nftUIData.claimStartMS) )
+      notInClaimableWindowPrompt.show()
+      return;
+    }else if( expired ){
+      notInClaimableWindowPrompt.text.text.value = "Sorry, this claim has expired \n" + convertDateToYMDHMS( new Date(nftUIData.claimStartMS) )
+      notInClaimableWindowPrompt.show()
+      return;
+    }
+  }
+
   //  if (!+price) return;
   log(collectionId, blockchainId, price);
   //const { mana, store } = await createComponents();
   //const storeContract = dclTx.getContract(dclTx.ContractName.CollectionStore, 137);
-  log("balance");
+  log("balance",CLAIM_CURRENCY,GAME_STATE.playerState.playFabUserInfo?.UserVirtualCurrency[CLAIM_CURRENCY],GAME_STATE.playerState.playFabUserInfo?.UserVirtualCurrency);
   const balance = eth
     .toWei(
-      GAME_STATE.playerState.playFabUserInfo?.UserVirtualCurrency?.MC + "",
+      GAME_STATE.playerState.playFabUserInfo?.UserVirtualCurrency[CLAIM_CURRENCY] + "",
       "ether"
     )
     .valueOf(); //await mana.balance();
   log("allowance");
   const allowance = 9; //await mana.isApproved(storeContract.address);
   log("buyVC", balance, allowance, price);
-  if (+price > +balance) {
+  //disable this check for now
+  if (CONFIG.CLAIM_VERIFY_PRICES_CLIENT_SIDE_ENABLED && +price > +balance) {
     notEnoughVcPrompt.show();
     return;
+  }
+  if(!CONFIG.CLAIM_VERIFY_PRICES_CLIENT_SIDE_ENABLED ){
+    log("buyVC", "not checking client side per STORE_VERIFY_PRICES_CLIENT_SIDE_ENABLED",collectionId, blockchainId, price);
   }
 
   buttonCallBackMap.confirmPurchaseOKBTN = async () => {
@@ -229,10 +278,11 @@ export async function buyVC(
     }
   };
   const currencies = currency;
-  confirmPurchase.text.text.value = `You are about to buy an item for \n ${eth.fromWei(
-    price,
-    "ether"
-  )} ${currencies}`;
+  confirmPurchase.text.text.value = "Do you want to claim this item?"
+  /*`You are about to buy an item for \n ${eth.fromWei(
+      price,
+      "ether"
+    )} ${currencies}`;*/
   confirmPurchase.show();
 
   log("assigned!!!", buttonCallBackMap);

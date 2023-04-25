@@ -94,6 +94,18 @@ export default {
       sourceLeft: 3656 - 144,
       sourceTop: 845,
     },
+    costRefresh: {
+      sourceWidth: 134,
+      sourceHeight: 135,
+      sourceLeft: 3656 - 144,
+      sourceTop: 1092,
+    },
+    costInfo: {
+      sourceWidth: 134,
+      sourceHeight: 135,
+      sourceLeft: 3656,
+      sourceTop: 1092,
+    }
   },
   backgrounds: {
     expandPanel: {
@@ -101,6 +113,12 @@ export default {
       sourceHeight: 176,
       sourceLeft: 2368,
       sourceTop: 3316,
+    },
+    levelUp: { //in Avatarswap-04.png
+      sourceWidth: 380,
+      sourceHeight: 480,
+      sourceLeft: 1300,
+      sourceTop: 60,
     },
   },
 };

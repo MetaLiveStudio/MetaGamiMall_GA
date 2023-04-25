@@ -92,6 +92,27 @@ export class AudioControlBar extends Entity {
     this.audioControlFill.setValue(value, 0.5);
   }
 
+  private visible = true;
+  isVisible(){
+    return this.visible
+  }
+  hide(){
+    this.visible = false;
+    this.audioControlFill.hide()
+    this.audioControlBg.hide()
+    this.audioMuteIcon.hide()
+    this.audioMutedIcon.hide()
+    this.audioIcon.hide()
+  }
+  show(){
+    this.visible = true;
+    this.audioControlFill.show()
+    this.audioControlBg.show()
+    this.audioMuteIcon.show()
+    this.audioMutedIcon.show()
+    this.audioIcon.show()
+    this.updateGUI()
+  }
   mute() {
     this.isAudible = false;
     this.updateVolumeBar(0);

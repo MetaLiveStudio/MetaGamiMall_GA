@@ -3,6 +3,10 @@
     "outFile": "./bin/game.js",
     "allowJs": true,
     "strict": true,
+    "strictNullChecks": false,
+    "strictBindCallApply": true,
+    "strictFunctionTypes": false,
+    "strictPropertyInitialization": false,
     "noLib": false,
     "paths": {
       "colyseus.js": [
@@ -26,6 +30,10 @@
       "eth-connect": [
         "node_modules/eth-connect/eth-connect.d.ts",
         "node_modules\\eth-connect\\eth-connect.d.ts"
+      ],
+      "@dcl/npc-scene-utils": [
+        "node_modules/@dcl/npc-scene-utils/dist/index.d.ts",
+        "node_modules\\@dcl\\npc-scene-utils\\dist\\index.d.ts"
       ]
     },
     "baseUrl": "."

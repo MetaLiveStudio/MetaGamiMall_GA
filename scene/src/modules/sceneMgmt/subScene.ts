@@ -1,21 +1,21 @@
 import { movePlayerTo } from "@decentraland/RestrictedActions";
 import * as utils from "@dcl/ecs-scene-utils";
 import { POISelectorType, SpawnPoint } from "./types";
-import { NPC } from "src/npcutils/index";
+import { NPC } from '@dcl/npc-scene-utils'
 //import { nftCollection, Painting } from './nfts'
 
 /*
 per nico
   adding/removing to engine can be slower
     "after running some tests measuring hiccups in different scenarios, turns out that making entities invisible rather than removing them from the engine is a lot more efficient"
-  
+
     it causes less hiccups and also the entities show a lot faster like this
     and I suppose we’d also avoid the issue that you reported with entities not appearing (I wasn’t able to reproduce that w my tests, though)
       it implies slightly more loading at the very beginning, but not too significant
 
 
     trade off are SHAPE_SHOW_HIDE still has active colliders
-  
+
 */
 export enum VisibilityStrategyEnum {
   ENGINE_ADD_REMOVE,

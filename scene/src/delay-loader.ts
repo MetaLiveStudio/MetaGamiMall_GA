@@ -10,10 +10,16 @@ export function handleDelayLoad(
   name: string,
   fn: () => void
 ) {
+  
   if (delayTime && delayTime > 0) {
-    utils.setTimeout(delayTime, fn);
+    log("handleDelayLoad.queued",name,"fn",fn)
+    utils.setTimeout(delayTime, ()=>{
+      log("handleDelayLoad.fired",name,fn)
+      fn();
+    });
   } else {
     //doing now
+    log("handleDelayLoad.fired",name)
     fn();
   }
 }

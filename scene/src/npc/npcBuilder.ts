@@ -1,6 +1,6 @@
 import resources from "../npc/resources";
 //import { tutorialEnableObservable } from './tutorialHandler'
-import { NPC, NPCDelay, FollowPathData } from "../npcutils/index"; //'@dcl/npc-scene-utils'
+import { NPC, NPCDelay, FollowPathData } from '@dcl/npc-scene-utils'
 import { getEntityByName, getEntityByRegex } from "../utils";
 import * as utils from "@dcl/ecs-scene-utils";
 import { Logger } from "../logging";
@@ -16,7 +16,7 @@ import {
 } from "./dialogData";
 import { NPC_INSTANCES } from "./npcConstants";
 import { CONFIG } from "../config";
-import { Pet } from "src/npcutils/npc/Pet";
+import { Pet } from "../npc/pet";
 
 export let npcs_parent = new Entity("234");
 let alice: NPC;
@@ -136,8 +136,15 @@ function createPath(
 
 export function addPets() {
   log("calling addPets");
-  log("calling addPets", Pet);
-  new Pet(alice);
+  
+  const _alice = alice !== undefined ? alice : NPC_INSTANCES["alice"]
+  log("calling addPets", Pet,"alice",_alice);
+  if(_alice !== undefined){
+    new Pet(_alice);
+  }else{
+    log("addPets","ERROR","unable to create pet, alice is undefined null??",_alice);
+  }
+  
 }
 export function addRobots() {
   //const ringShape = resources.models.robots.rings
@@ -151,13 +158,13 @@ export function addRobots() {
   // Alice
   alice = new NPC(
     {
-      position: new Vector3(40.5, 2, 40),
+      position: new Vector3(40.5, 2, 60),
       rotation: adjustForSceneRotation(Quaternion.Euler(0, 180, 0)),
     },
     resources.models.robots.metaDogePet,
     () => {
       // animations
-      /*
+      
         alice.playAnimation('Hello', true, 2)
 
         let dummyent = new Entity()
@@ -167,7 +174,7 @@ export function addRobots() {
           })
         )
         engine.addEntity(dummyent)
-        */
+        
       // sound
       alice.addComponentOrReplace(
         new AudioSource(resources.sounds.robots.alice)
@@ -206,11 +213,12 @@ export function addRobots() {
   //FIXME need to add bounce up down but somehow combine that with follow
   //if we can put the hover animation into the model saves me a lot of work
   /*
+  //hover is fighting with the pet summon, disabled for now
     const startingY = alice.getComponent(Transform).position.y//transform5TestxmasDroneHost.position.y
     const bounceAmount = .06
     const startVector = alice.getComponent(Transform).position.clone()
     const endVector= alice.getComponent(Transform).position.clone()
-    endVector.y=startingY+bounceAmount//new Vector3(69.5, startingY+bounceAmount, 7.2) 
+    endVector.y=startingY+bounceAmount//new Vector3(69.5, startingY+bounceAmount, 7.2)
     alice.addComponent(
       new utils.Interval(1000, () => {
         const tr = alice.getComponent(Transform)
@@ -220,11 +228,11 @@ export function addRobots() {
           alice.addComponentOrReplace(new utils.MoveTransformComponent(endVector, startVector, 1))
         }
       })
-    )*/
-
+    )
+      */
   /*
   let dogeStartPosition:Vector3 = getNpcPosition('indicatorArrow',new Vector3(41, 0.31330442428588867, 39.9229621887207))
-  
+
   doge = new NPC(
     { position: dogeStartPosition, scale: new Vector3(2, 2, 2) },
     "models/robots/MDP-walking_w_collider.glb",
@@ -268,7 +276,7 @@ export function addRobots() {
     }
     doge.followPath(dogePath)
   }
-*/
+
 
   let muscledogeShowMuscleStartPosition: Vector3 = new Vector3(40, 5, 24);
   muscledogeShowMuscle = new NPC(
@@ -424,19 +432,19 @@ export function addRobots() {
     }
   );
   dogeGodFlying.setParent(npcs_parent);
-
+*/
   let lilDogeStartPosition: Vector3 = new Vector3(10.5, 1.0134620666503906, 59);
   lilDogeNpc = new NPC(
     {
       position: getNpcPosition("npcPlaceHolder2", lilDogeStartPosition),
-      rotation: adjustForSceneRotation(Quaternion.Euler(0, 270, 0)),
-      scale: new Vector3(1, 1, 1),
+      rotation: adjustForSceneRotation(Quaternion.Euler(0, 290, 0)),
+      scale: new Vector3(1.5, 1.5, 1.5),
     },
     "models/robots/LilDoge_Waving-name_wc.glb",
     () => {
       //lilDogeNpc.stopWalking()
       let randomNum = 0; //Math.floor(Math.random() * 10)
-      lilDogeNpc.talkBubble(lilDogeDialog, randomNum);
+      lilDogeNpc.talk(lilDogeDialog, randomNum);
     },
     {
       //walkingAnim: 'Armature|maximo.com|Layer0',
@@ -450,7 +458,7 @@ export function addRobots() {
       //onWalkAway: () => {
       //  doge.followPath()
       //},
-      textBubble: true,
+      //textBubble: true,
       //noUI: true,
       bubbleHeight: 2.2,
     }

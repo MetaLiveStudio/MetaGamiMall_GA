@@ -12,21 +12,24 @@
     "ecs:install-next": "npm install --save-dev decentraland-ecs@next"
   },
   "devDependencies": {
-    "decentraland-ecs": "^6.11.3"
+    "decentraland-ecs": "^6.11.10"
   },
   "dependencies": {
+    "@adshares/decentraland": "^1.1.6",
     "@dcl/crypto-scene-utils": "^1.1.1",
     "@dcl/ecs-scene-utils": "^1.7.5",
+    "@dcl/npc-scene-utils": "^1.4.0",
     "@dcl/ui-scene-utils": "^1.8.1",
     "colyseus.js": "^0.14.13",
     "decentraland-builder-scripts": "latest",
     "eth-connect": "^6.0.2"
   },
-  "bundledDependencies": [
-    "colyseus.js",
-    "@dcl/ecs-scene-utils",
-    "@dcl/ui-scene-utils",
+  "bundleDependencies": [
     "@dcl/crypto-scene-utils",
+    "@dcl/ecs-scene-utils",
+    "@dcl/npc-scene-utils",
+    "@dcl/ui-scene-utils",
+    "colyseus.js",
     "eth-connect"
   ]
 }

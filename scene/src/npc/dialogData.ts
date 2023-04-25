@@ -1,7 +1,7 @@
 import { movePlayerTo } from "@decentraland/RestrictedActions";
 import * as utils from "@dcl/ecs-scene-utils";
 import { getEntityByName, getEntityByRegex } from "../utils";
-import { Dialog } from "../npcutils/index"; //'@dcl/npc-scene-utils'
+import { Dialog } from '@dcl/npc-scene-utils'
 //import { alice, bob, doge } from './npcBuilder'
 import { NPC_INSTANCES } from "./npcConstants";
 
@@ -58,7 +58,7 @@ export const AliceDialog: Dialog[] = [
     buttons: [
       { label: "Teleport", goToDialog: "i-want-to-teleport" },
       { label: "Mall Info", goToDialog: "tell-me-about-mall" },
-      { label: "MetaDogepunks", goToDialog: "tell-me-about-mdp" },
+      { label: "MetaDoge", goToDialog: "tell-me-about-mdp" },
       { label: "Nothing", goToDialog: "dismiss-dialog" },
     ],
   },
@@ -79,18 +79,15 @@ export const AliceDialog: Dialog[] = [
     },
   },
   {
-    name: "tell-me-about-mdp",
-    text: "You have been chosen by the MetaDoge Genesis Block, you were changed into to a Lil Doge",
-    skipable: false,
-  },
-  {
-    text: "What are MetaDoge you ask?",
+    text:
+      "MetaDoge is a metaverse NFT collection with only 4,999 supplies.MetaDoge has a 2D version and a 3D version " +
+      "MetaDoge 3D holders can enjoy coin bonus in Meta GamiMall and they can swap to their unqiue avatar here !",
     skipable: true,
+    //+ " This is an NFT collection has various use cases, truly scarcity and a wonderful story with a engaging development plan."
   },
   {
     text:
-      "MetaDoge is the only NFT collection that has both 2D Portrait & 3D Avatar with only only only 9,999 supplies. " +
-      "Holders own the full rights to use them as social media head portrait and Metaverse (Virtual World) Avatars!",
+      "MetaDoge 2D holders can see their Metadoge2D as the face of me, more untitlies will come next.",
     skipable: true,
     //+ " This is an NFT collection has various use cases, truly scarcity and a wonderful story with a engaging development plan."
   },
@@ -104,22 +101,9 @@ export const AliceDialog: Dialog[] = [
   {
     name: "tell-me-about-Mall",
     text:
-      "Meta GamiMall is a fancy, walking-friendly and vivid NFT Shopping Mall.  " +
+      "Meta GamiMall is a metaverse shopping mall for shopping, games, meta-activities.  " +
       "With an increasing number of user, events and buildings, we believe in the future of Decentraland, and we want to push it forward through our expertise.",
     skipable: false,
-  },
-  {
-    text: " As professional architects and urban designers, we found that it is tough to find a city or district that has Metaverse-style city planning, a friendly traffic system for users and provide sufficient motivations to attract visitors and projects. ",
-    skipable: true,
-  },
-
-  {
-    text:
-      "Thus, we are here to bring our solutions, to build a prototype for a future metaverse mall that is fancy, walking-friendly and vivid!" +
-      "All the RED STRUCTURES are available for rent, DM via Discord if you are interested",
-  },
-  {
-    text: "Well that's it from me. So what are you waiting for? Go and explore the world!",
     triggeredByNext: () => {
       NPC_INSTANCES["alice"].playAnimation("Goodbye", true, 2);
     },
@@ -133,9 +117,9 @@ export const AliceDialog: Dialog[] = [
     },
     isQuestion: true,
     buttons: [
-      { label: "Muscle Square", goToDialog: "teleport-muscle" }, //, fontSize: 8 },//, offsetY: -17.5, },//second button first?
-      { label: "Lil Square", goToDialog: "teleport-lild" }, // offsetY: -17.5, },//first button second?
-      { label: "Moon Square", goToDialog: "teleport-moon" },
+      { label: "MuscleSquare", goToDialog: "teleport-muscle" }, //, fontSize: 8 },//, offsetY: -17.5, },//second button first?
+      { label: "Entrance", goToDialog: "teleport-lild" }, // offsetY: -17.5, },//first button second?
+      { label: "MoonSquare", goToDialog: "teleport-moon" },
       { label: "More on Page 2", goToDialog: "i-want-to-teleport-pg2" },
     ],
   },
@@ -148,15 +132,15 @@ export const AliceDialog: Dialog[] = [
     },
     isQuestion: true,
     buttons: [
-      { label: "Heaven Square", goToDialog: "teleport-heaven" }, //,, fontSize: 8, },//second button first?
-      { label: "Mars Square", goToDialog: "teleport-mars" }, //,, fontSize: 10,},//first button second?
+      { label: "HeavenSquare", goToDialog: "teleport-heaven" }, //,, fontSize: 8, },//second button first?
+      { label: "MarsSquare", goToDialog: "teleport-mars" }, //,, fontSize: 10,},//first button second?
       { label: "Page 1", goToDialog: "i-want-to-teleport" },
       { label: "Cancel", goToDialog: "dismiss-teleport" },
     ],
   },
   {
     name: "teleport-lild",
-    text: "You have selected LilDoge Square",
+    text: "You have selected entrance",
     triggeredByNext: () => {
       log("GO TO LilDoge");
       movePlayerToEntity("waypointCE5", "npcPlaceHolder6");
@@ -336,15 +320,36 @@ export const moondogeMoonwalkDialog: Dialog[] = [
 
 export const lilDogeDialog: Dialog[] = [
   {
-    text: "Hi, Welcome to the Press Center, we will hold various events here !!! ",
-    skipable: true,
+    text: "Hi, Welcome to the MetaMine!!! I am your host, MetaDoge.\nIf you are looking for Mr.SWE DJ show, please turn left, walk to the teleporter, click it, you will be there in a few seconds",
+    skipable: false,
   },
   {
-    text: "My name is MetaDoge, the story of Lil Doge starts with love and fun. Holding a Lil-Doge means that you will be in this harmonized community. Enjoy your journey at Meta GamiMall!!!",
-    //triggeredByNext: () => {
-    //bob.playAnimation('Goodbye', true, 2)
-    //},
-    isEndOfDialog: true,
+    text: "MetaMine is a gamified event joined by 23 brands, they are sepreated into 3 tiers, Premium, Gold and Silver", 
+    skipable: false,
+  },  
+  {
+    text: " ande ALL of them have provided exclusive wearables for you to claim. There a cyber suit wearable that is made of 4 different wearables, offered by Decentraland, Decentral Game, Hahskey Dx and Galxe", 
+    skipable: false,
+  },  
+  {
+    text: "In order to claim, you need to check how many coins needed by clikcing the wearables that you want to claim and check the price",
+    skipable: false,
+  },
+  {
+    text: "For example, you can try with the doge head wearable beside me, you can close it by clicking the black cross sign in the right top corner",
+    skipable: false,
+  },
+  {
+    text: "Next, you need to collect coins that you can find in the scene by touching them",
+    skipable: false,
+  },
+  {
+    text: "finally, you need to come back to the wearable, click the wearable, and then click claim, after a few seconds, the wearable will come to your wallet address and you can see in your bagpack!!!",
+    skipable: false,
+  },
+  {
+  text: "Lastly, feel free to check this amazing Doge head wearable, it can let you collect coins 3% faster in MetaMine (In the future). Be quick, it will run out soon!!!",
+  isEndOfDialog: true,
   },
 ];
 

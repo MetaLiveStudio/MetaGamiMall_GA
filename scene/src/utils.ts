@@ -217,6 +217,19 @@ export function isNull(obj: any): boolean {
   return obj === null || obj === undefined;
 }
 
+export function convertDateToYMDHMS(date:Date) {
+  var d = date.getDate();
+  var m = date.getMonth() + 1; //Month from 0 to 11
+  var y = date.getFullYear();
+
+  //return '' + y + '-' + (m<=9 ? '0' + m : m) + '-' + (d <= 9 ? '0' + d : d);
+  //2022-10-04T02:52:13.408Z => 2022-10-04 02:52:13
+  log("convertDateToYMDHMS",date.toISOString())
+
+  return date.toISOString().split("T").join(" ").split("\.")[0] + " UTC"
+}
+
+
 export function computeFaceAngle(
   lookAtTarget: Vector3,
   transform: Transform,

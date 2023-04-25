@@ -216,6 +216,7 @@ export class WearableBoothManager {
           if (!args.options.nftUIData)
             throw new Error("args.options.nftUIData required ");
 
+          log("args.options.nftUIData clicked",args.options.nftUIData.style)
           switch (args.options.nftUIData.style) {
             case "infoPanel":
               this.ui2dNFTPanel?.openInfoPanel(args.options?.nftUIData);
@@ -241,6 +242,14 @@ export class WearableBoothManager {
                 cost: args.options.nftUIData.cost, 
                 imageHeight: args.options.nftUIData.imageHeight,
                 imageWidth: args.options.nftUIData.imageWidth,
+                showStockQty: args.options.nftUIData.showStockQty,
+                itemQtyCurrent: args.options.nftUIData.qtyCurrent,
+                itemQtyTotal: args.options.nftUIData.qtyTotal,
+                claimWindowEnabled: args.options.nftUIData.claimWindowEnabled,//defaults to false
+                claimStartMS: args.options.nftUIData.claimStartMS,
+                claimEndMS: args.options.nftUIData.claimEndMS,
+                contract: args.contract,//refreshDataOnOpen: args.options.nftUIData
+                itemId: args.itemId,
                 claimCallback: () => {
                   if (false) {
                     //if( isNull(GAME_STATE.playerState.playFabLoginResult) ){
@@ -258,6 +267,8 @@ export class WearableBoothManager {
                         .toWei(singleCost.price + "", "ether")
                         .valueOf() + ""
                       , singleCost.label
+                      , undefined
+                      , args.options.nftUIData
                     );
                   }
                 },
@@ -282,6 +293,8 @@ export class WearableBoothManager {
                       .toWei(singleCost.price + "", "ether")
                       .valueOf() + ""
                     , singleCost.label
+                    , undefined
+                    , args.options.nftUIData
                   );
                 }
               });
@@ -291,7 +304,7 @@ export class WearableBoothManager {
         "ethereum://0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/558536"
       )*/
         },
-        { hoverText: args.options.featuredEntityData?.hoverText + "F" }
+        { hoverText: args.options.featuredEntityData?.hoverText }
       )
     );
   }

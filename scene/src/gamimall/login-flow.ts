@@ -16,13 +16,21 @@ import { getProvider } from "@decentraland/web3-provider";
 import { GLOBAL_CANVAS } from "./resources";
 import { GAME_STATE } from "src/state";
 import {
+  getAndSetRealmDataIfNull,
+  getAndSetUserData,
+  getAndSetUserDataIfNull,
   getAndSetUserDataIfNullNoWait,
+  getRealmDataFromLocal,
   getUserDataFromLocal,
 } from "src/userData";
 import { loginErrorPrompt } from "src/ui-bars";
 import { isNull, notNull } from "src/utils";
 import { CONFIG } from "src/config";
 import { REGISTRY } from "src/registry";
+import { Constants as DecentRallyConstants } from "src/meta-decentrally/modules/resources/globals";
+import { LoginFlowCallback, LoginFlowResult } from "src/meta-decentrally/login/login-types";
+import { preventConcurrentExecution } from "src/meta-decentrally/modules/utilities";
+import { signedFetch } from '@decentraland/SignedFetch';
 
 PlayFab.settings.titleId = CONFIG.PLAYFAB_TITLEID;
 
@@ -47,6 +55,9 @@ export function resetLoginState() {
   GAME_STATE.playerState.setPlayFabUserInfoData(null);
   GAME_STATE.playerState.setLoginSuccess(false);
 }
+
+
+/*
 export function doLoginFlow() {
   log("doLoginFlow " + GAME_STATE.playerState.loginFlowState);
   switch (GAME_STATE.playerState.loginFlowState) {
@@ -62,8 +73,208 @@ export function doLoginFlow() {
       log("doLoginFlow already logged in");
   }
 }
-function signWithWallet() {
-  executeTask(async () => {
+*/
+export function doLoginFlow(callback?:LoginFlowCallback,resultInPlace?:LoginFlowResult):Promise<LoginFlowResult>{
+  const promise:Promise<LoginFlowResult> = new Promise( async (resolve, reject)=>{
+      try{
+          let loginRes:LoginFlowResult
+          if(CONFIG.LOGIN_FLOW_TYPE == 'signedTypeV4'){
+            loginRes = await doLoginFlowAsync()
+          }else if(CONFIG.LOGIN_FLOW_TYPE == 'dclSignedFetch'){
+            loginRes = await doLoginFlowAsync_signedFetch()
+          }else{
+            const msg = 'ERROR: unrecognized '+CONFIG.LOGIN_FLOW_TYPE
+            log(msg)
+            reject(msg)
+            return;
+          }
+          resolve( loginRes )
+      }catch(e){
+          log("doLoginFlow failed ",e)
+          //if(CONFIG.ENABLE_DEBUGGER_BREAK_POINTS) debugger
+          reject(e)
+      }
+  })
+  //if doLoginFlowAsync is preventConcurrentExecution wrapped
+  //confirmed that if it returns the same promise or a new one
+  //promise.then just adds more to the callback so all callers
+  //will get their callbacks ran
+  promise.then(()=>{
+      if(callback && callback.onSuccess){
+          log("doLoginFlow calling callback. onSuccess")
+          callback.onSuccess()
+      }else{
+          log("doLoginFlow success,no callback. onSuccess")
+      }
+  })
+  return promise
+}
+DecentRallyConstants.doLoginFlow = doLoginFlow
+
+//prevent login action ran more than 1 at a time
+const doLoginFlowAsync = preventConcurrentExecution("doLoginFlowAsync",async (resultInPlace?:LoginFlowResult) => {
+  log("doLoginFlowAsync " + GAME_STATE.playerState.loginFlowState)
+  log("preventConcurrentExecution.doLoginFlowAsync")
+  const retVal:LoginFlowResult = resultInPlace !== undefined ? resultInPlace : {chain:[]}
+  
+  try{
+  switch(GAME_STATE.playerState.loginFlowState){
+      case 'error':
+          //HANDLE??
+      case 'wallet-error':
+      case 'undefined':  
+          log("doLoginFlowAsync.calling.fetchCustomId")
+          retVal.chain.push( GAME_STATE.playerState.loginFlowState )
+          //TODO add catch? call do login flow aync again?
+          
+          await signWithWallet();
+          //const uuid = await fetchCustomId()
+          //GAME_STATE.playerState.playerCustomID = uuid
+          retVal.customId = GAME_STATE.playerState.playerCustomID
+          retVal.playfabResult = GAME_STATE.playerState.playFabLoginResult
+          break;
+      case 'wallet-success':
+          retVal.chain.push( GAME_STATE.playerState.loginFlowState )
+          //TODO add catch? call do login flow aync again?
+          await loginUser(GAME_STATE.playerState.playerCustomID)
+
+          retVal.customId = GAME_STATE.playerState.playerCustomID
+          retVal.playfabResult = GAME_STATE.playerState.playFabLoginResult
+          break;
+      case 'playfab-error':
+          //HANDLE??
+      case 'playfab-success':
+          retVal.chain.push( GAME_STATE.playerState.loginFlowState )
+          log("doLoginFlowAsync already logged in",retVal.chain)
+          retVal.playfabResult = GAME_STATE.playerState.playFabLoginResult
+  }
+  }catch(e:any){
+      retVal.chain.push( GAME_STATE.playerState.loginFlowState )
+      retVal.chain.push( e.message )
+      //debugger
+      log("doLoginFlowAsync threw an error",retVal,e)   
+  }
+  return retVal
+})
+
+
+//prevent login action ran more than 1 at a time
+const doLoginFlowAsync_signedFetch = preventConcurrentExecution("doLoginFlowAsync_signedFetch",async (resultInPlace?:LoginFlowResult) => {
+  log("doLoginFlowAsync " + GAME_STATE.playerState.loginFlowState)
+  log("preventConcurrentExecution.doLoginFlowAsync")
+  const retVal:LoginFlowResult = resultInPlace !== undefined ? resultInPlace : {chain:[]}
+  try{
+  switch(GAME_STATE.playerState.loginFlowState){
+      case 'error':
+          //HANDLE??
+      case 'wallet-error':
+      case 'undefined':  
+          log("doLoginFlowAsync.calling.fetchCustomId")
+          retVal.chain.push( GAME_STATE.playerState.loginFlowState )
+          //TODO add catch? call do login flow aync again?
+          const uuid = await fetchCustomId()
+          GAME_STATE.playerState.playerCustomID = uuid
+          retVal.customId = uuid
+      case 'wallet-success':
+          retVal.chain.push( GAME_STATE.playerState.loginFlowState )
+          //TODO add catch? call do login flow aync again?
+          const result = await loginUser(GAME_STATE.playerState.playerCustomID)
+          retVal.playfabResult = result
+      case 'playfab-error':
+          //HANDLE??
+      case 'playfab-success':
+          retVal.chain.push( GAME_STATE.playerState.loginFlowState )
+          log("doLoginFlowAsync already logged in",retVal.chain)
+          retVal.playfabResult = GAME_STATE.playerState.playFabLoginResult
+  }
+  }catch(e:any){
+      retVal.chain.push( GAME_STATE.playerState.loginFlowState )
+      retVal.chain.push( e.message )
+      //debugger
+      log("doLoginFlowAsync threw an error",retVal,e)   
+  }
+  return retVal
+})
+function handleCustomIdError(json:any|Error){
+    log("handleCustomIdError",json)
+    //TODO HANDLE ALL POSSIBLE ERROR STATES
+    if(json instanceof Error){
+        GAME_STATE.playerState.loginFlowState='wallet-error'
+
+        loginErrorPrompt.text.value =
+          "There was a an error signing in\n" + json.message;
+        loginErrorPrompt.show();
+        //Constants.Game_2DUI.showLoginErrorPrompt( undefined,"There was a an error signing in\n" + json.message  )
+    }else{
+        GAME_STATE.playerState.loginFlowState='wallet-error'
+        loginErrorPrompt.text.value =
+          "There was a an error signing in\n" + json.message;
+        loginErrorPrompt.show();
+    }
+}
+//TODO return value
+//see //https://github.com/MetaLiveStudio/metadoge#apidclauth
+async function fetchCustomId(){
+  return executeTask<string>(async () => {
+      log("fetchCustomId start ")
+
+      const callUrl = CONFIG.LOGIN_ENDPOINT
+
+      const userData = await getAndSetUserDataIfNull()
+      const realm = await getAndSetRealmDataIfNull()
+
+      let method = "POST"
+      let headers = { "Content-Type": "application/json" }
+      let body = JSON.stringify({
+          address: userData.userId,
+          hasConnectedWeb3: userData.hasConnectedWeb3,
+          catalyst: realm.domain,
+          room: realm.layer
+      })
+
+      try {
+          //+ "?&titleId="+CONFIG.PLAYFAB_TITLEID
+          //for some reason any query params breaks it
+          let response = await signedFetch(callUrl , {
+          headers: headers,
+          method: method,
+          body: body,
+          })
+      
+          if (!response.text) {
+              throw new Error("Invalid response")
+          }
+      
+          let json = await JSON.parse(response.text)
+      
+          log("Response received: ", json)
+          if (json.data && json.data.uuid){ 
+              GAME_STATE.playerState.loginFlowState='wallet-success'
+              
+              //{ valid: true, msg: 'Valid request', data: {uuid: uuid} }
+              log("calling PlayFabSDK.LoginWithCustomID")
+              addLoginInfo(PlayFab.settings.titleId)
+              const playerCustId=json.data.uuid
+              GAME_STATE.playerState.setPlayerCustomID(playerCustId) 
+
+              return playerCustId
+          }else{
+              handleCustomIdError(json)
+              //return 'error'
+              throw new Error( json.msg )
+          }
+      } catch (err){
+          log("fetchCustomId failed to reach URL",err)
+          handleCustomIdError(err)
+          //return err.message 
+          throw err
+      }
+  })
+
+}
+
+async function signWithWallet(doLogin?:boolean) {
+  //executeTask(async () => {
     log("walletsign start ");
     const address = await EthereumController.getUserAccount().then((res) =>
       res.toLowerCase()
@@ -72,6 +283,8 @@ function signWithWallet() {
     const nonceRes = await nonceReq.json();
     log("walletsign nonceRes ", nonceRes);
     const provider = await getProvider();
+
+    //FIXME, make it so this is blocking
     provider.sendAsync(
       {
         jsonrpc: "2.0",
@@ -92,7 +305,7 @@ function signWithWallet() {
         }
       }
     );
-  });
+  //});
 }
 
 //doLoginFlow()
@@ -113,7 +326,7 @@ function verifyLoginWithMetamask(address: any, signature: any) {
     addLoginInfo(PlayFab.settings.titleId);
     const playerCustId = verifyRes.data.uuid;
     GAME_STATE.playerState.setPlayerCustomID(playerCustId);
-    loginUser(playerCustId);
+    await loginUser(playerCustId);
     //loginUser("will-sdk-test")
   });
 }
@@ -218,10 +431,10 @@ function updateLoginInfoFromResult(result: LoginResult) {
       Color4.Red()
     );
   }
-}
+} 
 
-export function refreshUserData() {
-  log("refreshUserData called");
+export function refreshUserData(calledBy:string) {
+  log("refreshUserData called","calledBy",calledBy);
   //quick and dirty - place holder. for now just will relogin
   //FIXME long term should call fetch user data. want to track logins and resusing here muddles the login vs info fetching
   //wait 500 ms for playfab scores to sync
@@ -234,58 +447,69 @@ export function refreshUserData() {
     fetchLeaderboardInfo("VB_"); //takes longer to update ?!?!
   });
 }
-export function loginUser(uuid: any) {
+export function loginUser(uuid: any):Promise<LoginResult>{
   log("loginUser START");
-  //make sure we have it
-  getAndSetUserDataIfNullNoWait(); //not calling await, hoping its fast
+  const promise = new Promise<LoginResult>((resolve, reject)=>{
+      //make sure we have it
+      getAndSetUserDataIfNullNoWait(); //not calling await, hoping its fast
 
-  PlayFabSDK.LoginWithCustomID({
-    CreateAccount: true,
-    // Custom unique identifier for the user, generated by the title.
-    CustomId: uuid,
-    // The optional custom tags associated with the request (e.g. build number, external trace identifiers, etc.).
-    //CustomTags?: { [key: string]: string | null };
-    // Base64 encoded body that is encrypted with the Title's public RSA key (Enterprise Only).
-    //EncryptedRequest?: string;
-    // Flags for which pieces of info to return for the user.
-    InfoRequestParameters: {
-      GetUserReadOnlyData: true,
-      GetUserInventory: true,
-      GetUserVirtualCurrency: true,
-      GetPlayerStatistics: true,
-      GetCharacterInventories: false,
-      GetCharacterList: false,
-      GetPlayerProfile: false,
-      GetTitleData: true,
-      GetUserAccountInfo: true,
-      GetUserData: true,
-    },
-    // Player secret that is used to verify API request signatures (Enterprise Only).
-    //PlayerSecret?: string;
-    // Unique identifier for the title, found in the Settings > Game Properties section of the PlayFab developer site when a
-    // title has been selected.
-    TitleId: PlayFab.settings.titleId,
-  })
-    .then(function (result: LoginResult) {
-      log("promise.LoginWithCustomID", result);
+      PlayFabSDK.LoginWithCustomID({
+        CreateAccount: true,
+        // Custom unique identifier for the user, generated by the title.
+        CustomId: uuid,
+        // The optional custom tags associated with the request (e.g. build number, external trace identifiers, etc.).
+        //CustomTags?: { [key: string]: string | null };
+        // Base64 encoded body that is encrypted with the Title's public RSA key (Enterprise Only).
+        //EncryptedRequest?: string;
+        // Flags for which pieces of info to return for the user.
+        InfoRequestParameters: {
+          GetUserReadOnlyData: true,
+          GetUserInventory: true,
+          GetUserVirtualCurrency: true,
+          GetPlayerStatistics: true,
+          GetCharacterInventories: false,
+          GetCharacterList: false,
+          GetPlayerProfile: false,
+          GetTitleData: true,
+          GetUserAccountInfo: true,
+          GetUserData: true,
+        },
+        // Player secret that is used to verify API request signatures (Enterprise Only).
+        //PlayerSecret?: string;
+        // Unique identifier for the title, found in the Settings > Game Properties section of the PlayFab developer site when a
+        // title has been selected.
+        TitleId: PlayFab.settings.titleId,
+      })
+        .then(function (result: LoginResult) {
+          log("promise.LoginWithCustomID", result);
 
-      GAME_STATE.playerState.setPlayFabLoginResult(result);
+          GAME_STATE.playerState.setPlayFabLoginResult(result);
 
-      updateLoginInfoFromResult(result);
+          updateLoginInfoFromResult(result);
 
-      REGISTRY.ui.loginPanel.hide();
-      //REGISTRY.ui.racePanel.show()
-      REGISTRY.ui.staminaPanel.show();
-      //TODO update user wallet address (UpdateUserData) + displayname (UpdateUserTitleDisplayName)
-    })
-    .catch(function (error: LoginResult) {
-      log("promise.LoginWithCustomID failed", error);
-      updateLoginInfoFromResult(error);
-    });
+          REGISTRY.ui.loginPanel.hide();
+          //REGISTRY.ui.racePanel.show()
+          REGISTRY.ui.staminaPanel.show();
+
+          resolve(result)
+          //TODO update user wallet address (UpdateUserData) + displayname (UpdateUserTitleDisplayName)
+        })
+        .catch(function (error: LoginResult) {
+          log("promise.LoginWithCustomID failed", error);
+          updateLoginInfoFromResult(error);
+
+          reject(error)
+        });
+      })
+      return promise
 }
 
 export function fetchLeaderboardInfo(prefix: string = "") {
   log("fetchLeaderboardInfo called");
+  if(prefix == "VB_"){
+    log("fetchLeaderboardInfo DISABLED FOR ",prefix);
+    return
+  }
   var getLeaderboardDaily: PlayFabServerModels.GetLeaderboardRequest = {
     StatisticName: prefix + "coinsCollectedDaily",
     StartPosition: 0,
@@ -317,9 +541,8 @@ export function fetchLeaderboardInfo(prefix: string = "") {
     }
   );
 }
-//Wake is Thursday, The funeral is this Friday. I already have a vacation day scheduled for that.  If I do get bereavement but I already called off vacation can I ethically cancel the vacation for bereavement?
 
-function fetchPlayerCombinedInfo() {
+export function fetchPlayerCombinedInfo() {
   log("fetchPlayerCombinedInfo called");
   var getPlayerCombinedInfoRequestParams: PlayFabServerModels.GetPlayerCombinedInfoRequestParams =
     {
@@ -358,8 +581,11 @@ function fetchPlayerCombinedInfo() {
       // PlayFabId of the user whose data will be returned
       //PlayFabId: playFabId,
     };
-  PlayFabSDK.GetPlayerCombinedInfo(getPlayerCombinedInfoRequest).then(
-    (result: GetPlayerCombinedInfoResult) => {
+  
+    const promise = PlayFabSDK.GetPlayerCombinedInfo( 
+        getPlayerCombinedInfoRequest
+    )
+    promise.then( (result:GetPlayerCombinedInfoResult) => {
       GAME_STATE.playerState.setPlayFabUserInfoData(result.InfoResultPayload);
       updatePlayerHudInfo(
         "** Player Info\n" +
@@ -383,8 +609,8 @@ function fetchPlayerCombinedInfo() {
           ),
         Color4.Green()
       );
-    }
-  );
+    })
+    return promise
 }
 //testCoinPlacement();
 

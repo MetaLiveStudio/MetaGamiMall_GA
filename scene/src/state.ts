@@ -5,11 +5,118 @@ import { CONFIG } from "./config";
 import {
   GetPlayerCombinedInfoResultPayload,
   LoginResult,
+  StatisticValue,
 } from "./gamimall/playfab_sdk/playfab.types";
 import { GameLevelData as GameRoomData } from "./gamimall/resources";
 //import { TESTDATA_USE_SIGNED_FETCH } from './config'
 
+import * as clientSpec from 'src/meta-decentrally/modules/connection/state/client-state-spec'
+import { RaceData } from 'src/meta-decentrally/modules/race'
+import { TrackData } from 'src/meta-decentrally/modules/trackPlacement'
+
+
 //export const PLAYER_DATA_CACHE: Record<string,UserData|null> = {}
+
+//holds a cache of playFabUserInfo values
+//to reduce need to parse if/when unclear populated
+
+
+type StatsCache={
+  allTimeCoins:number
+}
+type VirtualCurrencyCache={
+  gc:number
+  mc:number
+  m1:number
+  m2:number
+  m3:number
+}
+
+class GetPlayerCombinedInfoResultHelper{
+  virtualCurrency: VirtualCurrencyCache
+  stats: StatsCache
+  constructor(){
+    this.reset()
+  }
+  reset(){
+    this.virtualCurrency = {
+      gc:0,
+      mc:0,
+      m1:0,
+      m2:0,
+      m3:0
+    }
+    this.stats = {
+      allTimeCoins:0
+    }
+  }
+  update(playFabUserInfo: GetPlayerCombinedInfoResultPayload){
+    
+    let mc = -1;
+    let gc = -1;
+    let vb = -1;
+
+    let m1 = -1
+    let m2 = -1
+    let m3 = -1
+    
+    if (
+      GAME_STATE.playerState.playFabUserInfo?.UserVirtualCurrency !==
+      undefined
+    ) {
+      mc = GAME_STATE.playerState.playFabUserInfo?.UserVirtualCurrency.MC;
+      gc = GAME_STATE.playerState.playFabUserInfo?.UserVirtualCurrency.GC;
+      vb = GAME_STATE.playerState.playFabUserInfo?.UserVirtualCurrency.VB;
+    }
+    if (
+      GAME_STATE.playerState.playFabUserInfo?.UserInventory !==
+      undefined
+    ) {
+      for(let p in GAME_STATE.playerState.playFabUserInfo?.UserInventory){
+        const itm = GAME_STATE.playerState.playFabUserInfo?.UserInventory[p]
+        //log("playFabUserInfo.playerInventory",p,itm)
+        switch(itm.ItemId){
+          case CONFIG.GAME_COIN_TYPE_MATERIAL_1_ID:
+            m1 = itm.RemainingUses ? itm.RemainingUses : -1
+            break;
+          case CONFIG.GAME_COIN_TYPE_MATERIAL_2_ID:
+            m2 = itm.RemainingUses ? itm.RemainingUses : -1
+            break;
+          case CONFIG.GAME_COIN_TYPE_MATERIAL_3_ID:
+            m3 = itm.RemainingUses ? itm.RemainingUses : -1
+            break;
+        }
+      }
+    }
+
+    //coinLobbyGCCounter.set(gc);
+    //coinLobbyMCCounter.set(mc);
+    //subCoinGCCounter.set(vb);
+
+    let playerStatics = GAME_STATE.playerState.playFabUserInfo?.PlayerStatistics;
+    let coinCollectingEpochStat:StatisticValue
+    if (playerStatics) {
+      for (const p in playerStatics) {
+        const stat: StatisticValue = playerStatics[p];
+        log("stat ", stat);
+        if (
+          stat.StatisticName == "coinsCollectedEpoch"
+        ) {
+          coinCollectingEpochStat = stat;
+        }
+      }
+      
+    }
+    //GAME_STATE.playerState.playFabUserInfo.PlayerStatistics
+    this.stats.allTimeCoins = coinCollectingEpochStat!==undefined ? coinCollectingEpochStat.Value : 0
+
+    this.virtualCurrency.gc = gc
+    this.virtualCurrency.mc = mc
+    this.virtualCurrency.m1 = m1
+    this.virtualCurrency.m2 = m2
+    this.virtualCurrency.m3 = m3
+  }
+}
 
 export class PlayerState {
   playerCustomID: string | null = null;
@@ -20,6 +127,7 @@ export class PlayerState {
   dclUserRealm: Realm | null = null;
   playFabLoginResult: LoginResult | null = null;
   playFabUserInfo: GetPlayerCombinedInfoResultPayload | undefined | null;
+  playFabUserInfoHelper: GetPlayerCombinedInfoResultHelper
   nftDogeHelmetBalance: number = 0; //starts off 0, move to player
   nftDogeBalance: number = 0;
   loginSuccess: boolean = false; // move to player
@@ -28,6 +136,9 @@ export class PlayerState {
 
   playerStateListeners: ObservableComponentSubscription[] = [];
 
+  constructor(){
+    this.playFabUserInfoHelper = new GetPlayerCombinedInfoResultHelper();
+  }
   requestDoLoginFlow() {
     this.notifyOnChange("requestDoLoginFlow", null, null);
   }
@@ -74,6 +185,7 @@ export class PlayerState {
     const oldVal = this.playFabUserInfo;
     //TODO parse it out and detect what changed
     this.playFabUserInfo = val;
+    this.playFabUserInfoHelper.update(val)
     this.notifyOnChange("playFabUserInfo", val, oldVal);
   }
 
@@ -153,12 +265,21 @@ class LeaderboardState {
     this.leaderBoardStateListeners.push(fn);
   }
 }
+//export type GameStateType='undefined'|'error'|'started'|'ended'
+//export type GameConnectedStateType='undefined'|'disconnected'|'error'|'connected'
+//export type PlayerLoginState='undefined'|'error'|'customid-success'|'customid-error'|'playfab-error'|'playfab-success'
+//export type GamePlayStateType='undefined'|'started'|'ended'
+
+//| "wallet-success" -> customid-success
+//  | "wallet-error" -> customid-error
 
 //export type GameStateType='undefined'|'error'|'started'|'ended'
 export type GameConnectedStateType =
   | "undefined"
   | "disconnected"
+  | "disconnecting"
   | "error"
+  | "connecting"
   | "connected";
 export type PlayerLoginState =
   | "undefined"
@@ -198,16 +319,20 @@ export type GameEndResultType = {
   raffleResult: RaffleInterface;
 };
 
+
 export class GameState {
   gameEnabled: boolean = false;
   gameStarted: boolean = false; //if game started
   gameConnected: GameConnectedStateType = "undefined"; //if game connected
   gameErrorMsg: string = "";
 
+  gameRoomTarget: string = ""//game room we want to be playing
   //https://docs.colyseus.io/colyseus/server/room/#table-of-websocket-close-codes
   gameConnectedCode: number = -1; //if game connected
   //gameConnectedMsg:string //if game connected
 
+  //max auto connect retries, prevent error always visible, paired with GAME_CONNECT_RETRY_MAX=3
+  connectRetryCount:number = 0;
   gameStartTime: number = 0; //when game started
   lastCoinEpochTime: number = 0; //should be in seconds
   coolDownTimerActive: boolean = false;
@@ -219,6 +344,11 @@ export class GameState {
     CONFIG.PERSONAL_ASSISTANT_ENABLED_DEFAULT_STATE; //the default starting state
   screenBlockLoading: boolean = false;
 
+  //start src/meta-decentrally
+  raceData:RaceData
+  trackData:TrackData
+  //end src/meta-decentrally
+
   playerState: PlayerState = new PlayerState();
   leaderboardState: LeaderboardState = new LeaderboardState();
 
@@ -229,8 +359,11 @@ export class GameState {
   countDownTimerValue: number = 0;
   gameHudActive: boolean = false;
 
+  gameCoinsCollectedEpochValue: number = 0;
   gameCoinGCValue: number = 0;
   gameCoinMCValue: number = 0;
+  gameCoinRewardGCValue: number = 0;
+  gameCoinRewardMCValue: number = 0;
   gameCoinsCollectedValue: number = 0;
   gameCoinsTotalValue: number = 0;
 
@@ -240,6 +373,8 @@ export class GameState {
 
   //TODO make more generic
   inVox8Park: boolean = false;
+
+  isIdle: boolean = false
 
   gameEndResult?: GameEndResultType;
   metadogeSwapEnabledIcon: boolean = false;
@@ -256,6 +391,17 @@ export class GameState {
   setLoginSuccess(val: boolean) {
     this.playerState.setLoginSuccess(val);
   }
+
+  //store full game object results here, using flags above to track changing them
+  //wrap this in an additional observer pattern
+  //playerCombinedInfoResult:GetPlayerCombinedInfoResult
+  getRaceRoom():Room<clientSpec.RaceRoomState>{
+    if(this.gameRoom && this.gameRoom.name == CONFIG.GAME_RACE_ROOM_NAME){
+      return this.gameRoom as Room<clientSpec.RaceRoomState>
+    }
+    return undefined
+  }
+
   setNftDogeHelmetBalance(val: number) {
     this.playerState.setNftDogeHelmetBalance(val);
   }
@@ -292,6 +438,7 @@ export class GameState {
   }
 
   setGameRoom(val: Room|undefined) {
+    log("setGameRoom",val)
     const oldVal = this.gameRoom;
     this.gameRoom = val;
     this.notifyOnChange("gameRoom", val, oldVal);
@@ -307,13 +454,27 @@ export class GameState {
     this.gameConnectedCode = val;
     this.notifyOnChange("gameConnectedCode", val, oldVal);
   }
-
+  
+  setGameCoinRewardGCValue(val: number) {
+    const oldVal = this.gameCoinRewardGCValue;
+    this.gameCoinRewardGCValue = val;
+    this.notifyOnChange("gameCoinRewardGCValue", val, oldVal);
+  }
+  setGameCoinRewardMCValue(val: number) {
+    const oldVal = this.gameCoinRewardMCValue;
+    this.gameCoinRewardMCValue = val;
+    this.notifyOnChange("gameCoinRewardMCValue", val, oldVal);
+  }
   setGameCoinGCValue(val: number) {
     const oldVal = this.gameCoinGCValue;
     this.gameCoinGCValue = val;
     this.notifyOnChange("gameCoinGCValue", val, oldVal);
   }
-
+  setGameCoinsCollectedEpochValue(val: number) {
+    const oldVal = this.gameCoinsCollectedEpochValue;
+    this.gameCoinsCollectedEpochValue = val;
+    this.notifyOnChange("gameCoinsCollectedEpochValue", val, oldVal);
+  }
   setGameMaterial1Value(val: number) {
     const oldVal = this.gameMaterial1Value;
     this.gameMaterial1Value = val;
@@ -369,13 +530,17 @@ export class GameState {
     const oldVal = this.screenBlockLoading;
     this.screenBlockLoading = val;
     this.notifyOnChange("screenBlockLoading", val, oldVal);
-  }
+  } 
   setGameStarted(val: boolean) {
     const oldVal = this.gameStarted;
     this.gameStarted = val;
     this.notifyOnChange("gameStarted", val, oldVal);
-  }
-  setGameConnected(val: GameConnectedStateType) {
+  } 
+  setGameConnected(val: GameConnectedStateType,calledBy?:string) {
+    log("setGameConnected",val,calledBy)
+    /*if(val == "error"){
+      debugger
+    }*/
     const oldVal = this.gameConnected;
     this.gameConnected = val;
     this.notifyOnChange("gameConnected", val, oldVal);
@@ -435,3 +600,8 @@ export function getTimeFormat(distance: number): string {
 
   return timeLeftFormatted;
 }
+
+onIdleStateChangedObservable.add(({ isIdle }) => {
+  log("Idle State change: ", isIdle)
+  GAME_STATE.isIdle = isIdle
+})

@@ -12,6 +12,7 @@ import PlayFab from "./playfab_sdk/PlayFabClientApi";
 import { GAME_STATE } from "src/state";
 import { refreshUserData } from "./login-flow";
 import { CONFIG } from "src/config";
+import { NFTUIDataPriceType } from "src/store/types";
 
 const collectCoinClip = new AudioClip("sounds/collect-coin.mp3");
 
@@ -68,6 +69,19 @@ export type CoinType = {
   visible: boolean;
   collectedBy: string;
 };
+
+
+export type RewardData = {
+  amount: number,
+  type: NFTUIDataPriceType
+  id: string
+};
+
+export type RewardNotification={
+  rewardType:string
+  newLevel:number,
+  rewards:RewardData[]
+}
 
 // getEntityByName("testCoinPlacementBlock").addComponent(
 //     new OnPointerDown(
@@ -306,7 +320,7 @@ export class SparkleManager {
 
     if (!retVal.alive) engine.addEntity(retVal);
 
-    log("spawning sparkle: ", retVal);
+    //log("spawning sparkle: ", retVal);
 
     return retVal;
   }
