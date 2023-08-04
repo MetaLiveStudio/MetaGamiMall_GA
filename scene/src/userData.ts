@@ -45,6 +45,20 @@ export async function getAndSetUserData() {
     log(data.publicKey);
     GAME_STATE.playerState.setDclUserData(data);
   }
+  return data
+}
+
+export function getAndSetUserDataSync() {
+  const data = getUserData();
+
+  data.then((userData:UserData)=>{
+    if (userData) {
+      log(userData.publicKey);
+      GAME_STATE.playerState.setDclUserData(userData);
+    }
+  })
+  
+  return data
 }
 
 // fetch the player's realm

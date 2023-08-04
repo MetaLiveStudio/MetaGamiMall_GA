@@ -13,110 +13,10 @@ import { GameLevelData as GameRoomData } from "./gamimall/resources";
 import * as clientSpec from 'src/meta-decentrally/modules/connection/state/client-state-spec'
 import { RaceData } from 'src/meta-decentrally/modules/race'
 import { TrackData } from 'src/meta-decentrally/modules/trackPlacement'
+import { GetPlayerCombinedInfoResultHelper } from "./gamimall/playfab-utils/playfabGetPlayerCombinedInfoResultHelper";
 
+ 
 
-//export const PLAYER_DATA_CACHE: Record<string,UserData|null> = {}
-
-//holds a cache of playFabUserInfo values
-//to reduce need to parse if/when unclear populated
-
-
-type StatsCache={
-  allTimeCoins:number
-}
-type VirtualCurrencyCache={
-  gc:number
-  mc:number
-  m1:number
-  m2:number
-  m3:number
-}
-
-class GetPlayerCombinedInfoResultHelper{
-  virtualCurrency: VirtualCurrencyCache
-  stats: StatsCache
-  constructor(){
-    this.reset()
-  }
-  reset(){
-    this.virtualCurrency = {
-      gc:0,
-      mc:0,
-      m1:0,
-      m2:0,
-      m3:0
-    }
-    this.stats = {
-      allTimeCoins:0
-    }
-  }
-  update(playFabUserInfo: GetPlayerCombinedInfoResultPayload){
-    
-    let mc = -1;
-    let gc = -1;
-    let vb = -1;
-
-    let m1 = -1
-    let m2 = -1
-    let m3 = -1
-    
-    if (
-      GAME_STATE.playerState.playFabUserInfo?.UserVirtualCurrency !==
-      undefined
-    ) {
-      mc = GAME_STATE.playerState.playFabUserInfo?.UserVirtualCurrency.MC;
-      gc = GAME_STATE.playerState.playFabUserInfo?.UserVirtualCurrency.GC;
-      vb = GAME_STATE.playerState.playFabUserInfo?.UserVirtualCurrency.VB;
-    }
-    if (
-      GAME_STATE.playerState.playFabUserInfo?.UserInventory !==
-      undefined
-    ) {
-      for(let p in GAME_STATE.playerState.playFabUserInfo?.UserInventory){
-        const itm = GAME_STATE.playerState.playFabUserInfo?.UserInventory[p]
-        //log("playFabUserInfo.playerInventory",p,itm)
-        switch(itm.ItemId){
-          case CONFIG.GAME_COIN_TYPE_MATERIAL_1_ID:
-            m1 = itm.RemainingUses ? itm.RemainingUses : -1
-            break;
-          case CONFIG.GAME_COIN_TYPE_MATERIAL_2_ID:
-            m2 = itm.RemainingUses ? itm.RemainingUses : -1
-            break;
-          case CONFIG.GAME_COIN_TYPE_MATERIAL_3_ID:
-            m3 = itm.RemainingUses ? itm.RemainingUses : -1
-            break;
-        }
-      }
-    }
-
-    //coinLobbyGCCounter.set(gc);
-    //coinLobbyMCCounter.set(mc);
-    //subCoinGCCounter.set(vb);
-
-    let playerStatics = GAME_STATE.playerState.playFabUserInfo?.PlayerStatistics;
-    let coinCollectingEpochStat:StatisticValue
-    if (playerStatics) {
-      for (const p in playerStatics) {
-        const stat: StatisticValue = playerStatics[p];
-        log("stat ", stat);
-        if (
-          stat.StatisticName == "coinsCollectedEpoch"
-        ) {
-          coinCollectingEpochStat = stat;
-        }
-      }
-      
-    }
-    //GAME_STATE.playerState.playFabUserInfo.PlayerStatistics
-    this.stats.allTimeCoins = coinCollectingEpochStat!==undefined ? coinCollectingEpochStat.Value : 0
-
-    this.virtualCurrency.gc = gc
-    this.virtualCurrency.mc = mc
-    this.virtualCurrency.m1 = m1
-    this.virtualCurrency.m2 = m2
-    this.virtualCurrency.m3 = m3
-  }
-}
 
 export class PlayerState {
   playerCustomID: string | null = null;
@@ -202,10 +102,15 @@ export class PlayerState {
 class LeaderboardState {
   leaderBoardStateListeners: ObservableComponentSubscription[] = [];
 
+  levelEpochLeaderboard?: PlayFabServerModels.GetLeaderboardResult;
   weeklyLeaderboard?: PlayFabServerModels.GetLeaderboardResult;
   dailyLeaderboard?: PlayFabServerModels.GetLeaderboardResult;
   hourlyLeaderboard?: PlayFabServerModels.GetLeaderboardResult;
 
+  levelEpochLeaderboardRecord: Record<
+    string,
+    PlayFabServerModels.GetLeaderboardResult
+  > = {};
   weeklyLeaderboardRecord: Record<
     string,
     PlayFabServerModels.GetLeaderboardResult
@@ -231,6 +136,19 @@ class LeaderboardState {
       this.hourlyLeaderboard = val;
     }
     this.notifyOnChange(prefix + "hourlyLeaderboard", val, oldVal);
+  }
+  
+  setLevelEpocLeaderBoard(
+    val: PlayFabServerModels.GetLeaderboardResult,
+    prefix: string = ""
+  ) {
+    const oldVal = this.levelEpochLeaderboard;
+    if (prefix && prefix !== "") {
+      this.levelEpochLeaderboardRecord[prefix] = val;
+    } else {
+      this.levelEpochLeaderboard = val;
+    }
+    this.notifyOnChange(prefix + "levelEpochLeaderboard", val, oldVal);
   }
   setWeeklyLeaderBoard(
     val: PlayFabServerModels.GetLeaderboardResult,
@@ -310,9 +228,21 @@ export type GameEndResultType = {
   mcCollectedAdjusted: number;
   mcTotalEarnedToday: number;
 
+  rock1Collected: number,
+  rock2Collected: number,
+  rock3Collected: number,
+  petroCollected: number,
+  nitroCollected: number,
+  bronzeCollected: number,
+
+  bronzeShoeCollected: number
+  
   material1Collected: number;
   material2Collected: number;
   material3Collected: number;
+
+  autoCloseEnabled: boolean;
+  autoCloseTimeoutMS: number
 
   walletTotal: number;
   gameTimeTaken: number;
@@ -356,20 +286,45 @@ export class GameState {
   gameRoomInstId: number = new Date().getTime();
   gameRoomData?: GameRoomData;
 
+  serverTime?: number;
+  playFabTime?: number;
+
   countDownTimerValue: number = 0;
   gameHudActive: boolean = false;
 
   gameCoinsCollectedEpochValue: number = 0;
+  gameCoinsCollectedDailyValue: number = 0;
   gameCoinGCValue: number = 0;
   gameCoinMCValue: number = 0;
+
+  gameCoinBPValue: number = 0;
+  gameCoinNIValue: number = 0;
+  gameCoinBZValue: number = 0;
+
+  gameCoinR1Value: number = 0;
+  gameCoinR2Value: number = 0;
+  gameCoinR3Value: number = 0;
+
   gameCoinRewardGCValue: number = 0;
   gameCoinRewardMCValue: number = 0;
+
+  gameCoinRewardNIValue: number = 0;
+  gameCoinRewardBPValue: number = 0;
+  gameCoinRewardBZValue: number = 0
+
+  gameCoinRewardR1Value: number = 0;
+  gameCoinRewardR2Value: number = 0;
+  gameCoinRewardR3Value: number = 0;
+
   gameCoinsCollectedValue: number = 0;
   gameCoinsTotalValue: number = 0;
 
   gameMaterial1Value: number = 0;
   gameMaterial2Value: number = 0;
   gameMaterial3Value: number = 0;
+
+  gameItemBronzeShoeValue: number = 0;
+  gameItemRewardBronzeShoeValue: number = 0;
 
   //TODO make more generic
   inVox8Park: boolean = false;
@@ -465,6 +420,44 @@ export class GameState {
     this.gameCoinRewardMCValue = val;
     this.notifyOnChange("gameCoinRewardMCValue", val, oldVal);
   }
+
+
+  setGameCoinRewardBPValue(val: number) {
+    const oldVal = this.gameCoinRewardBPValue;
+    this.gameCoinRewardBPValue = val;
+    this.notifyOnChange("gameCoinRewardBPValue", val, oldVal);
+  }
+  setGameCoinRewardBZValue(val: number) {
+    const oldVal = this.gameCoinRewardBZValue;
+    this.gameCoinRewardBZValue = val;
+    this.notifyOnChange("gameCoinRewardBZValue", val, oldVal);
+  }
+  setGameCoinRewardNIValue(val: number) {
+    const oldVal = this.gameCoinRewardNIValue;
+    this.gameCoinRewardNIValue = val;
+    this.notifyOnChange("gameCoinRewardNIValue", val, oldVal);
+  }
+  setGameCoinRewardR1Value(val: number) {
+    const oldVal = this.gameCoinRewardR1Value;
+    this.gameCoinRewardR1Value = val;
+    this.notifyOnChange("setGameCoinRewardR1Value", val, oldVal);
+  }
+  setGameCoinRewardR2Value(val: number) {
+    const oldVal = this.gameCoinRewardR2Value;
+    this.gameCoinRewardR2Value = val;
+    this.notifyOnChange("gameCoinRewardR2Value", val, oldVal);
+  }
+  setGameCoinRewardR3Value(val: number) {
+    const oldVal = this.gameCoinRewardR3Value;
+    this.gameCoinRewardR3Value = val;
+    this.notifyOnChange("gameCoinRewardR3Value", val, oldVal);
+  }
+  setGameItemRewardBronzeShoeValue(val: number) {
+    const oldVal = this.gameItemRewardBronzeShoeValue; 
+    this.gameItemRewardBronzeShoeValue = val;
+    this.notifyOnChange("gameItemRewardBronzeShoeValue", val, oldVal);
+  }
+   
   setGameCoinGCValue(val: number) {
     const oldVal = this.gameCoinGCValue;
     this.gameCoinGCValue = val;
@@ -475,6 +468,51 @@ export class GameState {
     this.gameCoinsCollectedEpochValue = val;
     this.notifyOnChange("gameCoinsCollectedEpochValue", val, oldVal);
   }
+  setGameCoinsCollectedDailyValue(val: number) {
+    const oldVal = this.gameCoinsCollectedDailyValue;
+    this.gameCoinsCollectedDailyValue = val;  
+    this.notifyOnChange("gameCoinsCollectedDailyValue", val, oldVal);
+  }
+
+  setGameCoinBPValue(val: number) {
+    const oldVal = this.gameCoinBPValue;
+    this.gameCoinBPValue = val;
+    this.notifyOnChange("gameCoinBPValue", val, oldVal);
+  }
+  setGameCoinNIValue(val: number) {
+    const oldVal = this.gameCoinNIValue;
+    this.gameCoinNIValue = val;
+    this.notifyOnChange("gameCoinNIValue", val, oldVal);
+  }
+  setGameCoinBZValue(val: number) {
+    const oldVal = this.gameCoinBZValue;
+    this.gameCoinBZValue = val;
+    this.notifyOnChange("gameCoinBZValue", val, oldVal);
+  }
+  
+
+  setGameCoinR1Value(val: number) {
+    const oldVal = this.gameCoinR1Value;
+    this.gameCoinR1Value = val;
+    this.notifyOnChange("gameCoinR1Value", val, oldVal);
+  }
+  setGameCoinR2Value(val: number) {
+    const oldVal = this.gameCoinR2Value;
+    this.gameCoinR2Value = val;
+    this.notifyOnChange("gameCoinR2Value", val, oldVal);
+  }
+  setGameCoinR3Value(val: number) {
+    const oldVal = this.gameCoinR3Value;
+    this.gameCoinR3Value = val;
+    this.notifyOnChange("gameCoinR3Value", val, oldVal);
+  }
+  
+  setGameItemBronzeShoeValue(val: number) {
+    const oldVal = this.gameItemBronzeShoeValue;
+    this.gameItemBronzeShoeValue = val;
+    this.notifyOnChange("gameItemBronzeShoeValue", val, oldVal);
+  }
+  
   setGameMaterial1Value(val: number) {
     const oldVal = this.gameMaterial1Value;
     this.gameMaterial1Value = val;
@@ -599,6 +637,36 @@ export function getTimeFormat(distance: number): string {
     (seconds < 10 ? "0" + seconds : seconds);
 
   return timeLeftFormatted;
+}
+
+
+export function resetAllGameStateGameCoin(){
+  
+  GAME_STATE.setGameCoinGCValue(0)
+  GAME_STATE.setGameCoinMCValue(0)
+  GAME_STATE.setGameCoinBZValue(0)
+
+  GAME_STATE.setGameCoinR1Value(0)
+  GAME_STATE.setGameCoinR2Value(0)
+  GAME_STATE.setGameCoinR3Value(0)
+
+  GAME_STATE.setGameCoinBPValue(0)
+  GAME_STATE.setGameCoinNIValue(0)
+  GAME_STATE.setGameItemBronzeShoeValue(0)
+
+}
+export function resetAllGameStateGameCoinRewards(){
+  GAME_STATE.setGameCoinRewardGCValue(0)
+  GAME_STATE.setGameCoinRewardMCValue(0)
+  GAME_STATE.setGameCoinRewardBZValue(0)
+
+  GAME_STATE.setGameCoinRewardR1Value(0)
+  GAME_STATE.setGameCoinRewardR2Value(0)
+  GAME_STATE.setGameCoinRewardR3Value(0)
+
+  GAME_STATE.setGameCoinRewardBPValue(0)
+  GAME_STATE.setGameCoinRewardNIValue(0)
+  GAME_STATE.setGameItemRewardBronzeShoeValue(0)
 }
 
 onIdleStateChangedObservable.add(({ isIdle }) => {

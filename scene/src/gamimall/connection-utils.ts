@@ -1,11 +1,13 @@
 import { GAME_STATE } from "src/state";
 import { COIN_MANAGER } from "./coin";
+import { minableController } from "./mining/minables";
 
 //remove all game elements
 export function removeGameElements() {
   log("removeGameElements ENTRY");
   //
   COIN_MANAGER.removeSpawnedCoins();
+  minableController.hideAllBlocks()
 }
 
 export function decodeConnectionCode(
@@ -49,6 +51,7 @@ export function decodeConnectionCode(
     //custom
     case 4401:
       return "Unable to authenticate your session.  Login and try again.";
+    case 4402: return "Duplicate session detected.  You may have no more than 1 session per wallet"
   }
   if (theDefault !== undefined) {
     return theDefault;

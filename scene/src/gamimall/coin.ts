@@ -22,6 +22,9 @@ collectCoinSparkle.withCollisions = false;
 export const coinShape = new GLTFShape("models/coin.glb"); // Includes the spinning animation
 coinShape.withCollisions = false;
 
+export const coinShapeBZ = new GLTFShape("models/VCNMaterials/BronzeCoin.glb"); // Includes the spinning animation
+coinShapeBZ.withCollisions = false;
+
 
 export const material1Shape = new GLTFShape("models/materialA.glb"); 
 material1Shape.withCollisions = false;
@@ -81,6 +84,7 @@ export type RewardNotification={
   rewardType:string
   newLevel:number,
   rewards:RewardData[]
+  sourceObjectId?:string //id it is linked to that gave out the reward
 }
 
 // getEntityByName("testCoinPlacementBlock").addComponent(
@@ -329,12 +333,7 @@ export class SparkleManager {
     log("preloadSparkle called");
     //DO NOT CHANGE PREFIX "block-" UNLESS YOU UPDATE SCENE SIDE TOO - caching by id
     for (let x = 0; x < qty; x++) {
-      let coinType = CONFIG.GAME_COIN_TYPE_GC;
-      let value = 1;
-      if (Math.floor(Math.random() * 2) == 1) {
-        coinType = CONFIG.GAME_COIN_TYPE_MC;
-        value = 1;
-      }
+      
       const spark = this.spawnSparkle(new Transform(transformArgs), true);
       spark.hide();
     }
@@ -487,6 +486,8 @@ export class Coin extends Entity {
       this.coinModelEntity.addComponentOrReplace(coinShapeMC);
     } else if (coinType == CONFIG.GAME_COIN_TYPE_VB) {
       this.coinModelEntity.addComponentOrReplace(coinShapeVB);
+    } else if (coinType == CONFIG.GAME_COIN_TYPE_BZ) {
+      this.coinModelEntity.addComponentOrReplace(coinShapeBZ);
     } else if (coinType == CONFIG.GAME_COIN_TYPE_MATERIAL_1) {
       this.coinModelEntity.addComponentOrReplace(material1Shape);
     } else if (coinType == CONFIG.GAME_COIN_TYPE_MATERIAL_2) {

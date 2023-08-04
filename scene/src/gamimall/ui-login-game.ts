@@ -1,6 +1,6 @@
 import * as ui from "@dcl/ui-scene-utils";
 import { CONFIG, initConfig } from "src/config";
-import { CustomPrompt } from "src/dcl-scene-ui-workaround/CustomPrompt";
+//import { CustomPrompt } from "src/dcl-scene-ui-workaround/CustomPrompt";
 import resources, { setSection } from "src/dcl-scene-ui-workaround/resources";
 import { REGISTRY } from "src/registry";
 import { GAME_STATE } from "src/state";

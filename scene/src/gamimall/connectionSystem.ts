@@ -1,5 +1,5 @@
 import { getCurrentRealm, isPreviewMode } from '@decentraland/EnvironmentAPI'
-import { connect } from './connection'
+import { connect, showConnectingEnded, showConnectingStarted } from './connection'
 //import { onConnect } from './onConnect'
 import { Room } from 'colyseus.js'
 import { CONFIG } from 'src/config'
@@ -28,6 +28,7 @@ export class ConnectSystem implements ISystem {
     }
     if(GAME_STATE.connectRetryCount > CONFIG.GAME_CONNECT_RETRY_MAX){
       log(CLASS_NAME,METHOD_NAME,"connect retry count hit max, will not try again","connectRetryCount",GAME_STATE.connectRetryCount,"CONFIG.GAME_CONNECT_RETRY_MAX",CONFIG.GAME_CONNECT_RETRY_MAX)
+      showConnectingEnded(false)
       return;
     }
     if(isNull(GAME_STATE.playerState.playFabLoginResult)){
@@ -61,6 +62,7 @@ export class ConnectSystem implements ISystem {
       return false
     } else { 
         
+      showConnectingStarted()
       GAME_STATE.connectRetryCount++
  
       currentRealm = realm.displayName
@@ -68,7 +70,7 @@ export class ConnectSystem implements ISystem {
       log(CLASS_NAME,METHOD_NAME,'CONNECTING TO default room',"connectRetryCount",GAME_STATE.connectRetryCount,"CONFIG.GAME_CONNECT_RETRY_MAX",CONFIG.GAME_CONNECT_RETRY_MAX,"GAME_STATE.gameConnected",GAME_STATE.gameConnected)
       //this is not blocking!!!! need way to know when finished or not
       startGame(); 
-
+ 
       this.connected = GAME_STATE.gameConnected === "connected"
       this.checking = false
  
@@ -84,7 +86,7 @@ export class ConnectSystem implements ISystem {
   }
 }
 
-let myConnectSystem = new ConnectSystem()
+const myConnectSystem = new ConnectSystem()
 REGISTRY.intervals.connectCheckInterval = checkInterval
 if(CONFIG.GAME_COIN_AUTO_START &&  myConnectSystem) engine.addSystem(myConnectSystem)
 

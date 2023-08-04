@@ -1,4 +1,6 @@
+import { UserData } from "@decentraland/Players";
 import { CONFIG } from "src/config";
+import { GAME_STATE } from "src/state";
 import { getAndSetUserData, getAndSetUserDataIfNull, getUserDataFromLocal } from "src/userData";
 import { isNull } from "src/utils";
 import resourcesDropin from "./resources-dropin";
@@ -21,13 +23,45 @@ import resourcesDropin from "./resources-dropin";
   export async function fetchMultiplier(){
     const METHOD_NAME = "fetchMultiplier";
     log(METHOD_NAME,"ENTRY")
+
+    
+    
     const result = await executeTask(async () => {
       let userData = await getAndSetUserDataIfNull();
+      let bronzeShoeQty = 0
+      if(GAME_STATE && GAME_STATE.playerState && GAME_STATE.playerState.playFabUserInfoHelper){
+        const inv = GAME_STATE.playerState.playFabUserInfoHelper.inventory
+        bronzeShoeQty = (inv ? inv.bronzeShoe : 0 ) + GAME_STATE.gameItemBronzeShoeValue + GAME_STATE.gameItemRewardBronzeShoeValue
+      }
+      let pairedDownCopy:UserData
+      if(userData){
+        //copy only what we need
+        pairedDownCopy = {
+          userId: userData.userId,
+          publicKey: userData.publicKey,
+          displayName: userData.displayName,
+          hasConnectedWeb3: userData.hasConnectedWeb3,
+          version: userData.version,
+          avatar:{
+            wearables: userData.avatar.wearables,
+            bodyShape:undefined,
+            eyeColor:undefined,
+            hairColor:undefined,
+            skinColor:undefined,
+            snapshots:undefined
+          }
+        }//JSON.parse(JSON.stringify(userData))
+      }
+      
+      //TODO send userData with it for end point to compute mulitplier by wearables on
       let wallet = userData !== undefined ? userData.publicKey : ""
       let response = null;
       //docs https://github.com/MetaLiveStudio/metadoge#apiwallet
       const callUrl =
-        CONFIG.CHECK_MULTIPLIER_URL + CONFIG.CHECK_MULTIPLIER_URL_OWNER_FIELD + wallet
+        CONFIG.CHECK_MULTIPLIER_URL 
+        + CONFIG.CHECK_MULTIPLIER_URL_OWNER_FIELD + wallet 
+        + CONFIG.CHECK_MULTIPLIER_URL_BRONZE_SHOE_FIELD + bronzeShoeQty 
+        + CONFIG.CHECK_MULTIPLIER_URL_USERDATA_FIELD + encodeURIComponent(JSON.stringify( pairedDownCopy ) )
  
       try {
         log(METHOD_NAME," fetch.calling " , callUrl);

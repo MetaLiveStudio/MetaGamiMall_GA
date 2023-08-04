@@ -1,12 +1,16 @@
 import * as ui from "@dcl/ui-scene-utils";
 import { CONFIG } from "src/config";
-import { CustomPrompt } from "src/dcl-scene-ui-workaround/CustomPrompt";
+//import { CustomPrompt } from "src/dcl-scene-ui-workaround/CustomPrompt";
 import resources, { setSection } from "src/dcl-scene-ui-workaround/resources";
 import { REGISTRY } from "src/registry";
 import { GameEndResultType, GAME_STATE } from "src/state";
+import { CustomOkPrompt, CustomOptionsPrompt, custUiAtlas, uiDimToNumber } from "src/ui/modals";
 import { isNull } from "src/utils";
-import { refreshUserData } from "./login-flow";
+//import { refreshUserData } from "./login-flow";
 import { RESOURCES } from "./resources";
+import atlas_mappings from "src/ui/atlas_mappings";
+import { i18n, i18nOnLanguageChangedAdd } from "src/i18n/i18n";
+import { namespaces } from "src/i18n/i18n.constants";
 
 /*
 const entity = new Entity()
@@ -16,7 +20,7 @@ entity.addComponent(new Transform({position:new Vector3(1,1,1)}))
 if(!entity.hasComponent(Animator)) entity.addComponentOrReplace(new Animator())
 entity.getComponent(Animator).addClip(new AnimationState("Run", { looping: true })))
 entity.getComponent(Animator).addClip(new AnimationState("Idle", { looping: true }))
-
+ 
 entity.getComponent(Animator).getClip("Run").play()
 
 engine.addEntity(entity)
@@ -34,6 +38,7 @@ raffleGamePrompt.addIcon("images/play-carousel-2.png",0,0,80,80)
 raffleGamePrompt.addText("Play",0,180,Color4.White(),20)
 
 */
+
 
 const SHIFTY = -30;
 const SHIFTY_TEXT = -10;
@@ -54,7 +59,7 @@ export const PROMPT_PICKER_OVERLAY_HEIGHT = 320;
 export const PROMPT_OVERLAY_OFFSET_X = 0;
 export const PROMPT_OVERLAY_OFFSET_Y = 60;
 
-export const BUTTON_POS_Y = -120; //-180
+export const BUTTON_POS_Y = -180; //-180
 
 const BANNER_SOURCE_WIDTH = 1093; //1038
 const BANNER_SOURCE_HEIGHT = 128;
@@ -72,221 +77,9 @@ let yCounter = startX;
 const gameTutorialImg = RESOURCES.textures.gameTutorialBg.src;
 const gameTutorialImgTexture = RESOURCES.textures.gameTutorialBg;
 const gameTutorialImgDesc =
-  "(1/3) Raffle Game.\nIt costs 100 LilCoins (1 MetaCash) To Play.\n Are you feeling lucky!";
+  "(1/2) Raffle Game.\nIt costs 100 LilCoins To Play.\n Are you feeling lucky!";
 
-let buttonPosY = BUTTON_POS_Y;
-
-//export const agePrompt = new CustomPrompt(CUSTOM_TEXTURE,400,300)
-export const raffleGamePrompt = new CustomPrompt(
-  RESOURCES.textures.darkThemeSemiTransparent.src,
-  PROMPT_PICKER_WIDTH,
-  PROMPT_PICKER_HEIGHT
-);
-if (CONFIG.UI_REPLACE_TEXTURE_WITH_SINGLETON)
-  raffleGamePrompt.background.source =
-    RESOURCES.textures.darkThemeSemiTransparent; //workaround to try to save textures
-setSection(raffleGamePrompt.background, resources.backgrounds.promptBackground);
-setSection(raffleGamePrompt.closeIcon, resources.icons.closeD);
-
-raffleGamePrompt.hide();
-
-raffleGamePrompt.background.positionX = PROMPT_OFFSET_X;
-raffleGamePrompt.background.positionY = PROMPT_OFFSET_Y;
-
-//why is it behind the background????
-//raffleGamePrompt.closeIcon.visible=true
-//raffleGamePrompt.closeIcon.positionX = PROMPT_OFFSET_X
-//bug where draws behind and too low. have to move it out
-raffleGamePrompt.closeIcon.positionY = 310; //310
-raffleGamePrompt.closeIcon.positionX = 280; //280
-
-//closeIcon: UIImage = new UIImage(this.background, this.texture)
-/*
-raffleGamePrompt.closeIcon = new UIImage(raffleGamePrompt.background, raffleGamePrompt.texture)
-setSection(raffleGamePrompt.closeIcon, resources.icons.closeW) 
-raffleGamePrompt.closeIcon.visible=true
-raffleGamePrompt.closeIcon.positionY = 300//310
-raffleGamePrompt.closeIcon.positionX = 270//280*/
-
-//need to override its close logic
-raffleGamePrompt.closeIcon.onClick = new OnClick(() => {
-  hideRaffleGamePrompt();
-});
-
-//        this.closeIcon.positionY = height ? height / 2 - 25 : 145
-
-//raffleGamePrompt.addText("Super Dogerio", 0, PROMPT_TITLE_HEIGHT, PROMPT_TITLE_COLOR, 30)
-
-let promptBannerImage = raffleGamePrompt.addIcon(
-  RESOURCES.textures.superDogerioBanner.src,
-  0,
-  PROMPT_TITLE_HEIGHT,
-  BANNER_SOURCE_WIDTH * BANNER_IMAGE_SCALE,
-  BANNER_SOURCE_HEIGHT * BANNER_IMAGE_SCALE,
-  { sourceHeight: BANNER_SOURCE_HEIGHT, sourceWidth: BANNER_SOURCE_WIDTH }
-);
-if (CONFIG.UI_REPLACE_TEXTURE_WITH_SINGLETON)
-  promptBannerImage.image.source = RESOURCES.textures.superDogerioBanner; //workaround to try to save textures
-
-//const pickBoxText:ui.CustomPromptText = raffleGamePrompt.addText("Collect coins, earn MetaCash have fun", 0, PROMPT_TITLE_HEIGHT-20+SHIFTY_TEXT)
-//raffleGamePrompt.addText("Collect coins, earn MetaCash", 0, PROMPT_TITLE_HEIGHT-40,undefined,10)
-
-//const eventStatusText:ui.CustomPromptText = raffleGamePrompt.addText("_Event Status_", 200, 260)
-//const timeTillNextGiveGive:ui.CustomPromptText = raffleGamePrompt.addText("_NextGiftGive_", 200, 230)
-
-const PLAYER_IMGSHOT_Y = 30; //40
-
-const backdrop_scale = 0; //16 is a little bigger bit fits tight
-const image_scale = 0; //16 is a little bigger bit fits tight
-//let gameImageBackDrop = raffleGamePrompt.addIcon('images/background.png',0,PLAYER_IMGSHOT_Y,256+backdrop_scale,256+backdrop_scale,{sourceHeight:256,sourceWidth:256})
-
-let gameImage = raffleGamePrompt.addIcon(
-  gameTutorialImg,
-  0,
-  PLAYER_IMGSHOT_Y,
-  256 + image_scale,
-  256 + image_scale,
-  { sourceHeight: 256, sourceWidth: 256 }
-);
-if (CONFIG.UI_REPLACE_TEXTURE_WITH_SINGLETON)
-  gameImage.image.source = gameTutorialImgTexture; //workaround to try to save textures
-//raffleGamePrompt.background.opacity = CONFIG.UI_BACKGROUND_OPACITY
-
-let gameImageSubTitle = raffleGamePrompt.addText(
-  gameTutorialImgDesc,
-  0,
-  PLAYER_IMGSHOT_Y,
-  Color4.White(),
-  18
-); //BUTTON_POS_Y + BUTTON_HEIGHT*1.6)
-//let gameImageSubTitleAddress = raffleGamePrompt.addText("No Player Selected", 0, BUTTON_POS_Y + BUTTON_HEIGHT*1.2)
-gameImageSubTitle.text.width = 256 + image_scale - 30;
-gameImageSubTitle.text.height = 256 + image_scale - 50;
-gameImageSubTitle.text.textWrapping = true;
-gameImageSubTitle.text.vAlign = "center";
-gameImageSubTitle.text.hAlign = "center";
-//pushes to top and to left
-//gameImageSubTitle.text.hTextAlign = 'left'
-//gameImageSubTitle.text.vTextAlign = 'top'
-//centers it completely
-gameImageSubTitle.text.hTextAlign = "center";
-gameImageSubTitle.text.vTextAlign = "center";
-
-let btnPev = raffleGamePrompt.addButton(
-  "Prev",
-  -100,
-  buttonPosY,
-  () => {
-    log("Prev");
-    nextGameImage(-1);
-  },
-  ui.ButtonStyles.E
-);
-btnPev.hide();
-
-const arrowXOffset = 200;
-
-let btnPrevImg = raffleGamePrompt.addIcon(
-  "images/ui/icons8-prev-page-64-E2-wt.png",
-  arrowXOffset * -1,
-  64 - 16,
-  64,
-  128,
-  { sourceHeight: 128, sourceWidth: 64 }
-);
-btnPrevImg.image.onClick = new OnClick(() => {
-  log("Prev");
-  nextGameImage(-1);
-});
-
-let btnNext = raffleGamePrompt.addButton(
-  "Next",
-  100,
-  buttonPosY,
-  () => {
-    log("Next");
-    nextGameImage(1);
-  },
-  ui.ButtonStyles.F
-);
-btnNext.hide();
-
-let btnNextImg = raffleGamePrompt.addIcon(
-  "images/ui/icons8-next-page-64-F2-wt.png",
-  arrowXOffset,
-  64 - 16,
-  64,
-  128,
-  { sourceHeight: 128, sourceWidth: 64 }
-);
-btnNextImg.image.onClick = new OnClick(() => {
-  log("Next");
-  nextGameImage(1);
-});
-
-Input.instance.subscribe("BUTTON_DOWN", ActionButton.PRIMARY, false, (e) => {
-  if (
-    !btnPev.image.visible &&
-    +Date.now() - raffleGamePrompt.UIOpenTime > 100
-  ) {
-    //onClick()
-    nextGameImage(-1);
-  }
-});
-//} else if (style == ButtonStyles.F) {
-Input.instance.subscribe("BUTTON_DOWN", ActionButton.SECONDARY, false, (e) => {
-  if (
-    !btnNext.image.visible &&
-    +Date.now() - raffleGamePrompt.UIOpenTime > 100
-  ) {
-    nextGameImage(1);
-  }
-});
-
-let btnSendGift = raffleGamePrompt.addButton(
-  "Play",
-  100,
-  buttonPosY - buttonHeight,
-  () => {
-    log("play");
-
-    if (isNull(GAME_STATE.playerState.playFabLoginResult)) {
-      log("player not logged in yet");
-      ui.displayAnnouncement("Player not logged in yet");
-      hideRaffleGamePrompt();
-      REGISTRY.ui.openloginGamePrompt();
-    } else {
-      showPlayResultsUI(true);
-    }
-    //start game.
-    //hideRaffleGamePrompt()
-  },
-  ui.ButtonStyles.ROUNDGOLD
-);
-
-let btnCancel = raffleGamePrompt.addButton(
-  "Cancel",
-  -100,
-  buttonPosY - buttonHeight,
-  () => {
-    log("No");
-    //raffleGamePrompt.hide()
-    hideRaffleGamePrompt();
-    ///showPickerPrompt()
-  }
-  //ui.ButtonStyles.F
-);
-/*
-const input = Input.instance
-input.subscribe("BUTTON_DOWN", ActionButton.SECONDARY, false, (e) => {
-  log("pointer Down", e)
-  nextGameImage(1)
-})
-input.subscribe("BUTTON_DOWN", ActionButton.PRIMARY, false, (e) => {
-  log("pointer Down", e)
-  nextGameImage(-1)
-})*/
-
+  
 const gameImageList: Texture[] = [
   gameTutorialImgTexture,
   gameTutorialImgTexture,
@@ -295,7 +88,7 @@ const gameImageList: Texture[] = [
   //,gameTutorialImgTexture
   //,gameTutorialImgTexture
 ];
-
+ 
 const gameImageDescList: string[] = [
   gameTutorialImgDesc,
   //,"(2/6) There are two \n kinds of tokens in \n Beta Version. \n LilCoins and MetaCash, \n 100 LilCoins = 1 MetaCash"
@@ -303,163 +96,244 @@ const gameImageDescList: string[] = [
   //,"(4/6) You can check\n your position in the \ndaily/weekly leaderboard,\n which is the right of your\n screen."
   //,"(5/6) We will hold rewards\n contests in the future,\n so get some practice and\n be ready for the rewards!!!"
   //,"(6/6) Lastly, have fun!!!\n We will keep improving \nthe experience and keep\n thinking about how to\n benefit you!!!"
-  "(2/3) Play for a chance to win up to double your bet.",
-  "(3/3) There are two kinds of tokens in beta version: LilCoins and MetaCash. 100x LilCoins = 1x MetaCash.",
+  "(2/2) Play for a chance to win up to double your bet.",
+  //"(3/3) There are two kinds of tokens in beta version: LilCoins and MetaCash. 100x LilCoins = 1x MetaCash.",
   //,"(3/6) A player can collect 100x MetaCash per day, based on UTC Time. You can check the time in the bottom right corner clock."
   //,"(4/6) You can check your ranking in the daily & weekly leaderboard, located on the right side panel."
   //,"(5/6) We will hold reward contests in the future, so start practicing and get ready for those prizes!!!"
   //,"(6/6) Lastly, have fun!!! We will keep working to improve the experience and we're constantly thinking of ways to reward our players!"
 ];
 
-let index = 0;
-function nextGameImage(dir: number) {
-  if (dir > 0) {
-    if (gameImageList.length > index + dir) {
-      index += dir;
-    } else {
-      index = 0;
+let buttonPosY = BUTTON_POS_Y;
+
+let raffleGamePrompt:CustomOptionsPrompt//ui.CustomPrompt
+let playResultsPrompt:CustomOkPrompt//ui.CustomPrompt
+let playResults:ui.CustomPromptText
+let multiplierInputBox:ui.CustomPromptTextBox
+let multEquationValueText:ui.CustomPromptText
+
+function isNumeric(str:string) {
+  if (typeof str != "string") return false // we only process strings! 
+
+  return !isNaN(parseFloat(str)) // ...and ensure strings of whitespace fail
+    //!isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
+         
+}
+
+let betMultiplier = 1
+
+function onChangeUpdateMultiplier(){
+  let val = 1
+  let valStr = "0"
+  
+  const multi = multiplierInputBox.fillInBox.value
+  
+  const minNum = 1
+  const maxNum = 10
+
+  if(isNumeric(multi) ){
+    if(
+      parseInt(multi)>=minNum
+      && parseInt(multi)<=maxNum){
+      betMultiplier = parseInt(multi)
+      val = betMultiplier * 100
+      valStr = val +""
+      multEquationValueText.text.color = Color4.White()
+    }else{
+      valStr = "Must be between \n" + minNum + "-"+ maxNum
+      multEquationValueText.text.color = Color4.Red()  
     }
-  } else {
-    if (index + dir >= 0) {
-      index += dir;
-    } else {
-      index = gameImageList.length - 1;
-    }
+  }else{
+    valStr = "Invalid Value"
+    multEquationValueText.text.color = Color4.Red()
+  }1
+  multEquationValueText.text.value = valStr
+}
+export function initUIRaffle() {
+
+  const Y_OFFSET = 50
+  try{
+
+    const endOptions = {
+      width: PROMPT_PICKER_WIDTH,
+      height: PROMPT_PICKER_HEIGHT + Y_OFFSET,
+      modalWidth: 0,
+    };
+    
+    //export const agePrompt = new CustomPrompt(CUSTOM_TEXTURE,400,300)
+    raffleGamePrompt = new CustomOptionsPrompt(
+      i18n.t("raffleTitle",{ns:namespaces.ui.raffle}),
+      i18n.t("raffleText",{ns:namespaces.ui.raffle}),
+      i18n.t("rafflePlay",{ns:namespaces.ui.raffle}),
+      "",
+      i18n.t("raffleCancel",{ns:namespaces.ui.raffle}),
+      "",
+      () => {
+        if (isNull(GAME_STATE.playerState.playFabLoginResult)) {
+          log("player not logged in yet");
+          ui.displayAnnouncement("Player not logged in yet");
+          hideRaffleGamePrompt();
+          REGISTRY.ui.openloginGamePrompt();
+        } else {
+          showPlayResultsUI(true);
+        }
+      },
+      ()=>{
+        hideRaffleGamePrompt();
+      },
+      endOptions
+    );
+    
+    raffleGamePrompt.title.text.positionY = uiDimToNumber(raffleGamePrompt.title.text.positionY) + 20;
+    
+    raffleGamePrompt.buttonConfirmBtn.image.height = BUTTON_HEIGHT
+    raffleGamePrompt.buttonSecondaryBtn.image.height = BUTTON_HEIGHT
+
+    raffleGamePrompt.buttonConfirmBtn.image.positionY = BUTTON_POS_Y//uiDimToNumber(raffleGamePrompt.buttonConfirmBtn.image.positionY) - Y_OFFSET/2;
+    raffleGamePrompt.buttonSecondaryBtn.image.positionY = BUTTON_POS_Y//uiDimToNumber(raffleGamePrompt.buttonSecondaryBtn.image.positionY) - Y_OFFSET/2;
+    
+    raffleGamePrompt.text.text.vAlign = "center";
+    raffleGamePrompt.text.text.hTextAlign = "left";
+    raffleGamePrompt.text.text.adaptHeight = true;
+    
+    const multiplierPosY = -120
+    raffleGamePrompt.prompt.addText("Multiplier",-140,multiplierPosY + 10,Color4.White(),20)
+    const multEquationText= raffleGamePrompt.prompt.addText("x 100 = ",30,multiplierPosY + 10,Color4.White(),20)
+    multEquationValueText= raffleGamePrompt.prompt.addText("100",150,multiplierPosY + 10,Color4.White(),20)
+    multEquationValueText.text.textWrapping = true
+    multEquationValueText.text.width = 130
+    multiplierInputBox = raffleGamePrompt.prompt.addTextBox(-50,multiplierPosY,betMultiplier+"",
+      ()=>{
+        onChangeUpdateMultiplier()
+      })
+    
+
+    multiplierInputBox.fillInBox.width = 50
+
+    raffleGamePrompt.hide();
+ 
+    raffleGamePrompt.prompt.background.positionX = PROMPT_OFFSET_X;
+    raffleGamePrompt.prompt.background.positionY = PROMPT_OFFSET_Y;
+
+    playResultsPrompt =  new CustomOkPrompt(
+      i18n.t("raffleResult",{ns:namespaces.ui.raffle}),
+      i18n.t("raffleLoading",{ns:namespaces.ui.raffle}),
+      i18n.t("raffleOK",{ns:namespaces.ui.raffle}),
+      () => {
+        //log('play')
+        showPlayResultsUI(false);
+        openRaffleGamePrompt()
+        //start game.
+        //hideRaffleGamePrompt()
+      }
+    );
+    /*playResultsPrompt.onShowcallback = () => {
+      playResultsPrompt.button.image.visible = false;
+      playResultsPrompt.button.label.visible = false;
+      playResultsPrompt.prompt.closeIcon.visible = false;
+    };*/
+  
+    /*playResultsPrompt.text.text.value = "Hint: Find the coins";
+    playResultsPrompt.text.text.positionY = -35
+    playResultsPrompt.text.text.height = 50
+    playResultsPrompt.text.text.vTextAlign = "center"
+    playResultsPrompt.text.text.fontSize = 17*/
+  
+    //export const startGamePrompt = new CustomPrompt(RESOURCES.textures.darkThemeSemiTransparent.src,PROMPT_PICKER_WIDTH,PROMPT_PICKER_HEIGHT)
+    
+    playResultsPrompt.hide();
+
+    
+
+    playResults = playResultsPrompt.text
+    /*playResultsPrompt.addText("....", 0, 0, Color4.White(), 18);
+    //let gameImageSubTitleAddress = startGamePrompt.addText("No Player Selected", 0, BUTTON_POS_Y + BUTTON_HEIGHT*1.2)
+    playResults.text.width = 256 + image_scale - 30;
+    playResults.text.height = 256 + image_scale - 50;
+    playResults.text.textWrapping = true;
+    playResults.text.vAlign = "center";
+    playResults.text.hAlign = "center";
+    //pushes to top and to left
+    //gameImageSubTitle.text.hTextAlign = 'left'
+    //gameImageSubTitle.text.vTextAlign = 'top'
+    //centers it completely
+    playResults.text.hTextAlign = "center";
+    playResults.text.vTextAlign = "center";*/
+
+
+    //export const loadingIcon = new ui.LoadingIcon(DEFAULT_LOAD_ICON_DURATION)
+    //loadingIcon.hide()
+
+  }catch(e){
+    
+    log("initUIRaffle","ERROR loading ",e) 
   }
-  log(
-    "index " +
-      index +
-      " dir " +
-      dir +
-      " " +
-      gameImageList.length +
-      " " +
-      (gameImageList.length < index + dir)
-  );
-  //GAME_STATE.setPickedPlayerId( gameImageList[index] )
-  gameImage.image.source = gameImageList[index];
-  gameImageSubTitle.text.value = gameImageDescList[index];
-}
 
-export function openRaffleGamePrompt() {
+  
+  REGISTRY.ui.openRaffleGamePrompt = openRaffleGamePrompt
+  REGISTRY.ui.hideRaffleGamePrompt = hideRaffleGamePrompt
+  
+}//end initUIRaffle
+
+
+
+function openRaffleGamePrompt() {
   raffleGamePrompt.show();
-
-  //FIXME making these invisible also stops them listening!?!?
-  btnNext.image.visible = false;
-  btnNext.label.visible = false;
-
-  btnPev.image.visible = false;
-  btnPev.label.visible = false;
-  //btnNext.hide()
-  //btnPev.hide()
+  multiplierInputBox.fillInBox.placeholder = betMultiplier + ""
+  multiplierInputBox.fillInBox.value = betMultiplier + ""
+  onChangeUpdateMultiplier()
 }
 
-export function hideRaffleGamePrompt() {
+
+function hideRaffleGamePrompt() {
   raffleGamePrompt.hide();
 }
 
-export const playResultsPrompt = new CustomPrompt(
-  RESOURCES.textures.darkThemeSemiTransparent.src,
-  400,
-  400
-);
-//export const startGamePrompt = new CustomPrompt(RESOURCES.textures.darkThemeSemiTransparent.src,PROMPT_PICKER_WIDTH,PROMPT_PICKER_HEIGHT)
-if (CONFIG.UI_REPLACE_TEXTURE_WITH_SINGLETON)
-  playResultsPrompt.background.source =
-    RESOURCES.textures.darkThemeSemiTransparent; //workaround to try to save textures
-setSection(
-  playResultsPrompt.background,
-  resources.backgrounds.promptBackground
-);
-setSection(playResultsPrompt.closeIcon, resources.icons.closeD);
 
-playResultsPrompt.hide();
-
-const bgicon = playResultsPrompt.addIcon(
-  RESOURCES.textures.loadingBg.src,
-  0,
-  PLAYER_IMGSHOT_Y,
-  256 + image_scale,
-  256 + image_scale,
-  { sourceHeight: 256, sourceWidth: 256 }
-);
-if (CONFIG.UI_REPLACE_TEXTURE_WITH_SINGLETON)
-  bgicon.image.source = RESOURCES.textures.loadingBg; //workaround to try to save textures
-
-//70 just above
-//30 == cursor
-const loadingText = playResultsPrompt.addText(
-  "RESULTS...",
-  0,
-  100,
-  Color4.White(),
-  22
-);
-
-const playResults = playResultsPrompt.addText("....", 0, 0, Color4.White(), 18);
-//let gameImageSubTitleAddress = startGamePrompt.addText("No Player Selected", 0, BUTTON_POS_Y + BUTTON_HEIGHT*1.2)
-playResults.text.width = 256 + image_scale - 30;
-playResults.text.height = 256 + image_scale - 50;
-playResults.text.textWrapping = true;
-playResults.text.vAlign = "center";
-playResults.text.hAlign = "center";
-//pushes to top and to left
-//gameImageSubTitle.text.hTextAlign = 'left'
-//gameImageSubTitle.text.vTextAlign = 'top'
-//centers it completely
-playResults.text.hTextAlign = "center";
-playResults.text.vTextAlign = "center";
-
-let bntClose = playResultsPrompt.addButton(
-  "OK",
-  0,
-  -150, //buttonPosY - buttonHeight,
-  () => {
-    //log('play')
-    showPlayResultsUI(false);
-    //start game.
-    //hideRaffleGamePrompt()
-  },
-  ui.ButtonStyles.ROUNDGOLD
-);
-
-//export const loadingIcon = new ui.LoadingIcon(DEFAULT_LOAD_ICON_DURATION)
-//loadingIcon.hide()
-
-export function showPlayResultsUI(val: boolean, duration?: number) {
+function showPlayResultsUI(val: boolean, duration?: number) {
   log("showLoadingUI START ", val, duration);
 
   //log("showLoadingUI  " + loadingIcon.image.visible)
 
-  playResults.text.value = "...";
+  const betText = "Bet: " + 100 * betMultiplier +"\n"
+
+  playResults.text.value = betText + "...";
 
   if (val) {
     playResultsPrompt.show();
 
+    //TODO consider moving this to the colyseus server???, keep the reward notify
     playRaffle().then((result: GameEndResultType) => {
       if (!result.raffleResult) {
         playResults.text.value = "Unexpected response";
         return;
       }
+
+
       if (!result.raffleResult.hasEnoughToPlay) {
-        playResults.text.value = "You do not have enough to play :(";
+        playResults.text.value = betText+ i18n.t("raffleNoMoney",{ns:namespaces.ui.raffle});
         return;
       }
       let refreshData = false;
       if (result.raffleResult.amountWon < 0) {
         playResults.text.value =
-          "You lost " + result.raffleResult.amountWon + " :(";
+        betText+ i18n.t("raffleLost",{ns:namespaces.ui.raffle}) + result.raffleResult.amountWon + " :(";
         refreshData = true;
       } else if (result.raffleResult.amountWon == 0) {
-        playResults.text.value = "You broke even :)";
+        playResults.text.value = betText+ i18n.t("raffleEven",{ns:namespaces.ui.raffle});
       } else {
         playResults.text.value =
-          "You won " + result.raffleResult.amountWon + " :)";
+          betText+ i18n.t("raffleWon",{ns:namespaces.ui.raffle}) + result.raffleResult.amountWon + " :)";
         refreshData = true;
       }
 
       if (refreshData) {
-        refreshUserData('raffle');
+        //need to update rewards
+        //refreshing user data with our lobby coin game will screw things up
+        GAME_STATE.setGameCoinRewardGCValue( GAME_STATE.gameCoinRewardGCValue + result.raffleResult.amountWon) 
+        //forces a refresh of stanima bar
+        GAME_STATE.setGameCoinGCValue(  GAME_STATE.gameCoinGCValue )      
+        //refreshUserData('raffle');
       }
     });
   } else {
@@ -478,9 +352,10 @@ export function showPlayResultsUI(val: boolean, duration?: number) {
   }*/
 }
 
-const customBaseUrl = CONFIG.RAFFLE_URL;
+
 export async function playRaffle(): Promise<GameEndResultType> {
   const METHOD_NAME = "playRaffle";
+  const customBaseUrl = CONFIG.RAFFLE_URL;
   const resultPromise = executeTask(async () => {
     let response = null;
     //https://us-central1-sandbox-query-blockchain.cloudfunctions.net/blockChainQueryApp/get-account-nft-balance?network=
@@ -490,9 +365,12 @@ export async function playRaffle(): Promise<GameEndResultType> {
       "?" +
       //const callUrl= customBaseUrl + '/blockChainQueryApp/hello-world?'
       "&playFabId=" +
-      GAME_STATE.playerState.playFabLoginResult?.PlayFabId + //GAME_STATE.playerState.playerPlayFabId
+      encodeURIComponent(GAME_STATE.playerState.playFabLoginResult?.PlayFabId) + //GAME_STATE.playerState.playerPlayFabId
       "&session=" +
-      GAME_STATE.playerState.playFabLoginResult?.SessionTicket +
+      encodeURIComponent(GAME_STATE.playerState.playFabLoginResult?.SessionTicket) +
+      "&betMultiplier=" + betMultiplier
+      "&titleId=" +
+      CONFIG.PLAYFAB_TITLEID +
       //+'&publicKey=' + GAME_STATE.playerState.dclUserData?.publicKey
       "&_unique=" +
       new Date().getTime();

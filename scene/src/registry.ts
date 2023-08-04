@@ -5,6 +5,7 @@ import {
   CustomClaimArgs,
   CustomOkPrompt,
   CustomOptionsPrompt,
+  InventoryPrompt,
   LevelUpPrompt,
 } from "./ui/modals";
 import {
@@ -42,6 +43,7 @@ export class Registry2dUI {
   showLoadingUI!: (val: boolean, duration?: number) => void;
   errorPrompt!: CustomOkPrompt;
   levelUpPrompt!: LevelUpPrompt
+  inventoryPrompt!: InventoryPrompt
   showErrorUI!: (
     val: boolean,
     code?: number,
@@ -69,12 +71,19 @@ export class Registry2dUI {
   hideloginGamePrompt!: () => void;
   web3ProviderRequiredPrompt!:CustomOptionsPrompt
 
+  openRaffleGamePrompt!: () => void;
+  hideRaffleGamePrompt!: () => void;
+
   createDebugUIButtons!: () => void;
 
   loginPanel!: LoginPanel;
   staminaPanel!: StaminaPanel;
   racePanel!: RacePanel;
   gameTools!: GameToolsPanel;
+
+  openLeaderboardHourly!: () => void;
+  openLeaderboardWeekly!: () => void;
+  openLeaderboardLevelEpoch!: () => void;
 }
 
 export class RegistryToggles {
@@ -90,7 +99,7 @@ type MovePlayerToType = {
 };
 export class RegistryMovePlayerTo {
   ALT_SCENE: MovePlayerToType = {
-    position: new Vector3(28, 0, 35),
+    position: new Vector3(40, 400, 52),
     cameraDir: new Vector3(40, 16, 40),
   };
 }

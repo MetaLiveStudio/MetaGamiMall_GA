@@ -27,7 +27,7 @@ const AUTH_URL: Record<string, string> = {
  // "https://decentrally-service.decentraland.net"
 
 export class Config{
-  ENV = DEFAULT_ENV
+  ENV = DEFAULT_ENV 
   
   IN_PREVIEW = false // can be used for more debugging of things, not meant to be enabled in prod
  
@@ -42,13 +42,14 @@ export class Config{
   COLYSEUS_ENDPOINT_NON_LOCAL = "see #initForEnv"; // prod environment
   //COLYSEUS_ENDPOINT = "wss://TODO"; // production environment
 
+  CLIENT_VERSION = BASE_CONFIG.CONFIG.CLIENT_VERSION; //version of client so server knows what features it can enabled
+  
   GAME_LOBBY_ROOM_NAME="custom_lobby"
   GAME_RACE_ROOM_NAME="racing_room"
 
   SEND_RACE_DATA_FREQ_MILLIS = 1000 /10 // doing 13 times a second or 76ms (100 or less is considered acceptable for gaming). best i could get locally was ~60ms
   ENTER_CAR_CHECK_FREQ_MILLIS = 1000 /6 //x times a second, not sure that is needed, but incase they jump out
   RACE_RANK_SORT_FREQ_MILLIS = 1000 /6 //6 times a second
-
 
   GROUND_THICKNESS = .3
   showInivisibleGroundColliders = false
@@ -71,6 +72,24 @@ export class Config{
   GAME_COIN_TYPE_GC = BASE_CONFIG.CONFIG.GAME_COIN_TYPE_GC
   GAME_COIN_TYPE_MC = BASE_CONFIG.CONFIG.GAME_COIN_TYPE_MC
 
+  GAME_COIN_TYPE_R1 = BASE_CONFIG.CONFIG.GAME_COIN_TYPE_R1
+  GAME_COIN_TYPE_R2 = BASE_CONFIG.CONFIG.GAME_COIN_TYPE_R2
+  GAME_COIN_TYPE_R3 = BASE_CONFIG.CONFIG.GAME_COIN_TYPE_R3
+  GAME_COIN_TYPE_BZ = BASE_CONFIG.CONFIG.GAME_COIN_TYPE_BZ
+  GAME_COIN_TYPE_NI = BASE_CONFIG.CONFIG.GAME_COIN_TYPE_NI
+  GAME_COIN_TYPE_BP = BASE_CONFIG.CONFIG.GAME_COIN_TYPE_BP
+  /*
+  GAME_COIN_TYPE_MATERIAL_1="M1"
+  GAME_COIN_TYPE_MATERIAL_2="M2"
+  GAME_COIN_TYPE_MATERIAL_3="M3"*/
+
+  GAME_COIN_TYPE_BRONZE_SHOE_1=BASE_CONFIG.CONFIG.GAME_COIN_TYPE_BRONZE_SHOE_1
+  GAME_COIN_TYPE_BRONZE_SHOE_1_ID=BASE_CONFIG.CONFIG.GAME_COIN_TYPE_BRONZE_SHOE_1_ID
+  /*
+  GAME_COIN_TYPE_MATERIAL_1_ID="Material.1" 
+  GAME_COIN_TYPE_MATERIAL_2_ID="Material.2"
+  GAME_COIN_TYPE_MATERIAL_3_ID="Material.3"*/
+
   TRACK_FEATURE_SLOW_DOWN_RESPAWN = 30000 //long time
   TRACK_FEATURE_DEFAULT_RESPAWN = 3000 //short
 
@@ -83,6 +102,8 @@ export class Config{
   BOOSTERS_COOLDOWN_MS = 100
   BOOSTERS_RELOAD_TIME = 3  //unit in seconds
   BOOSTERS_MAX_RELOAD_AMOUNT = 3
+
+  DECENTRALLY_ENABLED = false //enables decentrally features
 
   //with how we compute latency do we need to fudge it anymore?
   //with avg latancey of ~160ms a value of 50 was about 1.5 car lengths behind real so trying 99
@@ -103,6 +124,10 @@ export class Config{
   MAX_DRIVE_BACKWARDS_DIST_SQRED = Math.pow(8,2)
   
   GAME_SHOW_LEVEL_UP_DURING_RACE_ENABLED = false
+
+  GAME_MINABLES_ENABLED = BASE_CONFIG.CONFIG.GAME_MINABLES_ENABLED
+  GAME_RACING_BP_NI_VC_ENABLED = BASE_CONFIG.CONFIG.GAME_RACING_BP_NI_VC_ENABLED
+  
 
   ENABLE_DEBUGGER_BREAK_POINTS = true //change to false to force all debugger break points to off
  

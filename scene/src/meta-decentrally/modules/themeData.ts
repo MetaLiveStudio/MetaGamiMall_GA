@@ -18,6 +18,8 @@ export class ThemeTrackFeatures {
     trap: ThemeTrackFeature
     coinGc: ThemeTrackFeature
     coinMc: ThemeTrackFeature
+    coinBp: ThemeTrackFeature
+    coinNi: ThemeTrackFeature
     materialA: ThemeTrackFeature
 }
 
@@ -72,6 +74,20 @@ export class ThemeController {
                         , animationData: { enabled:false, loop:false, idle: "idle", activate: "activate" }
                         , activateTime: 0 //now
                         },
+            coinBp:  {
+                shape: getOrCreateGLTFShape('models/VCNMaterials/Petrol.glb')
+                ,transform:new Transform({scale:new Vector3(.4,.4,.4),position:new Vector3(0,.3,0)})
+                ,triggerSize: new Vector3(.5,2,.5)
+                , animationData: { enabled:false, loop:false, idle: "petrolAction", activate: "activate" }
+                , activateTime: 0 //now    
+                },
+            coinNi:  { 
+                shape: getOrCreateGLTFShape('models/VCNMaterials/Nitro.glb')
+                ,transform:new Transform({scale:new Vector3(.35,.35,.35),position:new Vector3(0,.2,0)})
+                ,triggerSize: new Vector3(.5,2,.5)
+                , animationData: { enabled:false, loop:false, idle: "Take 001", activate: "activate" }
+                , activateTime: 0 //now
+                },
             materialA:  {
                 shape: getOrCreateGLTFShape('models/materialA.glb')
                 ,transform:new Transform({scale:new Vector3(.5,.5,.5),position:new Vector3(0,.6,0)})

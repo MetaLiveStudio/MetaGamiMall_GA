@@ -517,18 +517,30 @@ export class RacingScene extends SubScene{
       //GAME_STATE.raceData.maxPlayers
 
       const raceDataOptions:RaceDataOptions = {
-        levelId:GAME_STATE.raceData.id
+        levelId:GAME_STATE.raceData.id,
+        featureDefinition: {
+          features: [
+              { type: "boost",enabled:true }, { type: "slow-down",enabled:true },
+             /* { type: "coin-gc" ,spawnAmount: [3,5], spawnPercentage: [.7,.9],enabled:true}, 
+              { type: "coin-gc" ,spawnAmount: [3,5], spawnPercentage: [.7,.9],enabled:true}, //add multi times for more weight
+              { type: "coin-gc" ,spawnAmount: [3,5], spawnPercentage: [.7,.9],enabled:true}, //add multi times for more weight
+              { type: "coin-mc",enabled:true} ,
+              { type: "coin-bp",enabled: CONFIG.GAME_RACING_BP_NI_VC_ENABLED} ,  
+              { type: "coin-ni",enabled: CONFIG.GAME_RACING_BP_NI_VC_ENABLED}  */
+          ]  
+        }
         /*,name:GAME_STATE.raceData.name
         ,maxLaps:GAME_STATE.raceData.maxLaps
         ,maxPlayers:GAME_STATE.raceData.maxPlayers*/}
 
-
+        
 
         //FIXME
         //does not support nested objects so going to pass it twice for now
         //as the "flattened value. using dot notation so there is parity"
         raceDataOptions
         const connectOptions = {
+          clientVersion: CONFIG.CLIENT_VERSION,
           raceDataOptions: raceDataOptions,
           "env": CONFIG.ENV,
           "titleId": CONFIG.PLAYFAB_TITLEID,

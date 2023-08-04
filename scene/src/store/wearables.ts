@@ -18,6 +18,8 @@ import { buyVC } from "./blockchain/index";
 import { isNull } from "src/utils";
 import { GAME_STATE } from "src/state";
 import { REGISTRY } from "src/registry";
+import { _scene2 } from "src/nft-frames";
+import { CONFIG } from "src/config";
 
 log("createWearableLinks start");
 
@@ -42,6 +44,118 @@ export async function createWearableLink(arg: WearableBoothArgs) {
   //}
   engine.addEntity(featureEntity);
   featureEntity.setParent(ent);
+
+
+  if(options.featuredEntityData !== undefined){
+    const cardData = options.featuredEntityData
+
+    if(cardData.lazyLoading !== undefined && cardData.lazyLoading.enabled !== undefined && cardData.lazyLoading.enabled == true){
+
+
+      //const hasPlaceHolderEntity = cardData.lazyLoading.placeHolderShape !== undefined && cardData.lazyLoading.placeHolderShape == true
+      const triggerDebugEnabled = cardData.lazyLoading.trigger.debugEnabled !== undefined && cardData.lazyLoading.trigger.debugEnabled == true
+      const triggerDebugUIEnabled = cardData.lazyLoading.debugEnabled !== undefined && cardData.lazyLoading.debugEnabled == true
+       
+      let featureEntityPlaceHolder:Entity
+      let triggerEnt:Entity
+      let triggerDebugEnt: Entity
+
+
+      if(cardData.lazyLoading.placeHolder !== undefined && cardData.lazyLoading.placeHolder.enabled !== undefined && cardData.lazyLoading.placeHolder.enabled == true){
+        let featurePlaceHolderShape 
+        if (
+          cardData.lazyLoading.placeHolder.shapeName !== undefined &&
+          cardData.lazyLoading.placeHolder.shapeName !== "cube-invisible" &&
+          cardData.lazyLoading.placeHolder.shapeName !== "cube" &&
+          cardData.lazyLoading.placeHolder.shapeName !== "cylinder"
+        ) {
+          featurePlaceHolderShape = new GLTFShape( cardData.lazyLoading.placeHolder.shapeName );
+        } else if(cardData.lazyLoading.placeHolder.shapeName === "cylinder"){
+          featurePlaceHolderShape = new CylinderShape();
+        } else {
+          featurePlaceHolderShape = new BoxShape();
+        }
+        featureEntityPlaceHolder = new Entity(ent.name + "-feature.placeholder-");
+        //if(options.featureEntData && options.featureEntData.transform){
+        //featureEntity.addComponent(new Transform(options.featureEntData.transform))
+        //}else{
+
+          featureEntityPlaceHolder.addComponent(new Transform({
+            position: cardData.lazyLoading.placeHolder.position !== undefined ? cardData.lazyLoading.placeHolder.position : Vector3.Zero()
+          }));
+          featureEntityPlaceHolder.addComponent(featurePlaceHolderShape)
+        //}
+        engine.addEntity(featureEntityPlaceHolder);
+
+        if(cardData.lazyLoading.placeHolder.positionType ==='featureEnt.parent'){
+          featureEntityPlaceHolder.setParent(ent.getParent())
+        }else if( cardData.lazyLoading.placeHolder.positionType ==='featureEnt'){
+          featureEntityPlaceHolder.setParent(ent);
+        }else if( cardData.lazyLoading.placeHolder.positionType ==='absolute'){
+          
+        }
+        //
+        //engine.removeEntity(featureEntityPlaceHolder)
+      }
+
+      const triggerComp = new utils.TriggerComponent(
+        new utils.TriggerSphereShape(
+          cardData.lazyLoading.trigger.size.x,
+          cardData.lazyLoading.trigger.position,
+        ),
+        {
+          enableDebug: triggerDebugEnabled,
+          onCameraEnter: () => {
+            engine.addEntity(featureEntity)   
+            if(triggerDebugEnt !== undefined) engine.addEntity(triggerDebugEnt)         
+            if(featureEntityPlaceHolder !== undefined) engine.removeEntity(featureEntityPlaceHolder)      
+          },
+          onCameraExit: () => {
+            engine.removeEntity(featureEntity) 
+            if(triggerDebugEnt !== undefined) engine.removeEntity(triggerDebugEnt)      
+            if(featureEntityPlaceHolder !== undefined) engine.addEntity(featureEntityPlaceHolder)         
+          }
+        }
+      )
+      
+      if(cardData.lazyLoading.trigger.positionType ==='featureEnt.parent'){
+        triggerEnt = new Entity()
+        triggerEnt.addComponent(triggerComp)
+        engine.addEntity(triggerEnt)
+        triggerEnt.setParent(ent.getParent())
+      }else if( cardData.lazyLoading.trigger.positionType ==='featureEnt'){
+        triggerEnt = new Entity()
+        triggerEnt.addComponent(triggerComp)
+        engine.addEntity(triggerEnt)
+        triggerEnt.setParent(ent)
+      }else if( cardData.lazyLoading.trigger.positionType ==='absolute'){
+        triggerEnt = new Entity()
+        triggerEnt.addComponent(triggerComp)
+        
+        triggerEnt.addComponent(new OnPointerDown(()=>{},{
+          hoverText: cardData.shapeName + "\ndebug trigger ent for"
+        }))
+        engine.addEntity(triggerEnt)
+      }
+
+      if(triggerEnt !== undefined){
+        if(triggerDebugUIEnabled){
+          triggerDebugEnt = new Entity()
+          triggerDebugEnt.addComponent(new BoxShape()).withCollisions=false
+          triggerDebugEnt.addComponent( new Transform(
+            {position:cardData.lazyLoading.trigger.position.add(new Vector3(0,1,0)) }
+          )) 
+          //engine.addEntity(triggerDebugEnt)//
+          //triggerDebugEnt.setParent(triggerEnt)
+        
+        
+        }
+      }
+
+      engine.removeEntity(featureEntity)   
+    }//end lazy loading trigger
+    
+  }
 
   if (resourcesDropin.featureToggles.enableOverheadLabels) {
     let debugEnt = new Entity();
@@ -233,7 +347,9 @@ export class WearableBoothManager {
               coins:"x 3000",
               dollars:"x 1000"*/
 
-
+              if(CONFIG.STORE_WEARABLES_ON_OPEN_CLAIM_PROMPT_DO_SAVE){
+                if(GAME_STATE.gameRoom) GAME_STATE.gameRoom.send("save-game",{})
+              }
               REGISTRY.ui.updateRewardPrompt({
                 imagePath: args.options.nftUIData.image,
                 subtitle: args.options.nftUIData.detailsInfo,

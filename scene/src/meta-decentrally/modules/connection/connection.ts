@@ -32,7 +32,8 @@ export async function connect(roomName: string, options: any = {}) {
     //realm?.displayName;
     
     options.realm = await getCurrentRealm();
-    options.userData = await getUserData();
+    const userData = await getUserData();
+    options.userData = userData
 
     options.playFabData = {"titleId":CONFIG.PLAYFAB_TITLEID,"id":GAME_STATE.playerState.playFabLoginResult?.PlayFabId,"sessionTicket":GAME_STATE.playerState.playFabLoginResult?.SessionTicket}
  
@@ -218,6 +219,7 @@ function updateConnectionGame(room: Room,eventName:string) {
 
         if(!isErrorCode(code)){ 
             onGameLeaveDisconnect(room,code)
+            disconnect()//needed?
         }else if(GAME_STATE.gameRoom){
             //wait 500 ms for playfab scores to sync
             log("will attempt reconnect shortly")
@@ -234,6 +236,7 @@ function updateConnectionGame(room: Room,eventName:string) {
                     log(instance,".room.event.leave. reconnect failed",err,code);
                     error(err);
                     onGameLeaveDisconnect(room,code,err.message)
+                    disconnect()//needed?
                 }); 
             //})
         }

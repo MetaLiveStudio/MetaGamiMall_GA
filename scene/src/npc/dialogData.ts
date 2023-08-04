@@ -4,6 +4,8 @@ import { getEntityByName, getEntityByRegex } from "../utils";
 import { Dialog } from '@dcl/npc-scene-utils'
 //import { alice, bob, doge } from './npcBuilder'
 import { NPC_INSTANCES } from "./npcConstants";
+import { i18n, i18nOnLanguageChangedAdd } from "src/i18n/i18n";
+import { namespaces } from "src/i18n/i18n.constants";
 
 export const NPC_DEFAULT_DIALOG: { [key: string]: string } = {};
 NPC_DEFAULT_DIALOG["alice"] = "";
@@ -41,11 +43,11 @@ function movePlayerToEntity(target: string, lookTarget: string) {
 export const AliceDialog: Dialog[] = [
   {
     //0
-    text: "Hello.  I am your personal teleporter and guide to Meta GamiMall.",
+    text: i18n.t("m2dmsg1",{ns:namespaces.pages.npc}),
     skipable: false,
   },
   {
-    text: "Hey, Welcome to MetaGamiMall!!! ",
+    text: i18n.t("m2dWelcome",{ns:namespaces.pages.npc}),
     skipable: false,
     triggeredByNext: () => {
       NPC_DEFAULT_DIALOG["alice"] = "how-may-i-help";
@@ -53,7 +55,7 @@ export const AliceDialog: Dialog[] = [
   },
   {
     name: "how-may-i-help",
-    text: "How may I help? ",
+    text: i18n.t("m2dHelp",{ns:namespaces.pages.npc}),
     isQuestion: true,
     buttons: [
       { label: "Teleport", goToDialog: "i-want-to-teleport" },
@@ -320,37 +322,9 @@ export const moondogeMoonwalkDialog: Dialog[] = [
 
 export const lilDogeDialog: Dialog[] = [
   {
-    text: "Hi, Welcome to the MetaMine!!! I am your host, MetaDoge.\nIf you are looking for Mr.SWE DJ show, please turn left, walk to the teleporter, click it, you will be there in a few seconds",
-    skipable: false,
-  },
-  {
-    text: "MetaMine is a gamified event joined by 23 brands, they are sepreated into 3 tiers, Premium, Gold and Silver", 
-    skipable: false,
-  },  
-  {
-    text: " ande ALL of them have provided exclusive wearables for you to claim. There a cyber suit wearable that is made of 4 different wearables, offered by Decentraland, Decentral Game, Hahskey Dx and Galxe", 
-    skipable: false,
-  },  
-  {
-    text: "In order to claim, you need to check how many coins needed by clikcing the wearables that you want to claim and check the price",
-    skipable: false,
-  },
-  {
-    text: "For example, you can try with the doge head wearable beside me, you can close it by clicking the black cross sign in the right top corner",
-    skipable: false,
-  },
-  {
-    text: "Next, you need to collect coins that you can find in the scene by touching them",
-    skipable: false,
-  },
-  {
-    text: "finally, you need to come back to the wearable, click the wearable, and then click claim, after a few seconds, the wearable will come to your wallet address and you can see in your bagpack!!!",
-    skipable: false,
-  },
-  {
-  text: "Lastly, feel free to check this amazing Doge head wearable, it can let you collect coins 3% faster in MetaMine (In the future). Be quick, it will run out soon!!!",
-  isEndOfDialog: true,
-  },
+    text: "Welcome to Meta GamiMall exchange center!!! Here, you can exchange coins to other materials!",
+    skipable: true,
+  }
 ];
 
 export const lilDogeDialog2: Dialog[] = [

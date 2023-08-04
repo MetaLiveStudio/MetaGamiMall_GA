@@ -437,7 +437,7 @@ export function addRobots() {
   lilDogeNpc = new NPC(
     {
       position: getNpcPosition("npcPlaceHolder2", lilDogeStartPosition),
-      rotation: adjustForSceneRotation(Quaternion.Euler(0, 290, 0)),
+      rotation: adjustForSceneRotation(Quaternion.Euler(0, 0, 0)),
       scale: new Vector3(1.5, 1.5, 1.5),
     },
     "models/robots/LilDoge_Waving-name_wc.glb",

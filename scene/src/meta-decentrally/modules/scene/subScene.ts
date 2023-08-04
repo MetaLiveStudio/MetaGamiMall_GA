@@ -325,7 +325,7 @@ export class SubScene {
 
     //engine.addEntity(this)
 
-    
+    this.name = name
     this.id = id
     this.entities = entities
   

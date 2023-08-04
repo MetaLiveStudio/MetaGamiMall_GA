@@ -1,6 +1,6 @@
 import * as ui from "@dcl/ui-scene-utils";
 import { CONFIG, initConfig } from "src/config";
-import { CustomPrompt } from "src/dcl-scene-ui-workaround/CustomPrompt";
+//import { CustomPrompt } from "src/dcl-scene-ui-workaround/CustomPrompt";
 import resources, { setSection } from "src/dcl-scene-ui-workaround/resources";
 import { logChangeListenerEntry } from "src/logging";
 import { REGISTRY } from "src/registry";
@@ -12,6 +12,7 @@ import {
   CustomClaimPrompt,
   CustomOptionsPrompt,
   CustomRewardPrompt,
+  InventoryPrompt,
   LevelUpPrompt,
 } from "src/ui/modals";
 
@@ -156,6 +157,13 @@ const endGameOfPrompt20 = new CustomRewardPrompt("End Current Game","End Current
     title: "HIHGHLIGHTS",
     coins: "x 3000",
     dollars: "x 1000",
+    rock1:"x r1",
+    rock2:"x r2",
+    rock3:"x r3",
+    bronze:"x bz1",
+    bronzeShoe:"x shoe",
+    nitro:"x nit",
+    petro:"x p1",
     itemQtyCurrent: 23,
     itemQtyTotal:100,
     options: rewardOpts,
@@ -172,6 +180,15 @@ const endGameOfPrompt20 = new CustomRewardPrompt("End Current Game","End Current
     title: "HIHGHLIGHTS",
     coins: "x 99",
     dollars: "x 199",
+    rock1:"x r1a",
+    rock2:"x r2a",
+    rock3:"x r3a",
+
+    bronze:"x bz1",
+    bronzeShoe:"x shoe",
+
+    nitro:"x nita",
+    petro:"x p1a",
     itemQtyCurrent: 3,
     itemQtyTotal:100,
     options: rewardOpts,
@@ -185,6 +202,34 @@ const endGameOfPrompt20 = new CustomRewardPrompt("End Current Game","End Current
   levelUpPrompt.updateDollar("3")
   levelUpPrompt.hide()
   REGISTRY.ui.levelUpPrompt = levelUpPrompt;
+
+  
+
+  const inventoryPrompt = new InventoryPrompt("Inventory","inventory text","OK",()=>{
+    log("ok clicked")
+  })
+
+  inventoryPrompt.updateCoins("1000000")
+  inventoryPrompt.updateDollar("3")
+  
+
+  inventoryPrompt.updateMaterial1("4")
+  inventoryPrompt.updateMaterial2("5")
+  inventoryPrompt.updateMaterial3("6")
+
+  inventoryPrompt.updateRock1("11")
+  inventoryPrompt.updateRock2("12")
+  inventoryPrompt.updateRock3("13")
+
+  inventoryPrompt.updateBronze("14bz")
+  inventoryPrompt.updateBronzeShoe("shoe")
+
+  inventoryPrompt.updateNitro("14n")
+  inventoryPrompt.updatePetro("15")
+
+  //inventoryPrompt.show()
+  
+  REGISTRY.ui.inventoryPrompt = inventoryPrompt;
 
   const endGamePrompt20 = new CustomRewardPrompt(
     "Congratulations",
@@ -201,11 +246,13 @@ const endGameOfPrompt20 = new CustomRewardPrompt("End Current Game","End Current
       height: 430,
     }
   );
+  endGamePrompt20.autoCloseEnabled = true
+  endGamePrompt20.autoCloseTimeoutMS = 5000
   //endGamePrompt20.show()
   REGISTRY.ui.endGameConfirmPrompt = endGameConfirmPrompt20;
 
   function openClaimRewardPrompt() {
-    claimRewardPrompt20.show();
+    claimRewardPrompt20.show(); 
   }
   function hideClaimRewardPrompt() {
     claimRewardPrompt20.hide();
@@ -292,6 +339,18 @@ const endGameOfPrompt20 = new CustomRewardPrompt("End Current Game","End Current
           let m2 = makeRowText(endGameResult.material2Collected,CONFIG.GAME_COIN_TYPE_MATERIAL_1,undefined,minValToShow,textWhenBelowMin)
           let m3 = makeRowText(endGameResult.material3Collected,CONFIG.GAME_COIN_TYPE_MATERIAL_1,undefined,minValToShow,textWhenBelowMin)
 
+          let rock1 = makeRowText(endGameResult.rock1Collected,CONFIG.GAME_COIN_TYPE_R1,undefined,minValToShow,textWhenBelowMin)
+          let rock2 = makeRowText(endGameResult.rock2Collected,CONFIG.GAME_COIN_TYPE_R2,undefined,minValToShow,textWhenBelowMin)
+          let rock3 = makeRowText(endGameResult.rock3Collected,CONFIG.GAME_COIN_TYPE_R3,undefined,minValToShow,textWhenBelowMin)
+          
+          let bronze = makeRowText(endGameResult.bronzeCollected,CONFIG.GAME_COIN_TYPE_BZ,undefined,minValToShow,textWhenBelowMin)
+
+          let bronzeShoe = makeRowText(endGameResult.bronzeShoeCollected,CONFIG.GAME_COIN_TYPE_BRONZE_SHOE_1,undefined,minValToShow,textWhenBelowMin)
+
+          let nitro = makeRowText(endGameResult.nitroCollected,CONFIG.GAME_COIN_TYPE_NI,undefined,minValToShow,textWhenBelowMin)
+          let petrol = makeRowText(endGameResult.petroCollected,CONFIG.GAME_COIN_TYPE_BP,undefined,minValToShow,textWhenBelowMin)
+          
+
 
           let txtD = makeRowText(endGameResult.mcCollected , " MetaCash",undefined,minValToShow,textWhenBelowMin);
           //todo add gcBonusEarned to it???
@@ -316,9 +375,24 @@ const endGameOfPrompt20 = new CustomRewardPrompt("End Current Game","End Current
             //txtEarned = "+" + 0 + " LilCoin Bonus";
             //resultGameCoinEarnedText.text.value = txtEarned;
           }
+
+          endGamePrompt20.autoCloseEnabled = endGameResult.autoCloseEnabled;
+          endGamePrompt20.autoCloseTimeoutMS = endGameResult.autoCloseTimeoutMS;
+
           endGamePrompt20.updateCoinsEarned(txtEarned);
           endGamePrompt20.updateCoins(txtC);
           endGamePrompt20.updateDollar(txtD);
+
+          endGamePrompt20.updateRock1(rock1);
+          endGamePrompt20.updateRock2(rock2);
+          endGamePrompt20.updateRock3(rock3);
+
+          
+          endGamePrompt20.updateBronze(bronze);
+          endGamePrompt20.updateBronzeShoe(bronzeShoe);
+
+          endGamePrompt20.updateNitro(nitro);
+          endGamePrompt20.updatePetro(petrol);
 
           endGamePrompt20.updateMaterial1(m1);
           endGamePrompt20.updateMaterial2(m2);
@@ -349,9 +423,18 @@ const endGameOfPrompt20 = new CustomRewardPrompt("End Current Game","End Current
     coinMultiplier: 1,
     gcBonusEarned: 0,
     guestCoinName: "",
+    rock1Collected: 11,
+    rock2Collected: 12,
+    rock3Collected: 13,
+    petroCollected: 14,
+    nitroCollected: 15,
+    bronzeCollected: 14.4,
+    bronzeShoeCollected: 14.6,
     material1Collected: 4,
     material2Collected: 5,
     material3Collected: 6,
+    autoCloseEnabled: true,
+    autoCloseTimeoutMS: 5000,
     raffleResult: {
       cost: 0,
       amountWon: 0,

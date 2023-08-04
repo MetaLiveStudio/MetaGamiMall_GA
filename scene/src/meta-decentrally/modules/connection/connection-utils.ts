@@ -24,6 +24,7 @@ export function decodeConnectionCode(code: number,theDefault?:string):string {
      
       //custom
       case 4401: return "Unable to authenticate your session.  Login and try again."
+      case 4402: return "Duplicate session detected.  You may have no more than 1 session per wallet"
     }
     if(theDefault!==undefined){
       return theDefault
