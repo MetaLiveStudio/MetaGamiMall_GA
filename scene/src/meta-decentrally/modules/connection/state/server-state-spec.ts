@@ -99,7 +99,21 @@ export interface LevelDataState{
 }
 
 
-export type TrackFeatureType='boost'|'slow-down'|'inert'|'wall'|'coin-gc'|'coin-mc'|'material-a'
+export type TrackFeatureType='boost'|'slow-down'|'inert'|'wall'|'coin-gc'|'coin-mc'|'material-a'| "coin-ni" | "coin-bp"
+
+
+export type TrackFeatureDef = {
+  featureDensity?: number; //default features.length + 5 (~9); determines how likly an item is spawned;bigger the number, less dense it will be, 1 will be 1 segement
+  features: TrackFeatureInstDef[];
+};
+
+export type TrackFeatureInstDef = {
+  type: TrackFeatureType;
+  enabled?: boolean; //defaults true
+  spawnAmount?: number[]; //default 2, if decides to spawn, spawn will be between 1-spawnAmount (randomly picked)
+  spawnPercentage?: number[]; //default .5. if decided to spawn (see featureDensity) it is the (0-1 probability to spawn it
+  maxXCloseness?: number; //default .3 if spawning more than 1, how close together can they get
+};
 
 export function getTrackFeatureType(str:string){
   return str as TrackFeatureType
@@ -183,6 +197,7 @@ export interface RaceDataOptions{
   maxLaps?:number
   maxPlayers?:number
   customRoomId?:string
+  featureDefinition?: TrackFeatureDef;
 }
 
 export interface EnrollmentState extends ClockState{
@@ -213,3 +228,35 @@ export interface PlayerInventoryState{
 
   container1Count: number;
 }
+
+
+//MOVE TO SHARABLE FILE START
+export type CoinSpawnDef={
+  min:number
+  max:number
+  percent?:number//when want a percentage amount
+  amount?:number//when want a specific amount
+}
+export type RemoteCoinSpawnDef={
+  type:string
+  id:string
+  spawnDef:CoinSpawnDef
+}
+
+export type RemoteBaseCoinRoomConfig={
+  items:{
+    notes:string
+    defaultSpawnFrequency:number
+    spawnFrequency:RemoteCoinSpawnDef[]
+  },
+  saveInterval:{
+    notes:string
+    value:number
+  },
+  coinCap:{
+    notes:string
+    enabled:boolean
+    overageReduction:number
+  }
+}
+//MOVE TO SHARABLE FILE END

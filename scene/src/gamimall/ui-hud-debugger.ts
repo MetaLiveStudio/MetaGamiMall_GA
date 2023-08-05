@@ -23,9 +23,13 @@ import {
   resetLoginState,
 } from "./login-flow";
 //import { loadingPrompt, showLoadingUI } from './ui-game-hud'
-import { getAndSetUserData, getAndSetUserDataIfNull, getUserDataFromLocal } from "src/userData";
+import { getAndSetUserData, getAndSetUserDataIfNull, getAndSetUserDataSync, getUserDataFromLocal } from "src/userData";
 import { REGISTRY } from "src/registry";
 import { SceneNames } from "src/modules/sceneMgmt/scenes/sceneNames";
+import { UserData } from "@decentraland/Identity";
+import { CheckMultiplierResultType, fetchMultiplier } from "src/store/fetch-utils";
+import { i18n } from "src/i18n/i18n";
+import { languages } from "src/i18n/i18n.constants";
 
 const textFont = new Font(Fonts.SansSerif);
 
@@ -362,10 +366,19 @@ buttonPosCounter += buttomWidth //next column
         guestCoinName: "test",
         coinMultiplier: 1.1,
         gcBonusEarned: 9,
-
+        rock1Collected: 11,
+        rock2Collected: 12,
+        rock3Collected: 13,
+        petroCollected: 14,
+        nitroCollected: 15,
+        bronzeCollected: 14.4,
+        bronzeShoeCollected: 14.8,
         material1Collected: 3,
         material2Collected: 4,
         material3Collected: 5,
+
+        autoCloseEnabled: false,
+        autoCloseTimeoutMS: undefined,
 
         //todo check default values
         raffleResult: {
@@ -416,21 +429,7 @@ buttonPosCounter += buttomWidth //next column
 
   buttonPosCounter += buttomWidth; //next column
 
-  const testIncCoinsLevels = (testButton = testControls.addButton(
-    "Inc:LvlgCoins",
-    buttonPosCounter,
-    buttonPosY,
-    () => {
-      REGISTRY.ui.staminaPanel.updateAllTimeCoins( REGISTRY.ui.staminaPanel.allTimeCoins + 1000)
-    },
-    ui.ButtonStyles.RED
-  ));
-  if (changeButtomWidth > 0) testButton.image.width = changeButtomWidth;
-  if (changeButtomHeight > 0) testButton.image.height = changeButtomHeight;
-
-  buttonPosCounter += buttomWidth; //next column
-
-
+  
 
   const test = (testButton = testControls.addButton(
     "Tgl:Bars",
@@ -471,25 +470,77 @@ buttonPosCounter += buttomWidth //next column
 
 
   if (gameSceneManager.activeSceneName === SceneNames.alternativeScene){
-  const scnSwpBtn = (testButton = testControls.addButton(
-    "Tgl:ScnSwp:" + gameSceneManager.activeScene.sceneName.substr(0, 4),
+    const scnSwpBtn = (testButton = testControls.addButton(
+      "Tgl:ScnSwp:" + gameSceneManager.activeScene.sceneName.substr(0, 4),
+      buttonPosCounter,
+      buttonPosY,
+      () => {
+        lastAvatarVal = !lastAvatarVal;
+        if (
+          gameSceneManager.activeScene.sceneName === gameSceneManager.rootScene.sceneName
+        ) {
+          gameSceneManager.moveTo(gameSceneManager.activeScene.sceneName, REGISTRY.movePlayerTo.ALT_SCENE.position );
+          gameSceneManager.moveTo(gameSceneManager.activeScene.sceneName);
+          scnSwpBtn.label.value =
+            "Tgl:ScnSwp:" + gameSceneManager.rootScene.sceneName.substr(0, 4);
+        } else {
+          gameSceneManager.moveTo(gameSceneManager.rootScene.sceneName);
+          scnSwpBtn.label.value =
+            "Tgl:ScnSwp:" +
+            gameSceneManager.activeScene.sceneName.substr(0, 4);
+        }
+      },
+      ui.ButtonStyles.RED
+    )); 
+
+    if (changeButtomWidth > 0) testButton.image.width = changeButtomWidth;
+    if (changeButtomHeight > 0) testButton.image.height = changeButtomHeight;
+
+    buttonPosCounter += buttomWidth; //next column
+  }
+  
+  //NEW ROW//NEW ROW
+  buttonPosY -= changeButtomHeight + 2;
+  buttonPosCounter = buttonPosSTART;
+
+  testButton = testControls.addButton(
+    "SndUsrData",
     buttonPosCounter,
     buttonPosY,
     () => {
-      lastAvatarVal = !lastAvatarVal;
-      if (
-        gameSceneManager.activeScene.sceneName === gameSceneManager.rootScene.sceneName
-      ) {
-        gameSceneManager.moveTo(gameSceneManager.activeScene.sceneName, REGISTRY.movePlayerTo.ALT_SCENE.position );
-        gameSceneManager.moveTo(gameSceneManager.activeScene.sceneName);
-        scnSwpBtn.label.value =
-          "Tgl:ScnSwp:" + gameSceneManager.rootScene.sceneName.substr(0, 4);
-      } else {
-        gameSceneManager.moveTo(gameSceneManager.rootScene.sceneName);
-        scnSwpBtn.label.value =
-          "Tgl:ScnSwp:" +
-          gameSceneManager.activeScene.sceneName.substr(0, 4);
-      }
+      getAndSetUserDataSync().then((result:UserData)=>{ 
+        //now have newest avatardata     
+          
+        //if connected send it  
+        if(GAME_STATE.gameRoom !== undefined && GAME_STATE.gameRoom !== null){
+          GAME_STATE.gameRoom.send("player.update.dcl.userData",{version:CONFIG.CHECK_MULTIPLIE_URL_VERSION,userData:result}) 
+        }  
+        //fetch and add multiplier
+        fetchMultiplier().then((res:CheckMultiplierResultType)=>{
+          log("fetchMultiplier","debug-ui",res)
+          //throttle this??   
+          if(res !== undefined && res.ok && res.multiplier){
+            REGISTRY.ui.staminaPanel.setMultiplier( res.multiplier )
+
+          }
+        }) 
+           
+      }) 
+      },
+      ui.ButtonStyles.RED
+    ); 
+
+    if (changeButtomWidth > 0) testButton.image.width = changeButtomWidth;
+    if (changeButtomHeight > 0) testButton.image.height = changeButtomHeight;
+
+  buttonPosCounter += buttomWidth; //next column
+  
+  const testIncCoinsLevels = (testButton = testControls.addButton(
+    "Inc:LvlgCoins",
+    buttonPosCounter,
+    buttonPosY,
+    () => {
+      REGISTRY.ui.staminaPanel.updateAllTimeCoins( REGISTRY.ui.staminaPanel.allTimeCoins + 1000)
     },
     ui.ButtonStyles.RED
   ));
@@ -497,7 +548,53 @@ buttonPosCounter += buttomWidth //next column
   if (changeButtomHeight > 0) testButton.image.height = changeButtomHeight;
 
   buttonPosCounter += buttomWidth; //next column
-  } 
+
+
+  const testInDcCoinsLevels = (testButton = testControls.addButton(
+    "Inc:LvlgDCoins",
+    buttonPosCounter,
+    buttonPosY,
+    () => {
+      REGISTRY.ui.staminaPanel.updateDailyCoins( REGISTRY.ui.staminaPanel.dailyCoins + 1000)
+    },
+    ui.ButtonStyles.RED
+  ));
+  if (changeButtomWidth > 0) testButton.image.width = changeButtomWidth;
+  if (changeButtomHeight > 0) testButton.image.height = changeButtomHeight;
+
+  buttonPosCounter += buttomWidth; //next column
+
+  (testButton = testControls.addButton(
+    "Lan:EN",
+    buttonPosCounter,
+    buttonPosY,
+    () => {
+      log("i18n.changeLanguage( en ) ")
+      i18n.changeLanguage( languages.en )
+    },
+    ui.ButtonStyles.RED
+  ));
+  if (changeButtomWidth > 0) testButton.image.width = changeButtomWidth;
+  if (changeButtomHeight > 0) testButton.image.height = changeButtomHeight;
+
+  buttonPosCounter += buttomWidth; //next column
+  
+  (testButton = testControls.addButton(
+    "Lan:XX",
+    buttonPosCounter,
+    buttonPosY,
+    () => {
+      log("i18n.changeLanguage( xx ) ")
+      i18n.changeLanguage( "fake-testing-fallback-language" )
+    },
+    ui.ButtonStyles.RED
+  ));
+  if (changeButtomWidth > 0) testButton.image.width = changeButtomWidth;
+  if (changeButtomHeight > 0) testButton.image.height = changeButtomHeight;
+
+  buttonPosCounter += buttomWidth; //next column
+
+
 }//END OF SHOW TEST BUTTONS
 
 REGISTRY.ui.createDebugUIButtons = createDebugUIButtons;

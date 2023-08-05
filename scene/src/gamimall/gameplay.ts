@@ -1,6 +1,6 @@
 import * as utils from "@dcl/ecs-scene-utils";
 import * as ui from "@dcl/ui-scene-utils";
-import { connect, CONNECTION_EVENT_REGISTRY, disconnect, reconnect } from "./connection";
+import { connect, CONNECTION_EVENT_REGISTRY, disconnect, reconnect, showConnectingEnded } from "./connection";
 import { uiCanvas, updateLeaderboard } from "./leaderboard";
 import {
   ambienceSound,
@@ -16,14 +16,18 @@ import { createTextShape, getEntityByName, isNull, notNull } from "../utils";
 
 import PlayFab from "./playfab_sdk/PlayFabClientApi";
 
-import { GAME_STATE } from "src/state";
+import { GAME_STATE, resetAllGameStateGameCoin, resetAllGameStateGameCoinRewards } from "src/state";
 import { refreshUserData } from "./login-flow";
 import { Config, CONFIG } from "src/config";
 import { Coin, COIN_MANAGER, CoinType as CoinDataType, RewardNotification } from "./coin";
-import { Room } from "colyseus.js";
+import { DataChange, Room } from "colyseus.js";
 import { REGISTRY } from "src/registry";
 import { setLobbyCameraTriggerShape } from "src/configTriggers";
-
+import * as clientState from "src/gamimall/state/client-state-spec";
+import * as serverStateSpec from "src/gamimall/state/MyRoomStateSpec";
+import { minableController } from "./mining/minables";
+import { COIN_GAME_FEATURE_DEF } from "./mining/setupMinables";
+import { getCoinCap, getLevelFromXp } from "src/modules/leveling/levelingUtils";
 /*
 executeTask(async () => {
     const message = 'msg: this is a top secret message'
@@ -57,6 +61,166 @@ function testCoinPlacement(){
     })
 }
 */
+
+function getFeatureDefById(id:string):serverStateSpec.TrackFeatureInstDef|null{
+  for(const p in COIN_GAME_FEATURE_DEF.minables){
+    if(COIN_GAME_FEATURE_DEF.minables[p].id === id){
+      return COIN_GAME_FEATURE_DEF.minables[p]
+    }
+  }
+  for(const p in COIN_GAME_FEATURE_DEF.buyables){
+    if(COIN_GAME_FEATURE_DEF.buyables[p].id === id){
+      return COIN_GAME_FEATURE_DEF.buyables[p]
+    }
+  }
+  return null
+}
+function handleRewardData(result:RewardNotification){
+  //const result = (message as RewardNotification)
+    //GAME_STATE.notifyInGameMsg(message);
+    //ui.displayAnnouncement("PLUG IN LEVEL UP:"+result.newLevel, 8, Color4.White(), 60);
+    if(result.rewards!==undefined){
+      let gc=0
+      let mc=0
+
+      let bp=0
+      let ni=0
+
+      let bz=0
+
+      let r1=0
+      let r2=0
+      let r3=0
+
+      let bronzeShoe=0
+      for(const p in result.rewards){
+        switch(result.rewards[p].id){
+          case CONFIG.GAME_COIN_TYPE_GC:
+            gc=result.rewards[p].amount
+            break; 
+          case CONFIG.GAME_COIN_TYPE_MC:
+            mc=result.rewards[p].amount
+            break; 
+          case CONFIG.GAME_COIN_TYPE_BP:
+            bp=result.rewards[p].amount
+            break; 
+          case CONFIG.GAME_COIN_TYPE_BZ:
+            bz=result.rewards[p].amount
+            break; 
+          case CONFIG.GAME_COIN_TYPE_NI:
+            ni=result.rewards[p].amount
+            break; 
+          case CONFIG.GAME_COIN_TYPE_R1:
+            r1=result.rewards[p].amount
+            break;
+          case CONFIG.GAME_COIN_TYPE_R2:
+            r2=result.rewards[p].amount
+            break;
+          case CONFIG.GAME_COIN_TYPE_R3:
+            r3=result.rewards[p].amount
+            break; 
+          case CONFIG.GAME_COIN_TYPE_BRONZE_SHOE_1_ID:
+            bronzeShoe=result.rewards[p].amount
+            break; 
+          default:
+            log("unhandled reward type",result.rewards[p].id,result.rewards[p])
+        }
+      } 
+       
+      const addToWallet = 
+           result.rewardType !== 'mining-lack-of-funds'  
+        && result.rewardType !== 'buying-lack-of-funds' 
+        && result.rewardType !== 'mining-maxed-out-inventory'
+        && result.rewardType !== 'buying-maxed-out-inventory'
+
+      if(addToWallet){
+        GAME_STATE.setGameItemRewardBronzeShoeValue(GAME_STATE.gameItemRewardBronzeShoeValue + bronzeShoe)
+
+        GAME_STATE.setGameCoinRewardGCValue(GAME_STATE.gameCoinRewardGCValue + gc)
+        GAME_STATE.setGameCoinRewardMCValue(GAME_STATE.gameCoinRewardMCValue + mc)
+
+        GAME_STATE.setGameCoinRewardBPValue(GAME_STATE.gameCoinRewardBPValue + bp)
+        GAME_STATE.setGameCoinRewardNIValue(GAME_STATE.gameCoinRewardNIValue + ni)
+        GAME_STATE.setGameCoinRewardBZValue(GAME_STATE.gameCoinRewardBZValue + bz)
+
+        GAME_STATE.setGameCoinRewardR1Value(GAME_STATE.gameCoinRewardR1Value + r1)
+        GAME_STATE.setGameCoinRewardR2Value(GAME_STATE.gameCoinRewardR2Value + r2)
+        GAME_STATE.setGameCoinRewardR3Value(GAME_STATE.gameCoinRewardR3Value + r3)
+
+        //forces a refresh of stanima bar
+        GAME_STATE.setGameCoinGCValue(  GAME_STATE.gameCoinGCValue )
+        GAME_STATE.setGameCoinMCValue(  GAME_STATE.gameCoinMCValue )
+        
+        GAME_STATE.setGameCoinBPValue(  GAME_STATE.gameCoinBPValue )
+        GAME_STATE.setGameCoinNIValue(  GAME_STATE.gameCoinNIValue )
+        GAME_STATE.setGameCoinBZValue(  GAME_STATE.gameCoinBZValue )
+
+        GAME_STATE.setGameCoinR1Value(  GAME_STATE.gameCoinR1Value )
+        GAME_STATE.setGameCoinR2Value(  GAME_STATE.gameCoinR2Value )
+        GAME_STATE.setGameCoinR3Value(  GAME_STATE.gameCoinR3Value )
+
+        GAME_STATE.setGameItemBronzeShoeValue(GAME_STATE.gameItemBronzeShoeValue)
+
+        REGISTRY.ui.inventoryPrompt.updateGrid()
+      }
+
+      switch(result.rewardType){
+        case 'level-up' :
+          REGISTRY.ui.levelUpPrompt.update(result)
+          REGISTRY.ui.levelUpPrompt.show()
+          break;
+        case 'buying-reward' :
+        case 'mining-reward' :
+          
+          minableController.showUIReward( true, result )
+          break;
+        case 'buying-maxed-out-inventory' :
+        case 'mining-maxed-out-inventory' :          
+        minableController.showUIMaxedOutInventory( true, result )
+          break;
+        case 'buying-lack-of-funds' :
+        case 'mining-lack-of-funds' :          
+          minableController.showUINotEnoughFunds( true, result )
+          break;
+        case 'buying-paid' : 
+        case 'mining-paid' :  
+           
+          minableController.showUIPaidFunds( true, result )
+          break;
+      }
+
+    }
+} 
+function addRemoveTrackFeature(trackFeat: clientState.ITrackFeatureState,type:|'add'|'remove') {
+  const METHOD_NAME = "addRemoveTrackFeature" 
+  log("addRemoveTrackFeature","ENTRY",trackFeat,type);
+  
+  const featureDef = getFeatureDefById(trackFeat.featureDefId)
+  trackFeat._featureDef=featureDef
+
+  if(trackFeat.type.indexOf("minable")>-1 || trackFeat.type.indexOf("buyable")>-1){
+      if(type=='add'){
+        const minable = minableController.createMinableFromState(trackFeat)
+        
+      }else{
+        //remove
+      }
+  }
+}
+function updateTrackFeature(trackFeat: clientState.ITrackFeatureState) {
+  const METHOD_NAME = "updateTrackFeature"
+  if(trackFeat.type.indexOf("minable")>-1|| trackFeat.type.indexOf("buyable")>-1){
+      const minable = minableController.getMinableById(trackFeat.id)
+      if(minable !== undefined){
+        //tile.health = 
+        
+        minable.updateFromServer(trackFeat)
+        //minable.updateHealth(0)
+      }else{
+        log(METHOD_NAME,"WARNING","could not find feature to update",trackFeat.type,trackFeat.id)
+      }
+  }
+}
 
 export function startGame(gameType?: string) {
   if (isNull(GAME_STATE.playerState.playFabLoginResult)) {
@@ -113,13 +277,12 @@ export const onJoinActions = (CONNECTION_EVENT_REGISTRY.onJoinActions = (
   log("onJoinActions entered", eventName);
   
   GAME_STATE.connectRetryCount=0//reset counter
-
+  showConnectingEnded(true)
+  
   GAME_STATE.setGameRoom(room);
 
-  GAME_STATE.setGameCoinRewardGCValue(0)
-  GAME_STATE.setGameCoinRewardMCValue(0)
-  GAME_STATE.setGameCoinGCValue(0)
-  GAME_STATE.setGameCoinMCValue(0)
+  resetAllGameStateGameCoin()
+  resetAllGameStateGameCoinRewards()
 
   let lastBlockTouched: string = "";
   function onTouchBlock(id: string) {
@@ -132,7 +295,7 @@ export const onJoinActions = (CONNECTION_EVENT_REGISTRY.onJoinActions = (
     }
   }
 
-  //will remove the coin ahead of actual server confirmed collection
+  //will remove the coin ahead of actual server confirmed collection 
   function optimisticCollectCoin(id: string) {
     //TODO
     //move to 'coin vault' with timer to put back in 1 second should server not confirm collection
@@ -146,11 +309,11 @@ export const onJoinActions = (CONNECTION_EVENT_REGISTRY.onJoinActions = (
     //collect-sparkle.glb
     //TODO use sparkle object pool
     //coin.showSparkle
-
+ 
     coin.collect();
     //TODO up score? is it safe to do that then check server periodically?
-  }
-
+  }    
+    
   function collectCoin(id: string) {
     //remove from coinsSpawned
     //add to coinsPool
@@ -247,10 +410,35 @@ export const onJoinActions = (CONNECTION_EVENT_REGISTRY.onJoinActions = (
       log("player.listen.coinGcCount", num);
       GAME_STATE.setGameCoinGCValue(num);
     });
+ 
+    const coinListeners=[
+      {name:"bronzeCollected",fn:(val:number)=>{GAME_STATE.setGameCoinBZValue(val)}},
+      //activate if needed
+      /*
+      {name:"rock1Collected",fn:(val:number)=>{GAME_STATE.setGameCoinR1Value(val)}},
+      {name:"rock2Collected",fn:(val:number)=>{GAME_STATE.setGameCoinR2Value(val)}},
+      {name:"rock3Collected",fn:(val:number)=>{GAME_STATE.setGameCoinR3Value(val)}},
+      {name:"petroCollected",fn:(val:number)=>{GAME_STATE.setGameCoinBPValue(val)}},
+      {name:"nitroCollected",fn:(val:number)=>{GAME_STATE.setGameCoinNIValue(val)}},
+      */
+    ]
+    for( const p of coinListeners){
+      player.listen(p.name, (num: number) => {
+        log("player.listen."+p.name, num);
+        p.fn(num);
+      });
+    }
+
     player.listen("coinsCollectedEpoch", (num: number) => {
       log("player.listen.coinsCollectedEpoch", num);
       GAME_STATE.setGameCoinsCollectedEpochValue(num);
     });
+
+    player.listen("coinsCollectedDaily", (num: number) => {
+      log("player.listen.setGameCoinsCollectedDailyValue", num);
+      GAME_STATE.setGameCoinsCollectedDailyValue(num);
+    });
+    
 
     player.listen("material1Count", (num: number) => {
       log("player.listen.material1Count", num);
@@ -318,13 +506,59 @@ export const onJoinActions = (CONNECTION_EVENT_REGISTRY.onJoinActions = (
     //playOnce(fallSound, 1, new Vector3(atPosition.x, atPosition.y, atPosition.z));
   });
 
+  room.onMessage("update.config", (config:serverStateSpec.RemoteBaseCoinRoomConfig) => {
+    log("room.msg.update.config",config);
+    CONFIG.GAME_COIN_CAP_ENABLED = config?.coinCap.enabled
+    if(config?.coinCap.enabled){
+      if(REGISTRY.ui.staminaPanel.staminaPanel.visible) REGISTRY.ui.staminaPanel.show()
+      CONFIG.speedCapOverageReduction = config?.coinCap.overageReduction
+
+      if(config?.coinCap.formula){
+        log("room.msg.update.config","using remote formula","local",CONFIG.GAME_DAILY_COIN_MAX_FORMULA_CONST,"vs",config.coinCap.formula);
+        CONFIG.GAME_DAILY_COIN_MAX_FORMULA_CONST = config?.coinCap.formula
+ 
+        testXPandCoinCap("remoteConfig")
+      }
+      //no change, but make ui update
+      REGISTRY.ui.staminaPanel.updateDailyCoins(REGISTRY.ui.staminaPanel.dailyCoins)
+    }else{
+      if(REGISTRY.ui.staminaPanel.staminaPanel.visible) REGISTRY.ui.staminaPanel.show()
+    }
+  })
   
   room.onMessage("game-saved", () => {
     log("room.msg.game-saved");
+    //clear reward value, need a way to clear it out when server saves too OR just read server rewardData and colyseus will sync it for us
+  
+    resetAllGameStateGameCoin()
+    resetAllGameStateGameCoinRewards() 
+
     refreshUserData("game-saved")
     ui.displayAnnouncement(`Save Complete`, 3, Color4.White(), 60);
     //refreshUserData("onMessage(finished")
   });
+  room.onMessage("game-auto-saved-daily-reset", () => {
+    log("room.msg.game-auto-saved-daily-reset");
+
+    resetAllGameStateGameCoin()
+    resetAllGameStateGameCoinRewards() 
+
+    refreshUserData("game-auto-saved-daily-reset")
+    ui.displayAnnouncement(`Daily Reset Complete`, 3, Color4.White(), 60);
+  })
+  room.onMessage("game-auto-saved", () => {
+    log("room.msg.game-auto-saved");
+    //do we need to clear this?  should auto save send latest stats instead of client having to do it?
+    //without refreshing playfab data, not sure we need to / want to clear this out?
+    //clear reward value, need a way to clear it out when server saves too OR just read server rewardData and colyseus will sync it for us
+    //GAME_STATE.setGameCoinRewardGCValue(0)//zero this out
+
+    //should i refresh on an autosave?
+    //refreshUserData("game-auto-saved")
+    //ui.displayAnnouncement(`Save Complete`, 3, Color4.White(), 60);
+    //refreshUserData("onMessage(finished")
+  });
+  
   room.onMessage("finished", () => {
     log("room.msg.finished");
     //ui.displayAnnouncement(`${highestPlayer.name} wins!`, 8, Color4.White(), 60);
@@ -343,7 +577,7 @@ export const onJoinActions = (CONNECTION_EVENT_REGISTRY.onJoinActions = (
     log("LEAVING ROOM!!!!!!!!!");
     log("LEAVING ROOM!!!!!!!!!");
 
-    disconnect()
+    disconnect() 
     log("room.onMessage.finished","refreshUserData not called, letting disconnect do it")
     //refreshUserData("onMessage(finished")
   });
@@ -375,41 +609,65 @@ export const onJoinActions = (CONNECTION_EVENT_REGISTRY.onJoinActions = (
     //GAME_STATE.setGameEndResultMsg()
   });
 
+  
   room.onMessage("notify.levelUp", (message) => {
     log("room.msg.notify.levelUp", message);
     if (message !== undefined) {
       const result = (message as RewardNotification)
-      //GAME_STATE.notifyInGameMsg(message);
-      //ui.displayAnnouncement("PLUG IN LEVEL UP:"+result.newLevel, 8, Color4.White(), 60);
-      if(result.rewards!==undefined){
-        let gc=0
-        let mc=0
-        for(const p in result.rewards){
-          switch(result.rewards[p].id){
-            case CONFIG.GAME_COIN_TYPE_GC:
-              gc=result.rewards[p].amount
-            break;
-            case CONFIG.GAME_COIN_TYPE_MC:
-              mc=result.rewards[p].amount
-            break;
-            default:
-              log("unhandled reward type",result.rewards[p].id,result.rewards[p])
-          }
-        }
-        GAME_STATE.setGameCoinRewardGCValue(GAME_STATE.gameCoinRewardGCValue + gc)
-        GAME_STATE.setGameCoinRewardMCValue(GAME_STATE.gameCoinRewardMCValue + mc)
-
-        GAME_STATE.setGameCoinGCValue(  GAME_STATE.gameCoinGCValue )      
-        GAME_STATE.setGameCoinMCValue(  GAME_STATE.gameCoinMCValue )      
-      }
-      REGISTRY.ui.levelUpPrompt.update(result)
-      REGISTRY.ui.levelUpPrompt.show()
+      
+      handleRewardData(result)
     }
+  })
+    
+  //miningLackOfFunds
+  //miningReward
+  //miningPaid
+  //buyingLackOfFunds
+  //buyingReward   
+  //buyingPaid
+  for( const interactionType of ['mining','buying']){ 
+    //log("creating room.onMessage for interactionType",interactionType)
+      //TODO make buying message
+      room.onMessage("notify."+interactionType+"LackOfFunds", (message) => {
+        log("room.msg.notify."+interactionType+"LackOfFunds", message);
+        if (message !== undefined) {
+          const result = (message as RewardNotification)
+          
+          handleRewardData(result)
+        }
+      })
 
-    //ui.displayAnnouncement(`${highestPlayer.name} wins!`, 8, Color4.White(), 60);
-    //ui.displayAnnouncement(message, 8, Color4.White(), 60);
-    //GAME_STATE.setGameEndResultMsg()
-  });
+      room.onMessage("notify."+interactionType+"MaxedOutInventory", (message) => {
+        log("room.msg.notify."+interactionType+"MaxedOutInventory", message);
+        if (message !== undefined) {
+          const result = (message as RewardNotification)
+          
+          handleRewardData(result)
+        }
+      })
+    
+      room.onMessage("notify."+interactionType+"Paid", (message) => {
+        log("room.msg.notify."+interactionType+"Paid", message);
+        if (message !== undefined) {
+          const result = (message as RewardNotification)
+          
+          handleRewardData(result)
+        }
+      })
+
+      room.onMessage("notify."+interactionType+"Reward", (message) => {
+        log("room.msg.notify."+interactionType+"Reward", message);
+        if (message !== undefined) {
+          const result = (message as RewardNotification)
+          
+          handleRewardData(result)
+        }
+
+      //ui.displayAnnouncement(`${highestPlayer.name} wins!`, 8, Color4.White(), 60);
+      //ui.displayAnnouncement(message, 8, Color4.White(), 60);
+      //GAME_STATE.setGameEndResultMsg()
+    });
+  }
 
   room.onMessage("onLeave", (message) => {
     log("room.msg.onLeave", message);
@@ -434,8 +692,54 @@ export const onJoinActions = (CONNECTION_EVENT_REGISTRY.onJoinActions = (
   room.onLeave((code) => {
     log("room.on.leave");
     log("onLeave, code =>", code);
+    //GAME_STATE.setGameConnected('disconnected')
     //debugger 
     refreshUserData("onLeave'");
+  });
+  
+  
+  room.state.listen("playFabTime", (playFabTime: number) => {
+    //log("room.state.playFabTime.listen", playFabTime);
+    GAME_STATE.playFabTime = playFabTime
+
+    //const now = Date.now()
+    //log("room.state.playFabTime.listen.diffs", (GAME_STATE.serverTime-GAME_STATE.playFabTime), (GAME_STATE.serverTime-now), (GAME_STATE.playFabTime-now));
+    
+  })
+  room.state.listen("serverTime", (serverTime: number) => {
+    //log("room.state.serverTime.listen", serverTime);
+    GAME_STATE.serverTime = serverTime
+  })
+
+  room.state.listen("levelData", (levelData: clientState.LevelDataState) => {
+    log("room.state.levelData.listen", levelData);
+    //updateLevelData(room.state.levelData); 
+ 
+    //if (!levelData.trackFeatures.onAdd) {
+      //for some reason null at the beginning
+      levelData.trackFeatures.onAdd = (trackFeat: clientState.ITrackFeatureState, sessionId: string) => {
+        log("room.state.levelData.trackFeatures.onAdd", trackFeat.id, trackFeat);
+        
+        addRemoveTrackFeature(trackFeat,'add') 
+        trackFeat.onChange = (changes: DataChange<any>[]) => {
+          log("room.state.levelData.trackFeatures.trackFeat.onChange", trackFeat.id, trackFeat);
+          updateTrackFeature(trackFeat)
+        };
+        /*
+        trackFeat.listen("health", (levelData: clientState.LevelDataState) => {
+          //log("room.state.levelData.trackFeatures.trackFeat.listen.health", trackFeat.name, trackFeat);
+          updateTrackFeature(trackFeat)
+        }) 
+        trackFeat.health.onChange = (changes: DataChange<any>[]) => {
+          //log("room.state.levelData.trackFeatures.trackFeat.health.onChange", trackFeat.name, trackFeat);
+          updateTrackFeature(trackFeat)
+        }*/
+      };
+      levelData.trackFeatures.onRemove = (trackFeat: clientState.ITrackFeatureState, sessionId: string) => {
+        log("room.state.levelData.trackFeatures.onRemove", trackFeat.id, trackFeat);
+        addRemoveTrackFeature(trackFeat,'remove')
+      }
+    //}
   });
 
   log("onJoinActions exit", eventName);
@@ -477,7 +781,28 @@ const colyseusConnect = (gameType?: string) => {
   log("colyseusConnect loading", levelToLoad.id);
 
   const roomName = levelToLoad.id; //"level_random_ground_float_few"// "level_random_ground_float_chase" //my_room,level_pad_surfer
-  connect(roomName, {})
+
+
+  const coinDataOptions:serverStateSpec.CoinRoomDataOptions = {
+    levelId:GAME_STATE.raceData.id,
+    featuresDefinition: CONFIG.GAME_MINABLES_ENABLED ? COIN_GAME_FEATURE_DEF: { minables:[],buyables:[] }
+    /*,name:GAME_STATE.raceData.name
+    ,maxLaps:GAME_STATE.raceData.maxLaps
+    ,maxPlayers:GAME_STATE.raceData.maxPlayers*/}
+
+
+
+    //FIXME
+    //does not support nested objects so going to pass it twice for now
+    //as the "flattened value. using dot notation so there is parity"
+    
+    const connectOptions = {
+      clientVersion: CONFIG.CLIENT_VERSION, 
+      coinDataOptions: coinDataOptions
+    }
+    
+
+  connect(roomName, connectOptions)
     .then((room) => {
       log("Connected to ", roomName, "!");
       GAME_STATE.setGameConnected("connected");
@@ -506,3 +831,25 @@ export const pullBlocks = () => {
     position: { x: playerPos.x, y: playerPos.y, z: playerPos.z },
   });
 };
+
+
+
+
+function testXPandCoinCap(context:string){
+  let totalCoins = 0
+
+  log("testXPandCoinCap",context)
+  log("==================",context)
+  
+  for(let x=0;x<150;x++){
+    totalCoins += x*500
+    const level = getLevelFromXp(totalCoins,CONFIG.GAME_LEVELING_FORMULA_CONST)
+    const maxCoinsPerLevel = getCoinCap( Math.floor(level),CONFIG.GAME_DAILY_COIN_MAX_FORMULA_CONST)
+
+    log("testXPandCoinCap,",context,"coins:\t",totalCoins,"\tlevel:\t",Math.floor(level),"\tmaxCoins:\t",maxCoinsPerLevel)
+
+  }
+  
+}
+ 
+testXPandCoinCap("init") 

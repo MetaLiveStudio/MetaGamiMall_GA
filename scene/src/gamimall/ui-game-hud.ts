@@ -2,17 +2,18 @@ import * as ui from "@dcl/ui-scene-utils";
 import * as utils from "@dcl/ecs-scene-utils";
 
 import { GameConnectedStateType, GAME_STATE, initGameState } from "src/state";
-import { CustomPrompt } from "src/dcl-scene-ui-workaround/CustomPrompt";
+//import { CustomPrompt } from "src/dcl-scene-ui-workaround/CustomPrompt";
 import { RESOURCES } from "./resources";
 import { CONFIG, initConfig } from "src/config";
 import { decodeConnectionCode, isErrorCode } from "./connection-utils";
 import resources, { setSection } from "src/dcl-scene-ui-workaround/resources";
 import { logChangeListenerEntry } from "src/logging";
 import { isNull } from "src/utils";
-import { openRaffleGamePrompt } from "./ui-play-raffle";
+
 import { REGISTRY } from "src/registry";
 import { CustomOkPrompt } from "src/ui/modals";
 import { refreshUserData } from "./login-flow";
+import { CheckMultiplierResultType, fetchMultiplier } from "src/store/fetch-utils";
 
 export function initUIGameHud() {
   const textFont = new Font(Fonts.SansSerif);
@@ -257,10 +258,13 @@ export function initUIGameHud() {
 
     const stats = GAME_STATE.playerState.playFabUserInfoHelper.stats
     const vc = GAME_STATE.playerState.playFabUserInfoHelper.virtualCurrency
+    const inv = GAME_STATE.playerState.playFabUserInfoHelper.inventory
     //const vc = GAME_STATE.playerState.playFabUserInfoHelper.virtualCurrencyGameCache
 
-    if(key == "gameCoinGCValue" || key == "gameCoinMCValue" ){
-      REGISTRY.ui.staminaPanel.updateAllTimeCoins(stats.allTimeCoins + (GAME_STATE.gameCoinGCValue + GAME_STATE.gameCoinMCValue))
+    //FIXME do not count when it is a level up call?????
+    if(key == "gameCoinGCValue" || key == "gameCoinMCValue" || key == "gameCoinBZValue" ){
+      REGISTRY.ui.staminaPanel.updateAllTimeCoins(stats.allTimeCoins + (GAME_STATE.gameCoinGCValue + GAME_STATE.gameCoinMCValue + GAME_STATE.gameCoinBZValue))
+      REGISTRY.ui.staminaPanel.updateDailyCoins(stats.dailyCoins + (GAME_STATE.gameCoinGCValue + GAME_STATE.gameCoinMCValue + GAME_STATE.gameCoinBZValue))
     }
     
     switch (key) {
@@ -270,29 +274,66 @@ export function initUIGameHud() {
         REGISTRY.ui.racePanel.updateTime(newVal);
         break;
       case "gameCoinGCValue":
-        //coinGCCounter.set(newVal);
-        REGISTRY.ui.racePanel.updateCoins(newVal);
+        REGISTRY.ui.racePanel.updateCoins(newVal); 
         REGISTRY.ui.staminaPanel.updateCoins(vc.gc + GAME_STATE.gameCoinGCValue + GAME_STATE.gameCoinRewardGCValue)//+ (newVal-oldVal))
-        break;
+        REGISTRY.ui.inventoryPrompt.updateCoins(vc.gc + GAME_STATE.gameCoinGCValue + GAME_STATE.gameCoinRewardGCValue)//+ (newVal-oldVal))
+        break; 
       case "gameCoinMCValue":
-        //coinMCCounter.set(newVal);
         REGISTRY.ui.racePanel.updateDollars(newVal);
         REGISTRY.ui.staminaPanel.updateDollars(vc.mc + GAME_STATE.gameCoinMCValue + GAME_STATE.gameCoinRewardMCValue)//+ (newVal-oldVal))
+        REGISTRY.ui.inventoryPrompt.updateDollar(vc.mc + GAME_STATE.gameCoinMCValue + GAME_STATE.gameCoinRewardMCValue)//+ (newVal-oldVal))
+        break;
+      case "gameCoinBZValue":
+        REGISTRY.ui.racePanel.updateBronze(newVal); 
+        REGISTRY.ui.staminaPanel.updateBronze(vc.bz + GAME_STATE.gameCoinBZValue + GAME_STATE.gameCoinRewardBZValue)//+ (newVal-oldVal))
+        REGISTRY.ui.inventoryPrompt.updateBronze(vc.bz + GAME_STATE.gameCoinBZValue + GAME_STATE.gameCoinRewardBZValue);
         break;
       case "coinsCollectedEpochValue":
-        //coinMCCounter.set(newVal);
         REGISTRY.ui.staminaPanel.updateAllTimeCoins(newVal)
         break;
+      case "coinsCollectedDailyValue":
+        REGISTRY.ui.staminaPanel.updateDailyCoins(newVal)
+        break;
+      case "gameCoinBPValue":
+        REGISTRY.ui.inventoryPrompt.updatePetro(vc.bp + GAME_STATE.gameCoinBPValue + GAME_STATE.gameCoinRewardBPValue);
+        break;
+      case "gameCoinNIValue":
+        REGISTRY.ui.inventoryPrompt.updateNitro(vc.ni + GAME_STATE.gameCoinNIValue + GAME_STATE.gameCoinRewardNIValue);
+        break;
+      case "gameCoinR1Value":
+        REGISTRY.ui.inventoryPrompt.updateRock1(vc.r1 + GAME_STATE.gameCoinR1Value + GAME_STATE.gameCoinRewardR1Value);
+        break;
+      case "gameCoinR2Value":
+        REGISTRY.ui.inventoryPrompt.updateRock2(vc.r2 + GAME_STATE.gameCoinR2Value + GAME_STATE.gameCoinRewardR2Value);
+        break;
+      case "gameCoinR3Value":
+        REGISTRY.ui.inventoryPrompt.updateRock3(vc.r3 + GAME_STATE.gameCoinR3Value + GAME_STATE.gameCoinRewardR3Value);
+        break;
+      case "gameItemBronzeShoeValue":
+        const bronzeShoeVal = inv.bronzeShoe + GAME_STATE.gameItemBronzeShoeValue + GAME_STATE.gameItemRewardBronzeShoeValue
+        REGISTRY.ui.staminaPanel.updateBronzeShoe(bronzeShoeVal);
+        REGISTRY.ui.inventoryPrompt.updateBronzeShoe(bronzeShoeVal);
+        //TODO if > 0 and old null or 0 call for a refresh of collecting multiplier
+        if(bronzeShoeVal>0){
+          //fetch and add multiplier
+          fetchMultiplier().then((res:CheckMultiplierResultType)=>{
+            log("fetchMultiplier","gameItemBronzeShoeValue",res)
+            //throttle this??   
+            if(res !== undefined && res.ok && res.multiplier){
+              REGISTRY.ui.staminaPanel.setMultiplier( res.multiplier )
+
+            }
+          })
+        }
+        break;
+        
       case "gameMaterial1Value":
-        //coinMCCounter.set(newVal);
         REGISTRY.ui.racePanel.updateMaterial1(newVal);
         break;
       case "gameMaterial2Value":
-        //coinMCCounter.set(newVal);
         REGISTRY.ui.racePanel.updateMaterial2(newVal);
         break;
       case "gameMaterial3Value":
-        //coinMCCounter.set(newVal);
         REGISTRY.ui.racePanel.updateMaterial3(newVal);
         break;
       case "gameCoinGuestValue":
@@ -372,16 +413,29 @@ export function initUIGameHud() {
           //avatarSwapScript.setAvatarSwapTriggerEnabled(avatarSwap,newVal)
           //GAME_STATE.
           const vc = GAME_STATE.playerState.playFabUserInfoHelper.virtualCurrency
+          const inv = GAME_STATE.playerState.playFabUserInfoHelper.inventory
           const stats = GAME_STATE.playerState.playFabUserInfoHelper.stats
           //consider letting gamestate set it, for now keep game logic seperate from basic
           //player state info??? but let game logic update other direction???
           GAME_STATE.setGameCoinsCollectedEpochValue(stats.allTimeCoins)
           REGISTRY.ui.staminaPanel.updateAllTimeCoins(stats.allTimeCoins)
+          REGISTRY.ui.staminaPanel.updateDailyCoins(stats.dailyCoins)
           REGISTRY.ui.staminaPanel.updateCoins(vc.gc);
+          REGISTRY.ui.staminaPanel.updateBronze(vc.bz);
           REGISTRY.ui.staminaPanel.updateDollars(vc.mc);
           REGISTRY.ui.staminaPanel.updateMaterial1(vc.m1);
           REGISTRY.ui.staminaPanel.updateMaterial2(vc.m2);
           REGISTRY.ui.staminaPanel.updateMaterial3(vc.m3);
+          REGISTRY.ui.staminaPanel.updateBronzeShoe(inv.bronzeShoe);
+
+          REGISTRY.ui.inventoryPrompt.updateNitro(vc.ni);
+          REGISTRY.ui.inventoryPrompt.updatePetro(vc.bp);
+          REGISTRY.ui.inventoryPrompt.updateBronzeShoe(inv.bronzeShoe);
+
+          REGISTRY.ui.inventoryPrompt.updateRock1(vc.r1);
+          REGISTRY.ui.inventoryPrompt.updateRock2(vc.r2);
+          REGISTRY.ui.inventoryPrompt.updateRock3(vc.r3);
+          
 
           break;
       }

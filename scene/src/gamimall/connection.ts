@@ -183,6 +183,12 @@ export async function reconnect(
     throw e;
   }
 }
+export function showConnectingStarted(){
+  REGISTRY.ui.gameTools.ReloginPanel.setActive(false)//.opacity = .2
+}
+export function showConnectingEnded(success:boolean){
+  REGISTRY.ui.gameTools.ReloginPanel.setActive(true)//.opacity = 1
+} 
 export async function disconnect(_consent?:boolean) {
   if(REGISTRY.intervals.connectCheckInterval) REGISTRY.intervals.connectCheckInterval.reset()
  

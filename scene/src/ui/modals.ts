@@ -12,11 +12,19 @@ import { RESOURCES } from "src/gamimall/resources";
 import { CommonResources } from "src/resources/common";
 import { RewardNotification } from "src/gamimall/coin";
 import { fetchNFTData, isNFTResultValid } from "src/store/fetch-utils";
+import { i18n, i18nOnLanguageChangedAdd } from "src/i18n/i18n";
+import { languages, namespaces } from "src/i18n/i18n.constants";
+import { REGISTRY } from "src/registry";
+import { ILeaderboardItem, PlayerLeaderboardEntryType, createLeaderBoardPanelText } from "src/gamimall/leaderboard-utils";
 
 const customDelayMs = 200;
 const canvas = ui.canvas;
 canvas.isPointerBlocker = true;
 const pinkNeonColor = new Color4(1, 0, 1, 0.1);
+
+export const custUiAtlasInventory = new Texture(
+  "images/ui/Inventory.png"
+);
 
 export const custUiAtlas = new Texture(
   "images/ui/dialog-custom-atlas-v3-semi-tran.png"
@@ -53,6 +61,7 @@ const claimWindowPrefixNotStarted = "Can claim after "
 const claimWindowPrefixExpired = "Claim expired " 
 
 
+
 export interface Modal {
   show(): void;
   hide(): void;
@@ -66,12 +75,15 @@ export type CustomPromptOptions = {
   buttonPositionY?: number;
   textPositionY?: number;
   textFontSize?: number;
+  costShowIcons?: boolean
 };
 
+export type I18NParamsType = {key:string, params?:any}
+
 export type CustomMapButton = {
-  title: string;
+  title: string | I18NParamsType; 
   titleYPos: string;
-  buttonText: string;
+  buttonText: string | I18NParamsType;
   buttonYPos: string;
   callback?: () => void;
 };
@@ -104,9 +116,9 @@ export class CustomOkPrompt implements Modal {
   callback?: () => void;
   onShowcallback?: () => void;
   constructor(
-    title: string,
+    title: string | I18NParamsType,
     text: string,
-    buttonText: string,
+    buttonText: string | I18NParamsType,
     callback?: () => void,
     options?: CustomPromptOptions
   ) {
@@ -129,12 +141,20 @@ export class CustomOkPrompt implements Modal {
       options && options.textPositionY ? options.textPositionY : 0;
 
     this.title = this.prompt.addText(
-      title,
+      typeof title !== "string" ? i18n.t(title.key,title.params) : title,
       40,
       titleHeight,
       new Color4(1, 0.906, 0.553, 1),
       19 * SCALE_FONT_OK_PROMPT_TITLE
     );
+
+    if(typeof title !== "string"){
+      i18nOnLanguageChangedAdd((lng) => {
+        if(typeof title !== "string"){
+          this.title.text.value = i18n.t(title.key,title.params)
+        }
+      })
+    }
 
     let promptText = (this.text = new CustomPromptText(
       this.prompt,
@@ -159,7 +179,7 @@ export class CustomOkPrompt implements Modal {
     promptText.text.hAlign = "center";
 
     let myButton = (this.button = this.prompt.addButton(
-      buttonText,
+      typeof buttonText !== "string" ? i18n.t(buttonText.key,buttonText.params) : buttonText,
       0,
       -35,
       () => {
@@ -174,6 +194,15 @@ export class CustomOkPrompt implements Modal {
       myButton.label.positionX = 0;
       myButton.label.positionY = 3;
     }
+
+    if(typeof buttonText !== "string"){
+      i18nOnLanguageChangedAdd((lng) => {
+        if(typeof buttonText !== "string"){
+          myButton.label.value = i18n.t(buttonText.key,buttonText.params)
+        }
+      })
+    }
+
 
     applyEmptyPanel(this.prompt, myButton, options);
   }
@@ -197,6 +226,21 @@ export class CustomOkPrompt implements Modal {
   }
 }
 
+
+export function uiDimToNumber(val: number | string): number {
+  if (typeof val === "string") {
+    return parseInt(val.substr(0, val.length - 2));
+  } else {
+    return val;
+  }
+}
+
+function updateCloseBtnPosition(prompt: ui.CustomPrompt,_offset?:number) {
+  const offset = _offset !== undefined ? _offset : -30
+  prompt.closeIcon.positionX = uiDimToNumber(prompt.background.width as number) / 2 + offset;
+  prompt.closeIcon.positionY = uiDimToNumber(prompt.background.height as number) / 2 + offset;
+}
+
 export class CustomMapPrompt implements Modal {
   prompt: ui.CustomPrompt;
   title: string;
@@ -216,9 +260,10 @@ export class CustomMapPrompt implements Modal {
     titleUI.text.positionY = "40%";
     let customButtons: ui.CustomPromptButton[] = [];
     let customTexts = [];
-    buttons.forEach((button) => {
+
+    buttons.forEach((button) => {  
       const buttonTitle = this.prompt.addText(
-        button.title,
+        typeof button.title !== "string" ? i18n.t(button.title.key,button.title.params) : button.title,
         0,
         0,
         pinkNeonColor,
@@ -228,7 +273,7 @@ export class CustomMapPrompt implements Modal {
       buttonTitle.text.fontSize = 14;
       buttonTitle.text.positionY = "32.5%";
       let myButton = this.prompt.addButton(
-        button.buttonText,
+        typeof button.buttonText !== "string" ? i18n.t(button.buttonText.key,button.buttonText.params) : button.buttonText,
         0,
         -30,
         () => {
@@ -247,6 +292,22 @@ export class CustomMapPrompt implements Modal {
         myButton.image.positionY = button.buttonYPos;
         myButton.label.fontSize = 14;
       }
+      
+      if(typeof button.buttonText !== "string"){
+        i18nOnLanguageChangedAdd((lng) => {
+          if(typeof button.buttonText !== "string"){
+            myButton.label.value = i18n.t(button.buttonText.key,button.buttonText.params)
+          }
+        })
+      }
+      if(typeof button.title !== "string"){
+        i18nOnLanguageChangedAdd((lng) => {
+          if(typeof button.title !== "string"){
+            buttonTitle.text.value = i18n.t(button.title.key,button.title.params)
+          }
+        })
+      }
+
       customButtons.push(myButton);
       customTexts.push(buttonTitle);
     });
@@ -263,10 +324,14 @@ export class CustomMapPrompt implements Modal {
   }
 }
 
+
 export class CustomOptionsPrompt implements Modal {
   prompt: ui.CustomPrompt;
   title: ui.CustomPromptText;
   text: ui.CustomPromptText;
+
+  buttonConfirmBtn: ui.CustomPromptButton;
+  buttonSecondaryBtn: ui.CustomPromptButton;
   buttonConfirm: string;
   buttonSubtitleConfirm: string;
   buttonSecondary: string;
@@ -309,7 +374,7 @@ export class CustomOptionsPrompt implements Modal {
     const textHeight =
       options && options.textPositionY
         ? options.textPositionY
-        : -12 * SCALE_UIImage; //((options && options.height) ? (options.height - height)/2: 25)
+        : -12 * SCALE_UIImage; //((opttions && options.height) ? (options.height - height)/2: 25)
 
     this.prompt = new ui.CustomPrompt(undefined, undefined, undefined, true);
     this.title = this.prompt.addText(
@@ -336,13 +401,13 @@ export class CustomOptionsPrompt implements Modal {
     subtitleText.text.font = sfFont;
     subtitleText.text.isPointerBlocker = false;
 
-    subtitleText.text.width = width - width_padding;
+    subtitleText.text.width = width - (width_padding * 2);
     subtitleText.text.height = height - height_padding;
     subtitleText.text.textWrapping = true;
     subtitleText.text.vAlign = "center";
     subtitleText.text.hAlign = "center";
 
-    let myButton = this.prompt.addButton(
+    let myButton = this.buttonConfirmBtn = this.prompt.addButton(
       this.buttonConfirm,
       -50,
       -30,
@@ -365,7 +430,7 @@ export class CustomOptionsPrompt implements Modal {
       myButton.label.positionY = 5;
     }
 
-    let secundaryButton = this.prompt.addButton(
+    let secundaryButton = this.buttonSecondaryBtn = this.prompt.addButton(
       this.buttonSecondary,
       50,
       -30,
@@ -414,7 +479,7 @@ export class CustomOptionsPrompt implements Modal {
     subtitleSecondary.text.font = sfFont;
     subtitleSecondary.text.isPointerBlocker = false;
 
-    this.prompt.hide();
+    this.hide();
     applyCustomOptionsPanel(this.prompt, myButton, secundaryButton, options);
   }
   show(): void {
@@ -427,20 +492,63 @@ export class CustomOptionsPrompt implements Modal {
   }
 }
 
-export type CustomGridTextRow = {
-  uiIcon: ui.CustomPromptIcon;
-  text: ui.CustomPromptText;
+
+export class CustomGridTextRow {
+  uiIconImg: UIImage;
+  uiItemBg: UIImage;
+  uiText: UIText;
+  promptIcon?: ui.CustomPromptIcon;
+  promptText?: ui.CustomPromptText;
+  
+  container: UIContainerRect;
+  bg: UIImage;
+
+  constructor(container:UIContainerRect,uiIconImg: UIImage, uiText: UIText,uiItemBg?: UIImage){
+    this.container = container
+    this.uiIconImg = uiIconImg
+    this.uiText = uiText
+    this.uiItemBg = uiItemBg
+  }
+
+  hide(){
+    if(this.container !== undefined){
+      this.container.visible = false
+    }else{
+      this.uiIconImg.visible = false
+      this.uiText.visible = false
+      if(this.uiItemBg !== undefined) this.uiItemBg.visible = false
+    }
+  }
+  clear(){
+      setSection(this.uiIconImg, atlas_mappings.icons.emptyInventorySlot);
+      this.uiText.value = ""
+  }
+  show(){
+    if(this.container !== undefined){
+      this.container.visible = true
+    }else{
+      this.uiIconImg.visible = true
+      this.uiText.visible = true
+      if(this.uiItemBg !== undefined) this.uiItemBg.visible = true
+    }
+  }
 };
 export type CustomGridTextRowData = {
   uiIconSection: ImageSection;
   text: string;
 };
 
-export class AbstractGridPrompt implements Modal {
+export class AbstractBaseGridPrompt implements Modal {
   prompt: ui.CustomPrompt;
   title: ui.CustomPromptText;
   text: ui.CustomPromptText;
+  closingMsg: ui.CustomPromptText;
   buttonPrimary: ui.CustomPromptButton
+
+  autoCloseEnabled: boolean = false
+  autoCloseStartTime: number
+  autoCloseTimeoutMS: number
+  autoCloseTimer: Entity
 
   /*
   coins:CustomTextRow
@@ -465,6 +573,34 @@ export class AbstractGridPrompt implements Modal {
     text: "",
   };
 
+  rock1: CustomGridTextRowData = {
+    uiIconSection: atlas_mappings.icons.rock1,
+    text: "",
+  };
+  rock2: CustomGridTextRowData = {
+    uiIconSection: atlas_mappings.icons.rock2,
+    text: "",
+  };
+  rock3: CustomGridTextRowData = {
+    uiIconSection: atlas_mappings.icons.rock3,
+    text: "",
+  };
+  petro: CustomGridTextRowData = {
+    uiIconSection: atlas_mappings.icons.petro,
+    text: "",
+  };
+  nitro: CustomGridTextRowData = {
+    uiIconSection: atlas_mappings.icons.nitro,
+    text: "",
+  };
+  bronze: CustomGridTextRowData = {
+    uiIconSection: atlas_mappings.icons.bronze,
+    text: "",
+  };
+  bronzeShoe: CustomGridTextRowData = {
+    uiIconSection: atlas_mappings.icons.bronzeShoe,
+    text: "",
+  };
   material1: CustomGridTextRowData = {
     uiIconSection: atlas_mappings.icons.material1,
     text: "",
@@ -525,6 +661,15 @@ export class AbstractGridPrompt implements Modal {
       16
     ));
 
+    let closingMsg = (this.closingMsg = this.prompt.addText(
+      i18n.t("closeAutomaticallyCountdown",{ns:namespaces.ui.prompts,"timeLeftSeconds":5}),
+      0,
+      -153,
+      Color4.White(),
+      8
+    ));
+    
+    
     let myButton = this.buttonPrimary = this.prompt.addButton(
       this.buttonConfirm,
       -50,
@@ -556,11 +701,244 @@ export class AbstractGridPrompt implements Modal {
     subtitleRaffle.text.font = sfFont;
     subtitleRaffle.text.isPointerBlocker = false;*/
 
-    this.prompt.hide();
+    this.hide();
     //FIXME call its own formatter, not levelups
     //applyLevelUpPanel(this.prompt, myButton, options);
   }
-  initGrid(args:{rowYPos?:number,rowYHeight?:number}){
+  initGrid(args:{rowXPos?:number,rowYPos?:number,rowXWidth?:number,rowYHeight?:number}){
+    //implement me
+  }
+  show(): void {
+    utils.setTimeout(customDelayMs, () => {
+      this.prompt.show();
+      this.updateGrid();
+      this.startTimers()
+    });
+  }
+
+  hide(): void {
+    this.clearTimers()
+    this.prompt.hide();
+  }
+  hideGrid() {
+    for (let x = 0; x < this.textGrid.length; x++) {
+      //log("hideGrid", x);
+      this.textGrid[x].hide()
+    }
+  }
+  clearGrid() {
+    for (let x = 0; x < this.textGrid.length; x++) {
+      //log("hideGrid", x);
+      this.textGrid[x].clear()
+    }
+  }
+  startTimers(){
+    this.clearTimers()
+    //start any new timers
+    if(this.autoCloseEnabled){
+      this.closingMsg.show()
+      this.autoCloseStartTime = Date.now()
+      const checkForClose = ()=>{
+        if(this.autoCloseStartTime===undefined){
+          return
+        } 
+        const delta = (Date.now() - this.autoCloseStartTime)
+
+        const timeLeftSeconds = Math.ceil((this.autoCloseTimeoutMS-delta)/1000).toFixed(0)
+        //log("timeLeftSeconds",timeLeftSeconds)
+        this.closingMsg.text.value = i18n.t("closeAutomaticallyCountdown",{ns:namespaces.ui.prompts,"timeLeftSeconds":timeLeftSeconds})
+
+        if(delta > this.autoCloseTimeoutMS){
+          this.hide()
+        }else{
+          //schedule again
+          this.autoCloseTimer = utils.setTimeout(200,
+            checkForClose)
+        }
+        
+      } 
+      this.autoCloseTimer = utils.setTimeout(200,
+        checkForClose)
+    }else{
+      this.closingMsg.hide()
+    }
+  }
+  clearTimers(){
+    if(this.autoCloseTimer) {
+      this.autoCloseStartTime = undefined
+      engine.removeEntity(this.autoCloseTimer)
+      this.autoCloseTimer = undefined
+      this.closingMsg.hide()
+    }
+  }
+  
+  updateGridIndex(row: number, data: CustomGridTextRowData) {
+    if(this.textGrid===undefined){
+      log("updateGridIndex WARN this.textGrid is null ",row,this.textGrid)
+      return;
+    }
+    if(this.textGrid[row] === undefined){
+      //debugger
+      log("updateGridIndex WARN invalid index ",row,this.textGrid.length)
+      return;
+    }
+    //this.textGrid[row].text.show();
+    //this.textGrid[row].uiIcon.show();
+    this.textGrid[row].show()
+
+    this.textGrid[row].uiText.value = data.text;
+
+    //if(isNaN(data.text)){
+      try{
+        const numVal = parseInt(data.text)
+        if(numVal <= 0){
+          this.textGrid[row].uiIconImg.opacity = .3
+          this.textGrid[row].uiText.opacity = .8
+        }else{
+          this.textGrid[row].uiIconImg.opacity = 1
+          this.textGrid[row].uiText.opacity = 1
+        } 
+        if(numVal > 9999){
+          this.textGrid[row].uiText.value = "+9999";
+        }
+      }catch(e){
+
+      }
+    //}else{
+    //  this.textGrid[row].uiIconImg.opacity = 1
+    //}
+    //dim it, dont hide it? row++;
+    //this.textGrid[row].uiText.value
+
+    if (data.uiIconSection !== undefined) {
+      setSection(this.textGrid[row].uiIconImg, data.uiIconSection);
+    }
+  }
+  updateGrid() {
+    const arr: CustomGridTextRowData[] = [
+      this.bronzeShoe,
+      this.coins,
+      this.coinsEarned,
+      this.bronze,
+      this.dollars,
+      this.rock1,
+      this.rock2,
+      this.rock3,
+      this.nitro,
+      this.petro,
+      this.material1,
+      this.material2,
+      this.material3,
+    ];
+    //ask
+    //if(){
+    //,
+    //}
+
+    this.hideGrid();
+    //debugger
+    let row = 0;
+    for (let x = 0; x < arr.length; x++) {
+      if (arr[x].text !== undefined && arr[x].text.length > 0) {
+        this.updateGridIndex(row, arr[x]);
+        row++;
+      } else {
+        log("updateGrid was blank", arr[x]);
+      }
+    }
+    /*
+    row++
+    row++
+    //push it down to its own row
+    this.updateGridIndex(row,this.coinsEarned)*/
+  }
+  reset(){
+    this.updateTitle("")
+    this.updateCoins("")
+    this.updateDollar("")
+    this.updateSubGameDollars("")
+    this.updateText("")
+    this.updateMaterial1("")
+    this.updateMaterial2("")
+    this.updateMaterial3("")
+    this.updatePetro("")
+    this.updateNitro("")
+    this.updateRock1("")
+    this.updateRock2("")
+    this.updateRock3("")
+    this.updateBronze("")
+    this.updateBronzeShoe("")
+  }
+  updateTitle(title: string) {
+    this.title.text.value = title;
+  }
+  updateText(text: string) {
+    this.text.text.value = text;
+  }
+  updateCoins(text: string | number) {
+    this.coins.text = typeof text === "string" ? text : Math.floor(text).toFixed(0);
+    //this.coins = coins;
+  }
+  updateCoinsEarned(coins: string) {
+    this.coinsEarned.text = coins;
+    //TODO
+    //updateCoinsEarned
+    //this.coins.text.value = coins
+  }
+  //for voxboard subgame, placeholder if need own object
+  updateSubGameDollars(dollar: string) {
+    this.dollars.text = dollar;
+  }
+
+  //material update placeholders
+  updateMaterial1(val: string) {
+    this.material1.text = val;
+  }
+  updateMaterial2(val: string) {
+    this.material2.text = val;
+  }
+  updateMaterial3(val: string) {
+    this.material3.text = val;
+  }
+
+  updateDollar(text: string|number) {
+    this.dollars.text = typeof text === "string" ? text : Math.floor(text).toFixed(0);
+  }
+
+  updateRock1(text: string|number) {
+    this.rock1.text = typeof text === "string" ? text : Math.floor(text).toFixed(0);
+  }
+  updateRock2(text: string|number) {
+    this.rock2.text = typeof text === "string" ? text : Math.floor(text).toFixed(0);
+  }
+  updateRock3(text: string|number) {
+    this.rock3.text = typeof text === "string" ? text : Math.floor(text).toFixed(0);
+  }
+  updatePetro(text: string|number) {
+    this.petro.text = typeof text === "string" ? text : Math.floor(text).toFixed(0);
+  }
+  updateNitro(text: string|number) {
+    this.nitro.text = typeof text === "string" ? text : Math.floor(text).toFixed(0);
+  }
+  updateBronze(text: string|number) {
+    this.bronze.text = typeof text === "string" ? text : Math.floor(text).toFixed(0);
+  }
+  updateBronzeShoe(text: string|number) {
+    this.bronzeShoe.text = typeof text === "string" ? text : Math.floor(text).toFixed(0);
+  }
+  
+}
+export class AbstractGridPrompt extends AbstractBaseGridPrompt implements Modal {
+  constructor(
+    title: string,
+    text: string,
+    buttonConfirm: string,
+    primaryCallback?: () => void,
+    options?: CustomPromptOptions
+  ) {
+    super(title,text,buttonConfirm,primaryCallback,options)
+  }
+  initGrid(args:{rowXPos?:number,rowYPos?:number,rowXWidth?:number,rowYHeight?:number}){
 
     let rowYPos = args.rowYPos !== undefined ? args.rowYPos : 5; 
     const rowYHeight = args.rowYHeight !== undefined ? args.rowYHeight : 20;
@@ -610,7 +988,7 @@ export class AbstractGridPrompt implements Modal {
       icon.image.source = custUiAtlas;
       setSection(icon.image, atlas_mappings.icons.coin);
 
-      this.textGrid.push({ uiIcon: icon, text: text });
+      this.textGrid.push(new CustomGridTextRow(undefined,icon.image,text.text));
 
       text = this.prompt.addText(
         strText + x,
@@ -634,7 +1012,7 @@ export class AbstractGridPrompt implements Modal {
       setSection(icon.image, atlas_mappings.icons.coin);
  
       //dont add right away so it adds down
-      addAfter.push({ uiIcon: icon, text: text });
+      addAfter.push(new CustomGridTextRow(undefined,icon.image,text.text));
 
       rowYPos -= rowYHeight;
     }
@@ -647,120 +1025,183 @@ export class AbstractGridPrompt implements Modal {
     this.updateGrid();
 
   }
-  show(): void {
-    utils.setTimeout(customDelayMs, () => {
-      this.prompt.show();
-      this.updateGrid();
-    });
-  }
-
-  hide(): void {
-    this.prompt.hide();
-  }
-  hideGrid() {
-    for (let x = 0; x < this.textGrid.length; x++) {
-      //log("hideGrid", x);
-      this.textGrid[x].text.hide();
-      this.textGrid[x].text.text.visible = false;
-      this.textGrid[x].uiIcon.hide();
-    }
-  }
-  updateGridIndex(row: number, data: CustomGridTextRowData) {
-    if(this.textGrid===undefined){
-      log("updateGridIndex WARN this.textGrid is null ",row,this.textGrid)
-      return;
-    }
-    if(this.textGrid[row] === undefined){
-      //debugger
-      log("updateGridIndex WARN invalid index ",row,this.textGrid.length)
-      return;
-    }
-    this.textGrid[row].text.show();
-    this.textGrid[row].uiIcon.show();
-
-    this.textGrid[row].text.text.value = data.text;
-
-    if (data.uiIconSection !== undefined) {
-      setSection(this.textGrid[row].uiIcon.image, data.uiIconSection);
-    }
-  }
-  updateGrid() {
-    const arr: CustomGridTextRowData[] = [
-      this.coins,
-      this.coinsEarned,
-      this.dollars,
-      this.material1,
-      this.material2,
-      this.material3,
-    ];
-    //ask
-    //if(){
-    //,
-    //}
-
-    this.hideGrid();
-    //debugger
-    let row = 0;
-    for (let x = 0; x < arr.length; x++) {
-      if (arr[x].text !== undefined && arr[x].text.length > 0) {
-        this.updateGridIndex(row, arr[x]);
-        row++;
-      } else {
-        log("updateGrid was blank", arr[x]);
-      }
-    }
-    /*
-    row++
-    row++
-    //push it down to its own row
-    this.updateGridIndex(row,this.coinsEarned)*/
-  }
-  reset(){
-    this.updateTitle("")
-    this.updateCoins("")
-    this.updateDollar("")
-    this.updateSubGameDollars("")
-    this.updateText("")
-    this.updateMaterial1("")
-    this.updateMaterial2("")
-    this.updateMaterial3("")
-  }
-  updateTitle(title: string) {
-    this.title.text.value = title;
-  }
-  updateText(text: string) {
-    this.text.text.value = text;
-  }
-  updateCoins(coins: string) {
-    this.coins.text = coins;
-    //this.coins = coins;
-  }
-  updateCoinsEarned(coins: string) {
-    this.coinsEarned.text = coins;
-    //TODO
-    //updateCoinsEarned
-    //this.coins.text.value = coins
-  }
-  //for voxboard subgame, placeholder if need own object
-  updateSubGameDollars(dollar: string) {
-    this.dollars.text = dollar;
-  }
-
-  //material update placeholders
-  updateMaterial1(val: string) {
-    this.material1.text = val;
-  }
-  updateMaterial2(val: string) {
-    this.material2.text = val;
-  }
-  updateMaterial3(val: string) {
-    this.material3.text = val;
-  }
-
-  updateDollar(dollar: string) {
-    this.dollars.text = dollar;
-  }
 }
+export class InventoryPrompt extends AbstractBaseGridPrompt implements Modal {
+    constructor(
+      title: string,
+      text: string,
+      buttonConfirm: string,
+      primaryCallback?: () => void,
+      options?: CustomPromptOptions
+    ) {
+      // 1200 / 735   
+      const scale = .5
+      options = {height:735*scale,width:1200*scale}
+      super(title,text,buttonConfirm,primaryCallback,options)
+
+      this.initGrid({rowXPos:0,rowYPos:70})
+
+      this.text.text.value = ""
+      this.title.text.value = ""
+      this.text.text.positionY = -100
+
+      
+      //this.prompt.closeIcon.positionX = "41%";
+      //this.prompt.closeIcon.positionY = "22%";
+
+      applyInventoryPanel(this.prompt, this.buttonPrimary, options);
+      
+      updateCloseBtnPosition(this.prompt,-10)
+    }
+    initGrid(args:{rowXPos?:number,rowYPos?:number,rowXWidth?:number,rowYHeight?:number}){
+  
+      let _rowXPos = args.rowXPos !== undefined ? args.rowXPos : 5; 
+      let rowYPos = args.rowYPos !== undefined ? args.rowYPos : 5; 
+      let rowXPos = _rowXPos
+      let spacing = 10
+      const rowYHeight = args.rowYHeight !== undefined ? args.rowYHeight : 50;
+      const rowXWidth = args.rowXWidth !== undefined ? args.rowXWidth : 50;
+      const fontSize = 12;
+  
+      //change these to change number of rows/columns
+      const rowDim = 3
+      const columnDim = 4 + 3
+
+      const rowXOffset = (rowXWidth * columnDim)/2 * -1
+  
+      const addAfter: CustomGridTextRow[] = [];
+      
+      for (let x = 0; x < rowDim; x++) {
+        rowXPos = _rowXPos
+        for(let y =0; y < columnDim; y++){
+          let strText = "xxx";
+          switch (x) {
+            case 1:
+              strText = "Gwood";
+              break;
+            case 2:
+              strText = "diamon";
+              break;
+            case 3:
+              strText = "lil coin";
+              break;
+          }
+    
+          const containerWidth = rowXWidth
+          const containerHeight = rowYHeight
+          const IMAGE_SHIFT_X = 0
+          const container = new UIContainerRect(this.prompt.background)
+          container.width = containerWidth
+          container.height = containerHeight
+          container.hAlign = "center"
+          container.vAlign = "center"
+          container.positionX = rowXOffset + rowXPos
+          container.positionY = rowYPos
+          
+          let shadow = new UIContainerRect(container)
+          shadow.hAlign = "right"
+          shadow.vAlign = "center"
+          shadow.width = containerWidth * 1
+          shadow.height = containerWidth * 1
+          shadow.color = Color4.Black()
+          shadow.opacity = 0//.7
+          //shadow.positionX = -7 + IMAGE_SHIFT_X
+          //shadow.positionY = -2
+
+
+          const itemBg = new UIImage(container, custUiAtlasInventory)
+          itemBg.width = containerWidth * 1
+          itemBg.height = containerHeight * 1
+          itemBg.hAlign = "center"
+          itemBg.vAlign = "center"
+          //itemBg.positionX = -5 + IMAGE_SHIFT_X
+          //itemBg.positionY = -2 //+ IMAGE_SHIFT_X
+
+          setSection(itemBg, atlas_mappings.icons.inventoryItemSlot);
+ 
+          const scaleDown = .9
+          //const imgTexture = rewardImage !== undefined && rewardImage.length > 0 ? new Texture(rewardImage) : defaultRewardIcon
+          const itemImage = new UIImage(container, custUiAtlas)
+          itemImage.width = containerWidth * scaleDown
+          itemImage.height = containerHeight * scaleDown
+          itemImage.hAlign = "center"
+          itemImage.vAlign = "center"
+          itemImage.positionX = (containerWidth * (1-scaleDown)) + IMAGE_SHIFT_X
+          //itemImage.positionY = (containerHeight * (1-scaleDown)) //+ IMAGE_SHIFT_X
+
+          setSection(itemImage, atlas_mappings.icons.coin);
+
+          //const imgTexture = rewardImage !== undefined && rewardImage.length > 0 ? new Texture(rewardImage) : defaultRewardIcon
+          const itemText = new UIText(container)
+          itemText.value = "x 999"
+          itemText.color = Color4.White()
+          itemText.fontSize = fontSize
+          itemText.width = containerWidth * scaleDown
+          itemText.height = containerHeight * scaleDown
+          itemText.hAlign = "right"
+          itemText.hTextAlign = "right"
+          itemText.vAlign = "bottom"
+          //itemText.positionX = -1*(containerWidth * (1-scaleDown)) + IMAGE_SHIFT_X
+          //itemText.positionY = (containerHeight * (1-scaleDown)) //+ IMAGE_SHIFT_X
+    
+          this.textGrid.push(new CustomGridTextRow(container,itemImage,itemText,itemBg)); 
+
+          //rowYPos -= rowYHeight;
+          rowXPos += rowXWidth + spacing
+        }
+        rowYPos -= rowYHeight + spacing
+        
+      }
+  
+      this.updateGrid();
+  
+    }
+    updateGrid() {
+      const arr: CustomGridTextRowData[] = [
+        this.coins,
+        this.coinsEarned,
+        this.bronze,
+        this.bronzeShoe,
+        this.dollars,
+
+        this.rock1,
+        this.rock2,
+        this.rock3,
+
+        this.nitro,
+        this.petro,
+
+        /* //this is inventory, not VC, not using for now 
+        this.material1,
+        this.material2,
+        this.material3,*/
+      ];
+      //ask
+      //if(){
+      //,
+      //}
+  
+      //call hide gride to hide 0 values?
+      this.clearGrid();
+      //debugger
+      let row = 0;
+      for (let x = 0; x < arr.length; x++) {
+        if (arr[x].text !== undefined && arr[x].text.length > 0) {
+          this.updateGridIndex(row, arr[x]);
+          //this.textGrid[row].uiText.value = arr[x].text//x+""
+          row++;
+        } else {
+          log("updateGrid was blank", arr[x]);
+        }
+      }
+      /*
+      row++
+      row++
+      //push it down to its own row
+      this.updateGridIndex(row,this.coinsEarned)*/
+    }
+  }
+
 export class LevelUpPrompt extends AbstractGridPrompt {
   constructor(
     title: string,
@@ -801,10 +1242,34 @@ export class LevelUpPrompt extends AbstractGridPrompt {
         switch(reward.rewards[p].id){
           case CONFIG.GAME_COIN_TYPE_GC:
             this.updateCoins(reward.rewards[p].amount.toFixed(0))
-          break;
+            break;
           case CONFIG.GAME_COIN_TYPE_MC:
             this.updateDollar(reward.rewards[p].amount.toFixed(0))
-          break;
+            break;
+          case CONFIG.GAME_COIN_TYPE_MC:
+            this.updateDollar(reward.rewards[p].amount.toFixed(0))
+            break;
+          case CONFIG.GAME_COIN_TYPE_R1:
+            this.updateRock1(reward.rewards[p].amount.toFixed(0))
+            break;
+          case CONFIG.GAME_COIN_TYPE_R2:
+            this.updateRock2(reward.rewards[p].amount.toFixed(0))
+            break;
+          case CONFIG.GAME_COIN_TYPE_R3:
+            this.updateRock3(reward.rewards[p].amount.toFixed(0))
+            break;
+          case CONFIG.GAME_COIN_TYPE_BP:
+            this.updatePetro(reward.rewards[p].amount.toFixed(0))
+            break;
+          case CONFIG.GAME_COIN_TYPE_NI:
+            this.updateNitro(reward.rewards[p].amount.toFixed(0))
+            break;
+          case CONFIG.GAME_COIN_TYPE_BZ:
+            this.updateBronze(reward.rewards[p].amount.toFixed(0))
+            break;
+          case CONFIG.GAME_COIN_TYPE_BRONZE_SHOE_1_ID:
+            this.updateBronzeShoe(reward.rewards[p].amount.toFixed(0))
+            break; 
           default:
             log("unhandled reward type",reward.rewards[p].id,reward.rewards[p])
         }
@@ -864,7 +1329,6 @@ export class CustomRewardPrompt extends AbstractGridPrompt {
     this.initGrid({}) 
 
 
-    //this.primaryCallback = primaryCallback;
     this.secundaryCallback = secundaryCallback;
 
     this.buttonConfirm = buttonConfirm;
@@ -917,7 +1381,7 @@ export class CustomRewardPrompt extends AbstractGridPrompt {
     subtitleRaffle.text.font = sfFont;
     subtitleRaffle.text.isPointerBlocker = false;
 
-    this.prompt.hide();
+    this.hide();
     applyRafflePanel(this.prompt, this.buttonPrimary, secundaryButton, options);
   }
 }
@@ -942,6 +1406,15 @@ export type CustomClaimArgs = {
   coins?: string;
   cost?: CustomClaimCost[]; //FIXME, must send in multi costs
   dollars?: string;
+
+  rock1?: string
+  rock2?: string
+  rock3?: string
+  bronze?: string
+  nitro?: string
+  petro?: string
+
+  bronzeShoe?: string
   
   showStockQty?:boolean //defaults to true
   itemQtyCurrent?:number
@@ -960,6 +1433,7 @@ export type CustomClaimArgs = {
 };
 export class CustomClaimPrompt implements Modal {
   prompt: ui.CustomPrompt;
+  claimButton: ui.CustomPromptButton
   image: ui.CustomPromptIcon;
   itemName: ui.CustomPromptText;
   subtitleItemName: CustomPromptText;
@@ -976,6 +1450,35 @@ export class CustomClaimPrompt implements Modal {
   };
   dollars: CustomGridTextRowData = {
     uiIconSection: atlas_mappings.icons.dimond,
+    text: "",
+  };
+
+  rock1: CustomGridTextRowData = {
+    uiIconSection: atlas_mappings.icons.rock1,
+    text: "",
+  };
+  rock2: CustomGridTextRowData = {
+    uiIconSection: atlas_mappings.icons.rock2,
+    text: "",
+  };
+  rock3: CustomGridTextRowData = {
+    uiIconSection: atlas_mappings.icons.rock3,
+    text: "",
+  };
+  petro: CustomGridTextRowData = {
+    uiIconSection: atlas_mappings.icons.petro,
+    text: "",
+  };
+  nitro: CustomGridTextRowData = {
+    uiIconSection: atlas_mappings.icons.nitro,
+    text: "",
+  };
+  bronze: CustomGridTextRowData = {
+    uiIconSection: atlas_mappings.icons.bronze,
+    text: "",
+  };
+  bronzeShoe: CustomGridTextRowData = {
+    uiIconSection: atlas_mappings.icons.bronzeShoe,
     text: "",
   };
 
@@ -1100,7 +1603,7 @@ export class CustomClaimPrompt implements Modal {
 
     let checkingLatestPrice = this.checkingLatestPriceUI = new CustomPromptText(
       this.prompt,
-      "Checking Latest Prices...",
+      i18n.t("checkingLatestPrices",{ns:namespaces.ui.prompts}),
       200,
       -50,
       false,
@@ -1114,10 +1617,13 @@ export class CustomClaimPrompt implements Modal {
 
     checkingLatestPrice.hide()
 
-    const COST_X_BASE = CONFIG.CLAIM_CHECK_FOR_LATEST_PRICES ? 180 : 200
+    const showCostIcons = CONFIG.CLAIM_CHECK_FOR_LATEST_PRICES 
+      && (args.options.costShowIcons === undefined || args.options.costShowIcons === true)
+
+    const COST_X_BASE = showCostIcons && CONFIG.CLAIM_CHECK_FOR_LATEST_PRICES ? 180 : 200
     let costText = new CustomPromptText(
       this.prompt,
-      "COST",
+      i18n.t("title.costToUpper",{ns:namespaces.common}),
       COST_X_BASE,
       40,
       false,
@@ -1129,7 +1635,11 @@ export class CustomClaimPrompt implements Modal {
     costText.text.font = sfFont;
     costText.text.fontSize = 15 * SCALE_FONT;
 
-    if(CONFIG.CLAIM_CHECK_FOR_LATEST_PRICES){
+    i18nOnLanguageChangedAdd((lng:string) => {
+      costText.text.value = i18n.t("title.costToUpper",{ns:namespaces.common})
+    })
+
+    if(showCostIcons){
       let costInfoIcon = this.prompt.addIcon(
         "",
         COST_X_BASE+72,
@@ -1187,8 +1697,8 @@ export class CustomClaimPrompt implements Modal {
     dollarsText.text.font = sfFont;
     
       */
-    let claimButton = this.prompt.addButton(
-      "Claim",
+    let claimButton = this.claimButton = this.prompt.addButton(
+      i18n.t("button.claim", {ns:namespaces.common}),
       -65,
       -60,
       () => {
@@ -1197,6 +1707,7 @@ export class CustomClaimPrompt implements Modal {
       },
       ui.ButtonStyles.E
     );
+    
     if (claimButton.icon) {
       claimButton.icon.visible = false;
       log(claimButton.label);
@@ -1267,7 +1778,7 @@ export class CustomClaimPrompt implements Modal {
       icon.image.source = custUiAtlas;
       setSection(icon.image, atlas_mappings.icons.coin);
 
-      this.textGrid.push({ uiIcon: icon, text: text });
+      this.textGrid.push(new CustomGridTextRow(undefined,icon.image,text.text));
 
       text = this.prompt.addText(
         strText + x,
@@ -1291,7 +1802,8 @@ export class CustomClaimPrompt implements Modal {
       setSection(icon.image, atlas_mappings.icons.coin);
 
       //dont add right away so it adds down
-      addAfter.push({ uiIcon: icon, text: text });
+      //addAfter.push({ uiIcon: icon, text: text });
+      addAfter.push(new CustomGridTextRow(undefined,icon.image,text.text));
 
       rowYPos -= rowYHeight;
     }
@@ -1302,11 +1814,20 @@ export class CustomClaimPrompt implements Modal {
       this.textGrid.push(addAfter[p]);
     }
 
+    for(let row=0;row<this.textGrid.length;row++){
+      //if(row === 4){
+      //workaround, not sure how but its blocking the cost "?" and "price refresh buttons"
+      //if we ever need this clickable will solve why
+      if(this.textGrid[row].uiItemBg) this.textGrid[row].uiItemBg.isPointerBlocker = false
+      if(this.textGrid[row].uiIconImg) this.textGrid[row].uiIconImg.isPointerBlocker = false
+      if(this.textGrid[row].uiText) this.textGrid[row].uiText.isPointerBlocker = false
+      //}
+    }
     this.updateGrid();
 
     this.updateData(args);
 
-    this.prompt.hide();
+    this.hide();
     applyClaimPanel(
       this.prompt,
       claimButton,
@@ -1349,8 +1870,9 @@ export class CustomClaimPrompt implements Modal {
           
             if (costs !== undefined && costs.length > 0) {
               //reset them so they can be set again
-              this.coins.text = ""
-              this.dollars.text = ""
+              for(const p of [this.bronzeShoe,this.coins,this.bronze,this.dollars,this.rock1,this.rock2,this.rock3,this.petro,this.nitro]){
+                p.text = ""
+              }
 
               for (let p in costs) {
                 const price = costs[p].amount?.toFixed(0);
@@ -1361,6 +1883,28 @@ export class CustomClaimPrompt implements Modal {
                     break;
                   case CONFIG.GAME_COIN_TYPE_MC: 
                     this.dollars.text = price;
+                    break;
+                  case CONFIG.GAME_COIN_TYPE_R1:
+                    this.rock1.text = price;
+                    break;
+                  case CONFIG.GAME_COIN_TYPE_R2: 
+                    this.rock2.text = price;
+                    break;
+                  case CONFIG.GAME_COIN_TYPE_R3:
+                    this.rock3.text = price;
+                    break;
+                  case CONFIG.GAME_COIN_TYPE_BZ: 
+                    this.bronze.text = price;
+                    break;
+                  //TODO bronzeShoe
+                  case CONFIG.GAME_COIN_TYPE_NI: 
+                    this.nitro.text = price;
+                    break;
+                  case CONFIG.GAME_COIN_TYPE_BP: 
+                    this.petro.text = price;
+                    break;
+                  case CONFIG.GAME_COIN_TYPE_BRONZE_SHOE_1_ID:
+                    this.bronzeShoe.text = price
                     break;
                   case CONFIG.GAME_COIN_TYPE_MATERIAL_1_ID:
                   case CONFIG.GAME_COIN_TYPE_MATERIAL_2_ID:
@@ -1398,9 +1942,7 @@ export class CustomClaimPrompt implements Modal {
   hideGrid() {
     for (let x = 0; x < this.textGrid.length; x++) {
       //log("hideGrid", x);
-      this.textGrid[x].text.hide();
-      this.textGrid[x].text.text.visible = false;
-      this.textGrid[x].uiIcon.hide();
+      this.textGrid[x].hide();
     }
   }
 
@@ -1413,17 +1955,19 @@ export class CustomClaimPrompt implements Modal {
       log("updateGridIndex WARN invalid index ",row,this.textGrid.length)
       return;
     }
-    this.textGrid[row].text.show();
-    this.textGrid[row].uiIcon.show();
+    this.textGrid[row].show();
+    //this.textGrid[row].uiIcon.show();
 
-    if(this.textGrid[row].text.text !== undefined) this.textGrid[row].text.text.value = data.text;
+    if(this.textGrid[row].uiText !== undefined) this.textGrid[row].uiText.value = data.text;
 
     if (data.uiIconSection !== undefined) {
-      setSection(this.textGrid[row].uiIcon.image, data.uiIconSection);
+      setSection(this.textGrid[row].uiIconImg, data.uiIconSection);
     }
   }
   updateGrid() {
-    const arr: CustomGridTextRowData[] = [this.coins, this.dollars];
+    const arr: CustomGridTextRowData[] = [this.bronzeShoe,this.coins, this.bronze, this.dollars
+      , this.rock1,this.rock2,this.rock3
+      ,this.petro,this.nitro];
     //ask
     //if(){
     //,
@@ -1462,6 +2006,27 @@ export class CustomClaimPrompt implements Modal {
             break;
           case CONFIG.GAME_COIN_TYPE_MC:
             args.dollars = price;
+            break;
+          case CONFIG.GAME_COIN_TYPE_R1:
+            args.rock1 = price;
+            break;
+          case CONFIG.GAME_COIN_TYPE_R2:
+            args.rock2 = price;
+            break;
+          case CONFIG.GAME_COIN_TYPE_R3:
+            args.rock3 = price;
+            break;
+          case CONFIG.GAME_COIN_TYPE_BP:
+            args.petro = price;
+            break;
+          case CONFIG.GAME_COIN_TYPE_NI:
+            args.nitro = price;
+            break;
+          case CONFIG.GAME_COIN_TYPE_BZ:
+            args.bronze = price;
+            break;
+          case CONFIG.GAME_COIN_TYPE_BRONZE_SHOE_1_ID:
+            args.bronzeShoe = price;
             break;
           case CONFIG.GAME_COIN_TYPE_MATERIAL_1_ID:
           case CONFIG.GAME_COIN_TYPE_MATERIAL_2_ID:
@@ -1512,6 +2077,14 @@ export class CustomClaimPrompt implements Modal {
     this.coins.text = args.coins ? args.coins : "";
     this.dollars.text = args.dollars ? args.dollars : "";
 
+    this.rock1.text = args.rock1 ? args.rock1 : "";
+    this.rock2.text = args.rock2 ? args.rock2 : "";
+    this.rock3.text = args.rock3 ? args.rock3 : "";
+    this.petro.text = args.petro ? args.petro : "";
+    this.nitro.text = args.nitro ? args.nitro : "";
+    this.bronze.text = args.bronze ? args.bronze : "";
+    this.bronzeShoe.text = args.bronzeShoe ? args.bronzeShoe : "";
+
     this.updateGrid();
     /*
     let claimButton = this.prompt.addButton(
@@ -1548,10 +2121,13 @@ export class CustomClaimPrompt implements Modal {
         this.itemQtyAmount.text.value = "("+qtyVal+")" 
       }else{
         if(currQty === undefined){
-          this.itemQtyAmount.text.value = "(Stock Not Available)" 
+          this.itemQtyAmount.text.value = i18n.t("stockNotAvailable",{ns:namespaces.ui.prompts})
         }else{
-          this.itemQtyAmount.text.value = "(Stock Not Available)"
+          this.itemQtyAmount.text.value = i18n.t("stockNotAvailable",{ns:namespaces.ui.prompts})
         }
+      i18nOnLanguageChangedAdd((lng:string) => {
+        this.itemQtyAmount.text.value = i18n.t("stockNotAvailable",{ns:namespaces.ui.prompts})
+      })  
       }
     }else{
       //dont show
@@ -1592,6 +2168,17 @@ function applyMapPanel(
   }
 }
 
+function applyButtonStyle(button?: CustomPromptButton){
+  if (button) {
+    button.image.source = custUiAtlas;
+    
+    button.image.sourceLeft = 2035;
+    button.image.sourceWidth = 660;
+    button.image.sourceTop = 2585;
+    button.image.sourceHeight = 215;
+    button.image.height = 75;
+  }
+}
 function applyEmptyPanel(
   modal: ui.CustomPrompt,
   button?: CustomPromptButton,
@@ -1600,10 +2187,11 @@ function applyEmptyPanel(
   if (custUiAtlas !== undefined) {
     modal.background.source = custUiAtlas;
 
-    modal.background.sourceWidth = 2024;
-    modal.background.sourceLeft = 0;
+    setSection(modal.background, atlas_mappings.backgrounds.emptyPanel);
+    //modal.background.sourceWidth = 2024;
+    //modal.background.sourceLeft = 0;
 
-    modal.background.sourceHeight = 1400;
+    //modal.background.sourceHeight = 1400;
     modal.background.height =
       options && options.height ? options.height : OK_PROMPT_DEFAULT_HEIGHT;
     modal.background.width =
@@ -1611,22 +2199,43 @@ function applyEmptyPanel(
     modal.closeIcon.positionX = "40%";
     modal.closeIcon.positionY = "21%";
 
-    if (button) {
-      button.image.source = custUiAtlas;
+    
+    if(button){
+      applyButtonStyle(button);
       button.image.positionY =
-        options && options.height
-          ? -1 * (options.height / OK_PROMPT_DEFAULT_HEIGHT) * 100 + 25 + "%"
-          : "-25%";
-      button.image.sourceLeft = 2035;
-      button.image.sourceWidth = 660;
-      button.image.sourceTop = 2585;
-      button.image.sourceHeight = 215;
-      button.image.height = "25%";
+        //options && options.height
+          //? -1 * (options.height / OK_PROMPT_DEFAULT_HEIGHT) * 100 + 25 + "%"
+          "-25%";
     }
+    
     if (modal instanceof ui.CustomPrompt) {
       modal.texture = custUiAtlas;
     }
   }
+}
+
+const BUTTON_HEIGHT = 60
+function applyInventoryPanel(
+  modal: ui.CustomPrompt,
+  button?: CustomPromptButton,
+  options?: CustomPromptOptions
+) {
+  applyCustomOptionsPanel(modal,button,undefined,options)
+
+  
+  modal.background.source = custUiAtlasInventory
+
+  modal.background.sourceWidth = 1200;
+  modal.background.sourceLeft = 0;
+
+  modal.background.sourceHeight = 735;
+
+  button.image.positionX = 0
+
+  button.image.height = BUTTON_HEIGHT
+  //    raffleGamePrompt.buttonSecondaryBtn.image.height = BUTTON_HEIGHT
+
+  //then fix
 }
 
 function applyClaimPanel(
@@ -1636,6 +2245,7 @@ function applyClaimPanel(
   options?: CustomPromptOptions
 ): void {
   if (custUiAtlas !== undefined) {
+    modal.background.positionY = -30//push down a little away from stanima bar
     modal.background.source = custUiAtlas;
 
     modal.background.sourceTop = 1601;
@@ -1653,8 +2263,14 @@ function applyClaimPanel(
         ? options && options.width
         : CLAIM_PROMPT_DEFAULT_WIDTH;
 
-    modal.closeIcon.positionX = "47.5%";
+    modal.closeIcon.positionX = "48%";
     modal.closeIcon.positionY = "45%";
+    modal.closeIcon.source = custUiAtlas; //<== THIS POINTS AT OUR IMAGE ATLAS
+    modal.closeIcon.sourceLeft = 3843; //TODO change these to map to it
+    modal.closeIcon.sourceWidth = 105;//change these to map to it
+    modal.closeIcon.sourceTop = 310;//change these to map to it
+    modal.closeIcon.sourceHeight = 105;//change these to map to it
+
     if (secondaryClaimButton) {
       firstClaimButton.image.source = custUiAtlas;
       firstClaimButton.image.positionY = "-26%";
@@ -1763,7 +2379,7 @@ function applyRafflePanel(
 
     if (button) {
       button.image.source = custUiAtlas;
-      button.image.positionY = "-35%";
+      button.image.positionY = "-34.5%"//"-35%";
       button.image.positionX = "-18%";
       button.image.sourceLeft = 2035;
       button.image.sourceWidth = 400;
@@ -1774,7 +2390,7 @@ function applyRafflePanel(
     }
     if (secondaryButton) {
       secondaryButton.image.source = custUiAtlas;
-      secondaryButton.image.positionY = "-35%";
+      secondaryButton.image.positionY = "-34.5%"//"-35%";
       secondaryButton.image.positionX = "18%";
       secondaryButton.image.sourceLeft = 2426;
       secondaryButton.image.sourceWidth = 424;
@@ -1848,4 +2464,236 @@ function applyCustomOptionsPanel(
       modal.texture = custUiAtlas;
     }
   }
+}
+
+export class LeaderBoardPrompt extends CustomOkPrompt implements ILeaderboardItem{
+  playerEntries?: PlayerLeaderboardEntryType[];
+  currentPlayer?: PlayerLeaderboardEntryType;
+  formatterCallback?: (text: string|number) => string;
+  startIndex:number = 0;
+  pageSize:number = CONFIG.GAME_LEADEBOARD_2DUI_MAX_RESULTS
+  nextBtn: ui.CustomPromptButton;
+  prevBtn: ui.CustomPromptButton;
+  constructor(
+    title: string,
+    text: string,
+    buttonText: string,
+    callback?: () => void,
+    options?: CustomPromptOptions
+  ){
+    super ( title, text, buttonText, callback, options)
+
+    const nextBtnPosY = -40
+    let nextBtn = (this.nextBtn = this.prompt.addButton(
+      ">>",
+      180,
+      nextBtnPosY,
+      () => {
+        if(this.startIndex + this.pageSize < this.playerEntries.length){
+          this.startIndex += this.pageSize
+        } 
+        this.updateUI()
+      },
+      ui.ButtonStyles.ROUNDBLACK
+    ));
+
+    let prevBtn = (this.prevBtn = this.prompt.addButton(
+      "<<",
+      -180,
+      nextBtnPosY,
+      () => {
+        this.startIndex -= this.pageSize
+        if(this.startIndex < 0){
+          this.startIndex = 0
+        }
+        this.updateUI()
+      },
+      ui.ButtonStyles.ROUNDBLACK
+    ));
+
+    applyButtonStyle(nextBtn)
+    applyButtonStyle(prevBtn)
+    nextBtn.label.width = 40
+    prevBtn.label.width = 40
+    prevBtn.label.positionY = 2
+    nextBtn.label.positionY = 2
+    nextBtn.image.width = 40
+    prevBtn.image.width = 40
+    nextBtn.image.height = 35
+    prevBtn.image.height = 35
+    applyLeaderBoardPanel(this)
+  }
+
+  setPlayerEntries(arr: PlayerLeaderboardEntryType[]) {
+    this.startIndex = 0
+    this.playerEntries = arr;
+  }
+  setCurrentPlayer(arr: PlayerLeaderboardEntryType) {
+    this.currentPlayer = arr;
+  }
+ 
+  updateUI(): void {
+    this.text.text.value = createLeaderBoardPanelText(this,this.startIndex,this.pageSize,this.formatterCallback)
+  }
+  
+  setFormatterCallback(callback: (text: string|number) => string): void {
+    this.formatterCallback = callback
+  }
+  
+}
+
+function applyLeaderBoardPanel( prompt:LeaderBoardPrompt){
+  prompt.button.image.positionY = -230
+  
+  prompt.title.text.positionY = 90
+  prompt.title.text.positionX = 70
+
+  prompt.text.text.positionY = -60
+  prompt.text.text.fontSize = 12
+
+  prompt.prompt.background.positionY = 50
+  
+}
+
+
+const languageIcons = [
+  {
+    name: {key:"english", params:{ns:namespaces.ui.languages}},
+    isoCode: languages.en,
+    icon: atlas_mappings.icons.language_english
+  },
+  
+  {
+    name: {key:"chinese", params:{ns:namespaces.ui.languages}},
+    isoCode: languages.zh,
+    icon: atlas_mappings.icons.language_china
+  }
+  ,
+  {
+    name: {key:"german", params:{ns:namespaces.ui.languages}},
+    isoCode: languages.de,
+    icon: atlas_mappings.icons.language_german
+  }
+  , 
+  {
+    name: {key:"japenese", params:{ns:namespaces.ui.languages}},
+    isoCode: languages.jp,
+    icon: atlas_mappings.icons.language_japan
+  }
+  ,
+  {
+    name: {key:"korean", params:{ns:namespaces.ui.languages}},
+    isoCode: languages.ko,
+    icon: atlas_mappings.icons.language_korea
+  }
+  ,
+  {
+    name: {key:"spanish", params:{ns:namespaces.ui.languages}},
+    isoCode: languages.es,
+    icon: atlas_mappings.icons.language_spain
+  },
+  {
+    name: {key:"turkey", params:{ns:namespaces.ui.languages}},
+    isoCode: languages.tr,
+    icon: atlas_mappings.icons.language_turkey
+  },
+  {
+    name: {key:"saudi", params:{ns:namespaces.ui.languages}},
+    isoCode: languages.sa,
+    icon: atlas_mappings.icons.language_saudi
+  },
+  {
+    name: {key:"portuguese", params:{ns:namespaces.ui.languages}},
+    isoCode: languages.br,
+    icon: atlas_mappings.icons.language_brazil
+  },
+  {
+    name: {key:"iran", params:{ns:namespaces.ui.languages}},
+    isoCode: languages.ir,
+    icon: atlas_mappings.icons.language_iran
+  }
+
+
+]
+
+export class PickLanguagePrompt extends CustomOkPrompt{
+  constructor(
+    title: string | I18NParamsType,
+    text: string,
+    buttonText: string | I18NParamsType,
+    callback?: () => void,
+    options?: CustomPromptOptions
+  ){
+    super ( title, text, buttonText, callback, {
+      height: 500
+    })
+    
+    this.title.text.positionY = 75
+    this.button.image.positionY = -155
+
+    const containerWidth = 50
+    const containerHeight = 70
+    const containerPaddX = 10
+    const posXStart = -(containerWidth+containerPaddX) * 2.5
+    let posX = posXStart
+    let posY = 0
+    let counter = 0
+    
+    const ROW_SIZE = 6
+    for(const langs of languageIcons){ 
+      log("language.btn",langs)
+      const container = new UIContainerRect(this.prompt.background)
+      container.width = containerWidth
+      container.height = containerHeight
+      container.hAlign = "center"
+      container.vAlign = "center"
+      container.positionX = posX
+      container.positionY = posY
+
+      const isI18nProp = typeof langs.name !== "string"//i18nProps.hasOwnProperty( 'key')
+      
+      const itemText = new UIText(container)
+          itemText.value = isI18nProp ? i18n.t(langs.name.key,langs.name.params) : langs.name
+          itemText.color = Color4.White()
+          itemText.fontSize = 12
+          itemText.width = containerWidth 
+          itemText.height = containerHeight 
+          itemText.hAlign = "center"
+          itemText.hTextAlign = "center"
+          itemText.vAlign = "bottom"
+
+
+      if(isI18nProp){
+        i18nOnLanguageChangedAdd((lng) => {
+          itemText.value = i18n.t(langs.name.key,langs.name.params)
+        })
+      }
+
+
+      const langImg = new UIImage(container, custUiAtlas)
+      langImg.width = containerWidth 
+      langImg.height = containerWidth 
+      langImg.hAlign = "center"
+      langImg.vAlign = "center"
+        //itemBg.positionX = -5 + IMAGE_SHIFT_X
+        //itemBg.positionY = -2 //+ IMAGE_SHIFT_X
+
+        langImg.onClick = new OnPointerDown(
+          () => {
+            i18n.changeLanguage(langs.isoCode.toLowerCase())
+          }
+        )
+
+      setSection(langImg, langs.icon);
+      //setSection(langImg, atlas_mappings.icons.costRefresh);
+
+      counter ++
+      posX += containerWidth + containerPaddX
+      if(counter % ROW_SIZE ==0){
+        posX = posXStart
+        posY -= containerWidth+containerPaddX
+      }
+    }
+  }
+
 }

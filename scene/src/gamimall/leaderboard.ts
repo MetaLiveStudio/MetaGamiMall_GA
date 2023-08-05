@@ -1,6 +1,6 @@
 import { CONFIG } from "src/config";
 import { logChangeListenerEntry } from "src/logging";
-import { GAME_STATE, PlayerState } from "src/state";
+import { GAME_STATE, PlayerState, initGameState } from "src/state";
 import { isNull } from "src/utils";
 import { fetchLeaderboardInfo } from "./login-flow";
 import { getUserDisplayName } from "./player-utils";
@@ -10,6 +10,12 @@ import {
   StatisticValue,
 } from "./playfab_sdk/playfab.types";
 import { createMaterial, GLOBAL_CANVAS } from "./resources";
+import { LeaderBoardPrompt } from "src/ui/modals";
+import { REGISTRY } from "src/registry";
+import { getLevelFromXp } from "src/modules/leveling/levelingUtils";
+import { ILeaderboardItem, LEADERBOARD_REGISTRY, PlayerLeaderboardEntryType, createLeaderBoardPanelText, leaderBoardsConfigs } from "./leaderboard-utils";
+
+initGameState()
 
 export const uiCanvas = GLOBAL_CANVAS;
 let textHeaderShape: TextShape | undefined;
@@ -38,24 +44,18 @@ leaderboard.color = Color4.White();
 
 */
 
-export type PlayerLeaderboardEntryType = {
-  /** Title-specific display name of the user for this leaderboard entry. */
-  DisplayName?: string;
-  /** PlayFab unique identifier of the user for this leaderboard entry. */
-  PlayFabId?: string;
-  /** User's overall position in the leaderboard. */
-  Position: number;
-  /** Specific value of the user's statistic. */
-  StatValue: number;
-};
-export class LeaderboardItem {
+export class LeaderboardItem implements ILeaderboardItem {
   host?: Entity;
   textHeaderShape?: TextShape;
   text?: TextShape;
   playerEntries?: PlayerLeaderboardEntryType[];
   currentPlayer?: PlayerLeaderboardEntryType;
-
+  formatterCallback?: (text: string|number) => string;
+  startIndex:number = 0;
+  pageSize:number = CONFIG.GAME_LEADEBOARD_BILLBOARD_MAX_RESULTS
+  
   setPlayerEntries(arr: PlayerLeaderboardEntryType[]) {
+    this.startIndex = 0
     this.playerEntries = arr;
   }
   setCurrentPlayer(arr: PlayerLeaderboardEntryType) {
@@ -63,55 +63,16 @@ export class LeaderboardItem {
   }
 
   updateUI() {
-    let leaderBoardPlaceHolderText = "";
-    let leaderBoardPlaceHolderText2 = "";
-
-    let counter = 0;
-
-    if (this.playerEntries !== undefined) {
-      for (const p in this.playerEntries) {
-        const item = this.playerEntries[p];
-        leaderBoardPlaceHolderText +=
-          Number(item.Position) +
-          1 +
-          " " +
-          item.DisplayName +
-          "......" +
-          item.StatValue +
-          "\n";
-
-        counter++;
-
-        if (counter >= CONFIG.GAME_LEADEBOARD_BILLBOARD_MAX_RESULTS) {
-          break;
-        }
-      }
-    }
-
-    if (this.currentPlayer !== undefined) {
-      leaderBoardPlaceHolderText +=
-        "\n" +
-        this.currentPlayer.DisplayName +
-        "......" +
-        (this.currentPlayer.StatValue ? this.currentPlayer.StatValue : 0);
-    }
+    const leaderBoardPlaceHolderText = createLeaderBoardPanelText(this,this.startIndex,this.pageSize,this.formatterCallback)
     if (this.text) {
       this.text!.value = leaderBoardPlaceHolderText;
     }
   }
+  setFormatterCallback(callback: (text: string|number) => string): void {
+    this.formatterCallback = callback
+  }
 }
 
-export class LeaderboardRegistry {
-  daily?: LeaderboardItem;
-  weekly?: LeaderboardItem;
-  hourly?: LeaderboardItem;
-
-  dailyVoxSkate?: LeaderboardItem;
-  weeklyVoxSkate?: LeaderboardItem;
-  hourlyVoxSkate?: LeaderboardItem;
-}
-
-export const LEADERBOARD_REGISTRY = new LeaderboardRegistry();
 
 export function makeLeaderboard(
   host: Entity,
@@ -278,32 +239,82 @@ export function updateLeaderboard(playerNames: string[]) {
     */
 }
 
-const leaderBoardsConfigs = [
+
+let playerArr: PlayerLeaderboardEntryType[] = [];
+  let leaderBoardPlaceHolderText = "\nSign in to see leaderboard";
+  playerArr.push({
+    DisplayName: "Sign in to see leaderboard",
+    Position: 0,
+    StatValue: 0,
+  });
+
+const LEADERBOARD_PROMPT_HEIGHT = 620;
+const LEADERBOARD_PROMPT_WIDTH = 500;
+const hourlyLeaderBoard = new LeaderBoardPrompt(
+  "Hourly Leaderboard",
+  leaderBoardPlaceHolderText,
+  "OK",
+  () => {},
   {
-    prefix: "",
-    hourly: () => {
-      return LEADERBOARD_REGISTRY.hourly;
-    },
-    daily: () => {
-      return LEADERBOARD_REGISTRY.daily;
-    },
-    weekly: () => {
-      return LEADERBOARD_REGISTRY.weekly;
-    },
-  },
+    //textPositionY: -30,
+    //modalHeight: 500,
+    height: LEADERBOARD_PROMPT_HEIGHT,
+    width: LEADERBOARD_PROMPT_WIDTH,
+  }
+);
+
+//hourlyLeaderBoard.show()
+
+const weeklyLeaderboard = new LeaderBoardPrompt(
+  "Weekly Leaderboard",
+  leaderBoardPlaceHolderText,
+  "OK",
+  () => {},
   {
-    prefix: "VB_",
-    hourly: () => {
-      return LEADERBOARD_REGISTRY.hourlyVoxSkate;
-    },
-    daily: () => {
-      return LEADERBOARD_REGISTRY.dailyVoxSkate;
-    },
-    weekly: () => {
-      return LEADERBOARD_REGISTRY.weeklyVoxSkate;
-    },
-  },
-];
+    //textPositionY: -30,
+    //modalHeight: 500,
+    height: LEADERBOARD_PROMPT_HEIGHT,
+    width: LEADERBOARD_PROMPT_WIDTH,
+  }
+);
+
+
+const levelLeaderboard = new LeaderBoardPrompt(
+  "Level Leaderboard",
+  leaderBoardPlaceHolderText,
+  "OK",
+  () => {},
+  {
+    //textPositionY: -30,
+    //modalHeight: 500,
+    height: LEADERBOARD_PROMPT_HEIGHT,
+    width: LEADERBOARD_PROMPT_WIDTH,
+  }
+);
+levelLeaderboard.setFormatterCallback(
+  (text:string|number)=>{
+    const rawVal = typeof text === "string" ? parseInt(text) : text
+
+    if(rawVal >= 0){
+      const level = getLevelFromXp( rawVal ,CONFIG.GAME_LEVELING_FORMULA_CONST)
+      return level.toFixed(0)
+    }else{
+      return "0"
+    }
+  }
+)
+
+//levelLeaderboard.show()
+
+
+REGISTRY.ui.openLeaderboardHourly = ()=> { hourlyLeaderBoard.show() }
+REGISTRY.ui.openLeaderboardWeekly = ()=> { weeklyLeaderboard.show() }
+REGISTRY.ui.openLeaderboardLevelEpoch = ()=> { levelLeaderboard.show() }
+
+LEADERBOARD_REGISTRY.hourly.push(hourlyLeaderBoard)
+LEADERBOARD_REGISTRY.weekly.push(weeklyLeaderboard)
+LEADERBOARD_REGISTRY.epoch.push(levelLeaderboard)
+
 
 GAME_STATE.leaderboardState.addChangeListener(
   (key: string, newVal: any, oldVal: any) => {
@@ -316,10 +327,11 @@ GAME_STATE.leaderboardState.addChangeListener(
         oldVal
     );
 
-    let leaderBoardItem: LeaderboardItem | undefined = undefined;
+    let leaderBoardItem: ILeaderboardItem[] | undefined = undefined;
     let playerArr: PlayerLeaderboardEntryType[] = [];
     let leaderArr: PlayerLeaderboardEntry[] = [];
 
+    let maxResults = CONFIG.GAME_LEADEBOARD_MAX_RESULTS
     //scan to find matching key
     for (const p in leaderBoardsConfigs) {
       const leaderBoardConfig = leaderBoardsConfigs[p];
@@ -345,7 +357,16 @@ GAME_STATE.leaderboardState.addChangeListener(
         leaderBoardItem = leaderBoardConfig.weekly();
         leaderArr = newVal.Leaderboard;
         break;
+      } else if (
+        leaderBoardConfig.weekly() &&
+        key == leaderBoardConfig.prefix + "levelEpochLeaderboard"
+      ) {
+        leaderBoardItem = leaderBoardConfig.epoch();
+        leaderArr = newVal.Leaderboard;
+        maxResults = CONFIG.GAME_LEADEBOARD_LVL_MAX_RESULTS
+        break;
       }
+      
     }
 
     if (leaderArr != null && leaderArr.length > 0) {
@@ -354,7 +375,7 @@ GAME_STATE.leaderboardState.addChangeListener(
         //const weekStr = (dailyLeaderArr[p].Position+1) + " " + dailyLeaderArr[p].DisplayName + " " + dailyLeaderArr[p].StatValue
         playerArr.push(leaderArr[p]);
         counter++;
-        if (counter >= CONFIG.GAME_LEADEBOARD_MAX_RESULTS) {
+        if (counter >= maxResults) {
           break;
         }
       }
@@ -365,12 +386,14 @@ GAME_STATE.leaderboardState.addChangeListener(
         StatValue: -1,
       });
     }
-    if (leaderBoardItem !== undefined) {
-      log("addChangeListener to update for " + key);
-      leaderBoardItem.setPlayerEntries(playerArr);
-      leaderBoardItem.updateUI();
-    } else {
-      log("addChangeListener failed to update for " + key);
+    for(const p of leaderBoardItem){
+      if (p !== undefined) {
+        log("addChangeListener to update for " + key);
+        p.setPlayerEntries(playerArr);
+        p.updateUI();
+      } else {
+        log("addChangeListener failed to update for " + key);
+      }
     }
   }
 );
@@ -444,27 +467,42 @@ GAME_STATE.playerState.addChangeListener(
             //pushStrToArr(dailyLeaderArrStr,"Meta Coins:",GAME_STATE.playerState.playFabUserInfo?.UserVirtualCurrency?.MC)
 
             //todo check it
-            leaderBoardConfig.hourly()?.setCurrentPlayer({
-              DisplayName: playerName + "",
-              Position: -1,
-              StatValue: coinCollectingHourlyStat!
-                ? coinCollectingHourlyStat.Value
-                : -1,
-            });
-            leaderBoardConfig.daily()?.setCurrentPlayer({
-              DisplayName: playerName + "",
-              Position: -1,
-              StatValue: coinCollectingDailyStat!
-                ? coinCollectingDailyStat.Value
-                : -1,
-            });
-            leaderBoardConfig.weekly()?.setCurrentPlayer({
-              DisplayName: playerName + "",
-              Position: -1,
-              StatValue: coinCollectingWeeklyStat!
-                ? coinCollectingWeeklyStat.Value
-                : -1,
-            });
+            leaderBoardConfig.hourly()?.forEach((p=>{
+              p.setCurrentPlayer({
+                DisplayName: playerName + "",
+                Position: -1,
+                StatValue: coinCollectingHourlyStat!
+                  ? coinCollectingHourlyStat.Value
+                  : -1,
+              });
+            }))
+            leaderBoardConfig.daily()?.forEach((p=>{
+              p.setCurrentPlayer({
+                DisplayName: playerName + "",
+                Position: -1,
+                StatValue: coinCollectingDailyStat!
+                  ? coinCollectingDailyStat.Value
+                  : -1,
+                })
+            }));
+            leaderBoardConfig.weekly()?.forEach((p=>{
+              p.setCurrentPlayer({
+                DisplayName: playerName + "",
+                Position: -1,
+                StatValue: coinCollectingWeeklyStat!
+                  ? coinCollectingWeeklyStat.Value
+                  : -1,
+              })
+            }));
+            leaderBoardConfig.epoch()?.forEach((p=>{
+              p.setCurrentPlayer({
+                DisplayName: playerName + "",
+                Position: -1,
+                StatValue:coinCollectingEpochStat!
+                  ? coinCollectingEpochStat.Value
+                  : -1,
+              })
+            }));
           }
           //}
           break;
@@ -499,3 +537,24 @@ GAME_STATE.addChangeListener((key: string, newVal: any, oldVal: any) => {
       break;
   }
 });
+
+/*
+//const curentPlayer = {DisplayName:"You",Position:-1,StatValue:-1}
+  //LEADERBOARD_REGISTRY.daily.setCurrentPlayer(curentPlayer)
+  //LEADERBOARD_REGISTRY.weekly.setCurrentPlayer(curentPlayer)
+  const leaderBoardArr = [
+    ...LEADERBOARD_REGISTRY.daily,
+    ...LEADERBOARD_REGISTRY.weekly,
+    ...LEADERBOARD_REGISTRY.hourly,
+    ...LEADERBOARD_REGISTRY.epoch,
+    //LEADERBOARD_REGISTRY.dailyVoxSkate,
+    //LEADERBOARD_REGISTRY.weeklyVoxSkate,
+    //LEADERBOARD_REGISTRY.hourlyVoxSkate,
+  ]; 
+  for (const p in leaderBoardArr) {
+    const board = leaderBoardArr[p];
+
+    board.setPlayerEntries(playerArr);
+    board.updateUI();
+  }
+  */

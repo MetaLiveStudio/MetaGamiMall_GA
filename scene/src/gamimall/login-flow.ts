@@ -1,4 +1,5 @@
 import * as utils from "@dcl/ecs-scene-utils";
+import * as ui from "@dcl/ui-scene-utils";
 import PlayFab from "./playfab_sdk/PlayFabClientApi";
 import * as PlayFabSDK from "./playfab_sdk/index";
 import {
@@ -23,15 +24,17 @@ import {
   getRealmDataFromLocal,
   getUserDataFromLocal,
 } from "src/userData";
-import { loginErrorPrompt } from "src/ui-bars";
+
 import { isNull, notNull } from "src/utils";
 import { CONFIG } from "src/config";
-import { REGISTRY } from "src/registry";
+import { initRegistry, REGISTRY } from "src/registry";
 import { Constants as DecentRallyConstants } from "src/meta-decentrally/modules/resources/globals";
 import { LoginFlowCallback, LoginFlowResult } from "src/meta-decentrally/login/login-types";
 import { preventConcurrentExecution } from "src/meta-decentrally/modules/utilities";
 import { signedFetch } from '@decentraland/SignedFetch';
 
+
+initRegistry()
 PlayFab.settings.titleId = CONFIG.PLAYFAB_TITLEID;
 
 // play ambient music
@@ -43,12 +46,36 @@ PlayFab.settings.titleId = CONFIG.PLAYFAB_TITLEID;
 // const dclAuthURL = 'http://localhost:3000/api/dcl/auth'
 const dclAuthURL = CONFIG.LOGIN_ENDPOINT; //'https://dev.metadoge.art/api/dcl/auth'
 
+ 
+///src/gamimall/login-flow.ts
+export const loginErrorPrompt = new ui.OptionPrompt(
+  "Unable to Login",
+  "Error",
+  () => {
+    loginErrorPrompt.close();
+  },
+  () => {
+    loginErrorPrompt.hide();
+    GAME_STATE.playerState.requestDoLoginFlow();
+  },
+  "Cancel",
+  "Try Again",
+  true
+);
+
+loginErrorPrompt.hide();
+
+
 //this is a active logout, will make calls
 export function logout() {
   //TODO make logout calls
   resetLoginState();
 }
 export function resetLoginState() {
+  if(!GAME_STATE.playerState){
+    log("resetLoginState GAME_STATE.playerState undefined skipping",GAME_STATE.playerState);
+    return;
+  }
   GAME_STATE.playerState.setLoginFlowState("undefined");
   GAME_STATE.playerState.setPlayerCustomID(null);
   GAME_STATE.playerState.setPlayFabLoginResult(null);
@@ -74,6 +101,7 @@ export function doLoginFlow() {
   }
 }
 */
+
 export function doLoginFlow(callback?:LoginFlowCallback,resultInPlace?:LoginFlowResult):Promise<LoginFlowResult>{
   const promise:Promise<LoginFlowResult> = new Promise( async (resolve, reject)=>{
       try{
@@ -110,6 +138,26 @@ export function doLoginFlow(callback?:LoginFlowCallback,resultInPlace?:LoginFlow
   return promise
 }
 DecentRallyConstants.doLoginFlow = doLoginFlow
+//REGISTRY.doLoginFlow = doLoginFlow
+
+
+export function registerLoginFlowListener(){
+  GAME_STATE.playerState.addChangeListener(
+    (key: string, newVal: any, oldVal: any) => {
+      log(
+        "listener.playerState.login-flow.ts " + key + " " + newVal + " " + oldVal
+      );
+
+      switch (key) {
+        //common ones on top
+        case "requestDoLoginFlow":
+          doLoginFlow();
+          break;
+      }
+    }
+  );
+}
+
 
 //prevent login action ran more than 1 at a time
 const doLoginFlowAsync = preventConcurrentExecution("doLoginFlowAsync",async (resultInPlace?:LoginFlowResult) => {
@@ -444,7 +492,7 @@ export function refreshUserData(calledBy:string) {
   utils.setTimeout(3000, () => {
     fetchLeaderboardInfo(); //takes longer to update ?!?!
     //TODO only fetch when in that section, trick is need to also know when this type of game ended
-    fetchLeaderboardInfo("VB_"); //takes longer to update ?!?!
+    //fetchLeaderboardInfo("VB_"); //takes longer to update ?!?!
   });
 }
 export function loginUser(uuid: any):Promise<LoginResult>{
@@ -464,13 +512,13 @@ export function loginUser(uuid: any):Promise<LoginResult>{
         // Flags for which pieces of info to return for the user.
         InfoRequestParameters: {
           GetUserReadOnlyData: true,
-          GetUserInventory: true,
-          GetUserVirtualCurrency: true,
-          GetPlayerStatistics: true,
+          GetUserInventory: CONFIG.GAME_PLAFAB_INVENTORY_ENABLED, //needed for bronze.shoe
+          GetUserVirtualCurrency: true, //need for currency
+          GetPlayerStatistics: true,//needed for coins collected/xp
           GetCharacterInventories: false,
           GetCharacterList: false,
           GetPlayerProfile: false,
-          GetTitleData: true,
+          GetTitleData: false,
           GetUserAccountInfo: true,
           GetUserData: true,
         },
@@ -515,6 +563,12 @@ export function fetchLeaderboardInfo(prefix: string = "") {
     StartPosition: 0,
     MaxResultsCount: CONFIG.GAME_LEADEBOARD_MAX_RESULTS,
   };
+  var getLeaderboardLevelEpoch: PlayFabServerModels.GetLeaderboardRequest = {
+    StatisticName: prefix + "coinsCollectedEpoch", //coins collected is level when formula applied
+    StartPosition: 0,
+    MaxResultsCount: CONFIG.GAME_LEADEBOARD_LVL_MAX_RESULTS,
+  };
+  
   var getLeaderboardWeekly: PlayFabServerModels.GetLeaderboardRequest = {
     StatisticName: prefix + "coinsCollectedWeekly",
     StartPosition: 0,
@@ -540,6 +594,11 @@ export function fetchLeaderboardInfo(prefix: string = "") {
       GAME_STATE.leaderboardState.setWeeklyLeaderBoard(result, prefix);
     }
   );
+  PlayFabSDK.GetLeaderboard(getLeaderboardLevelEpoch).then(
+    (result: GetLeaderboardResult) => {
+      GAME_STATE.leaderboardState.setLevelEpocLeaderBoard(result, prefix);
+    }
+  );
 }
 
 export function fetchPlayerCombinedInfo() {
@@ -547,13 +606,13 @@ export function fetchPlayerCombinedInfo() {
   var getPlayerCombinedInfoRequestParams: PlayFabServerModels.GetPlayerCombinedInfoRequestParams =
     {
       GetUserReadOnlyData: true,
-      GetUserInventory: true,
+      GetUserInventory: CONFIG.GAME_PLAFAB_INVENTORY_ENABLED,
       GetUserVirtualCurrency: true,
       GetPlayerStatistics: true,
       GetCharacterInventories: false,
       GetCharacterList: false,
       GetPlayerProfile: true,
-      GetTitleData: true,
+      GetTitleData: false,
       GetUserAccountInfo: true,
       GetUserData: true,
       // Specific statistics to retrieve. Leave null to get all keys. Has no effect if GetPlayerStatistics is false
@@ -613,18 +672,3 @@ export function fetchPlayerCombinedInfo() {
     return promise
 }
 //testCoinPlacement();
-
-GAME_STATE.playerState.addChangeListener(
-  (key: string, newVal: any, oldVal: any) => {
-    log(
-      "listener.playerState.login-flow.ts " + key + " " + newVal + " " + oldVal
-    );
-
-    switch (key) {
-      //common ones on top
-      case "requestDoLoginFlow":
-        doLoginFlow();
-        break;
-    }
-  }
-);

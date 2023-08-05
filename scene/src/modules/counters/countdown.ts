@@ -4,7 +4,7 @@
 
 //40, 6, 8
 const baseX = 40
-const baseY = 6
+const baseY = 9
 const baseZ = 8
 //const textX = -.6
 const textY = -.6
@@ -38,7 +38,7 @@ export class CountdownBanner{
         frame.setParent(host)
         
         const titleEnt = this.titleEnt = new Entity()
-        const titleText = new TextShape(this.eventName + " will start in")
+        const titleText = new TextShape(this.eventName + " starts in")
         titleText.fontSize = 10
         titleText.color = new Color3(123 / 400, 84 / 400, 183 / 400)
         titleEnt.addComponent(new Transform({
@@ -156,33 +156,33 @@ export class CountdownTimerSystem {
 }
 //month is 0 based; 0 = January
 //format is year,month,date,hours,minutes,seconds,ms - UTC ALWAYS
-let eventTime0 = Date.UTC(2022, 10, 18, 13, 0, 0) //(Date.now() ) + (1) //Saturday, June 11, 2022 21:00:00 UTC 
+let eventTime0 = Date.UTC(2023, 3, 7, 12, 0, 0) //(Date.now() ) + (1) //Saturday, June 11, 2022 21:00:00 UTC 
 log("counter",new Date(eventTime0),eventTime0-(Date.now()))
-let eventTime1 = Date.UTC(2022, 10, 18, 13, 30, 0)
+let eventTime1 = Date.UTC(2023, 3, 7, 14, 0, 0)
 log("counter",new Date(eventTime1),eventTime1-(Date.now()))
-let eventTime2 = Date.UTC(2022, 10, 18, 14, 0, 0)
+let eventTime2 = Date.UTC(2023, 3, 7, 13, 0, 0)
 log("counter",new Date(eventTime2),eventTime2-(Date.now()))
-let eventTime3 = Date.UTC(2022, 10, 18, 13, 0, 0)
+let eventTime3 = Date.UTC(2023, 3, 7, 12, 0, 0)
 log("counter",new Date(eventTime3),eventTime3-(Date.now()))
 
 const countdownSystem = new CountdownTimerSystem()
 countdownSystem.addCounter(
     new CountdownBanner(
-        "MetaMine",
+        "MetaMineS2",
         eventTime0
         , new Transform({
-            position: new Vector3(baseX, baseY, baseZ),
+            position: new Vector3(baseX, baseY-3.5, baseZ),
             rotation: Quaternion.Euler(0,0,0),
-            scale: new Vector3(1,1,1)})
+            scale: new Vector3(0.7,0.7,0.7)})
     )
 )
 
 countdownSystem.addCounter(
     new CountdownBanner(
-        "Claim",
+        "Premium Claim",
         eventTime1
         , new Transform({
-            position: new Vector3(baseX, baseY-3, baseZ+9),
+            position: new Vector3(baseX, baseY-6.5, baseZ+12),
             rotation: Quaternion.Euler(0,0,0),
             scale: new Vector3(0.5,0.5,0.5)
         })
@@ -191,10 +191,10 @@ countdownSystem.addCounter(
 
 countdownSystem.addCounter(
     new CountdownBanner(
-        "Claim",
+        "Gold Claim",
         eventTime2
         , new Transform({
-            position: new Vector3(baseX, baseY-3, baseZ+28),
+            position: new Vector3(baseX, baseY-6.5, baseZ+28.5),
             rotation: Quaternion.Euler(0,0,0),
             scale: new Vector3(0.5,0.5,0.5)
         })
@@ -203,12 +203,12 @@ countdownSystem.addCounter(
 
 countdownSystem.addCounter(
     new CountdownBanner(
-        "Cyber Party",
+        "Silver Claim",
         eventTime3
         , new Transform({
-            position: new Vector3(baseX-12, baseY-4, baseZ),
-            rotation: Quaternion.Euler(0,-90,0),
-            scale: new Vector3(0.3,0.3,0.3)
+            position: new Vector3(baseX, baseY-6.5, baseZ+55),
+            rotation: Quaternion.Euler(0,0,0),
+            scale: new Vector3(0.5,0.5,0.5)
         })
     )
 )

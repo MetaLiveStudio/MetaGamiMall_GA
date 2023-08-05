@@ -11,30 +11,14 @@ import { GAME_STATE, initGameState } from "./state";
 import { CheckMultiplierResultType, fetchMultiplier } from "./store/fetch-utils";
 import { LoginPanel, RacePanel, StaminaPanel } from "./ui/ui_background";
 import { concatString, pushStrToArr } from "./utils";
+import { i18n, i18nOnLanguageChangedAdd } from "src/i18n/i18n";
+import { namespaces } from "src/i18n/i18n.constants";
 //import { avatarSwap, avatarSwapScript } from "./game";
 //import { GAME_STATE } from "./state";
 //const GlobalCanvas = new UICanvas()
 
 initConfig();
 initGameState();
-
-///src/gamimall/login-flow.ts
-export const loginErrorPrompt = new ui.OptionPrompt(
-  "Unable to Login",
-  "Error",
-  () => {
-    loginErrorPrompt.close();
-  },
-  () => {
-    loginErrorPrompt.hide();
-    GAME_STATE.playerState.requestDoLoginFlow();
-  },
-  "Cancel",
-  "Try Again",
-  true
-);
-
-loginErrorPrompt.hide();
 
 // /385445f9-b94f-431a-8c67-7650c03c99cc/src/arissa.ts
 export function toggleMetaDogeIcon() {

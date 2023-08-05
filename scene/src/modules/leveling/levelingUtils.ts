@@ -1,17 +1,45 @@
 import { LevelingFormulaConfig } from "./levelingTypes"
 
+//so code can run client and colyseus, comment out colysesus side
+//function log(...args: any[]) {
+//    log(...args);
+//}
+
+
 /*
 //worth a read
 https://gist.github.com/Jikoo/30ec040443a4701b8980
 http://howtomakeanrpg.com/a/how-to-make-an-rpg-levels.html
 https://onlyagame.typepad.com/only_a_game/2006/08/mathematics_of_.html
+
+//coin cap forumula
+//https://docs.google.com/spreadsheets/d/1BZGRdUw1nKcIcE2pB1XPiG6ECa9AhL-LAXZuaQF5zoA/edit#gid=1696823418
+
+//leveling formula
+https://docs.google.com/spreadsheets/d/1IKFq_K0OkTRt7RL0l_MyzyJdgcT8Zs5gw505lRpcEVQ/edit#gid=0
 */
+
+export function getCoinCap(lvl:number,levelingConfig:LevelingFormulaConfig):number{
+  //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/log
+  //log[base9](lvl)
+
+  //offset to move to correct starting point (dont want to drop below min)
+  const lvloffset=levelingConfig.levelOffset ? levelingConfig.levelOffset : 0 
+  let level = ( Math.log(lvl+lvloffset) / Math.log(levelingConfig.y)) * levelingConfig.x;
+  if(level > levelingConfig.max ){
+    level = levelingConfig.max
+  }
+  if(level < levelingConfig.min ){ 
+    level = levelingConfig.min
+  }
+  return level
+}
 
 export function getLevelFromXp(xp:number,levelingConfig:LevelingFormulaConfig):number{
   
   let level = Math.pow(xp, 1/levelingConfig.y)* levelingConfig.x
   if(level > levelingConfig.max ){
-    level = levelingConfig.max
+    level = levelingConfig.max 
   }
   if(level < levelingConfig.min ){
     level = levelingConfig.min

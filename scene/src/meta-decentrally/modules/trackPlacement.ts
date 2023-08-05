@@ -458,6 +458,12 @@ export class TrackData{
           case "material-a":
             themeTrackFeat = level.theme.trackFeature.materialA
             break
+          case "coin-bp":
+              themeTrackFeat = level.theme.trackFeature.coinBp
+              break
+          case "coin-ni":
+              themeTrackFeat = level.theme.trackFeature.coinNi
+              break
         }
         if(themeTrackFeat){
           featShape = new TrackFeatureShape({model: themeTrackFeat.shape.src,transform:themeTrackFeat.transform})
@@ -748,6 +754,8 @@ export function createTrackFeature(trackData:TrackData,trackFeature:TrackFeature
         break;
       case 'coin-gc':
       case 'coin-mc':
+      case 'coin-bp':
+      case 'coin-ni':
       case 'material-a':
 
         const hideTime = CONFIG.TRACK_FEATURE_DEFAULT_RESPAWN

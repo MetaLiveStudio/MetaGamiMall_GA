@@ -73,6 +73,10 @@ export const raceThemeSoundAudioSources:AudioSource[] = [
 ]
 
 
+const FIRST_PERSON_VOLUME_ADJ=-.075
+const FIRST_PERSON_VOLUME_ADJ_MIN = .02//if adjust goes below 0, set it just very low
+
+
 function createEntitySound(name:string,audioClip:AudioClip|AudioSource,volume?:number){
     const entSound = new Entity(name)
     entSound.addComponent(new Transform())
@@ -101,47 +105,71 @@ type SoundAbstractSpawnerArgs={
     volume?:number
 }
 
-class SoundAbstractSpawner extends AbstractSpawner{
-    audioClipUrl:string
-    audioClip:AudioClip
+
+class SoundAbstractSpawner extends AbstractSpawner {
+    audioClipUrl: string;
+    audioClip: AudioClip;
     /**
      * entire len of clip
      */
-    clipLen:number
+    clipLen: number;
     /**
      * cooldown till can be reused again (allows sounds to be played ontop of eachother)
      */
-    replayCooldown:number
-
-    volume:number
-
-
-    constructor(name:string,maxPoolSize:number,options:SoundAbstractSpawnerArgs){
-        super(name,maxPoolSize)
-        this.audioClipUrl = options.audioClipUrl
-        this.clipLen = options.clipLen
-        this.replayCooldown = options.replayCooldown
-        this.volume = options.volume
+    replayCooldown: number;
+  
+    volume: number;
+  
+    constructor(name: string, maxPoolSize: number, options: SoundAbstractSpawnerArgs) {
+      super(name, maxPoolSize);
+      this.audioClipUrl = options.audioClipUrl;
+      this.clipLen = options.clipLen;
+      this.replayCooldown = options.replayCooldown;
+      this.volume = options.volume;
     }
-
-    playOnce(){
-        const ent = this.getEntityFromPool()
-        if(ent){
-            log("playOnce",this.name," from pool",ent.name)
-            ent.getComponent(AudioSource).playOnce()
-            this.removeEntityIn(ent,Math.min(this.clipLen,this.replayCooldown))
+  
+    playOnce(attachTo?:IEntity) {
+      const ent = this.getEntityFromPool();
+      if (ent) {
+        let firstPerson = false
+        let vol = this.volume
+        //TODO implement me!
+        //if(REGISTRY.player !== undefined && REGISTRY.player.cameraMode === CameraMode.FirstPerson){
+        //  firstPerson = true
+          
+        //}
+        if(attachTo !== undefined){
+          if(ent.getParent() != attachTo) ent.setParent(attachTo)
         }else{
-            log("playOnce",this.name," failed no more in pool",ent)
+          if(ent.getParent() != Attachable.AVATAR) ent.setParent(Attachable.AVATAR)
+          if(firstPerson){
+            //adjust volume
+            vol = Math.max(FIRST_PERSON_VOLUME_ADJ_MIN,this.volume+FIRST_PERSON_VOLUME_ADJ)//adjust volume
+          }
         }
-    }
-    
-    removeEntityIn(entity:Entity,timeMS:number){
-        entity.addComponentOrReplace(new utils.Delay(timeMS,()=>{
-            this.removeEntity(entity)
-        }))
         
-    }   
-}
+        log("SoundAbstractSpawner.playOnce", this.name, " from pool", ent.name,"pool size",this.entityPool.length,"firstPerson",firstPerson,"volume",this.volume,"adjustedVol",vol);
+        //ADJUST VOLUME BASED ON CAMERA
+        const audioSource:AudioSource = ent.getComponent(AudioSource)
+        
+        audioSource.volume = vol
+        audioSource.playOnce();
+  
+        
+        this.removeEntityIn(ent, Math.min(this.clipLen, this.replayCooldown));
+      } else {
+        log("SoundAbstractSpawner.playOnce", this.name, " failed no more in pool", ent,"pool size",this.entityPool.length);
+      }
+    }
+  
+    removeEntityIn(entity: Entity, timeMS: number) {
+      entity.addComponentOrReplace(
+        new utils.Delay(timeMS, () => {
+          this.removeEntity(entity);
+        })
+      );
+    }
+  }
  
 export class SoundPool extends SoundAbstractSpawner {
     
@@ -170,6 +198,10 @@ export class SoundPoolMgr {
     raceCountDownBeep:SoundPool = new SoundPool( "race.countdown.ping",1,{audioClipUrl:'sounds/racing/raceCountdownBeep.mp3',clipLen:1000,replayCooldown:300,volume:.8} );
     //raceCountDownGo:SoundPool = new SoundPool( "race.countdown.ping.go",1,{audioClipUrl:'sounds/racing/raceCountdownBeep.mp3',clipLen:1000,replayCooldown:800,volume:.8} );
     raceStart:SoundPool = new SoundPool( "race.go",1,{audioClipUrl:'sounds/racing/raceGoStart.mp3',clipLen:2000,replayCooldown:1000,volume:1} );
+
+    miningStart:SoundPool = new SoundPool( "mining.start",1,{audioClipUrl:'sounds/mining-sound.mp3',clipLen:2000,replayCooldown:1000,volume:1} );
+    //consider level-completed.mp3
+    miningReward:SoundPool = new SoundPool( "mining.reward",1,{audioClipUrl:'sounds/mining-reward.mp3',clipLen:2000,replayCooldown:1000,volume:1} );
 }
 
 export const SOUND_POOL_MGR = new SoundPoolMgr()

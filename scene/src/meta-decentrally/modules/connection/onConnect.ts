@@ -1,5 +1,5 @@
 import { DataChange, Room, RoomAvailable } from 'colyseus.js'
-import { GAME_STATE } from 'src/state';
+import { GAME_STATE, resetAllGameStateGameCoin, resetAllGameStateGameCoinRewards } from 'src/state';
 import * as clientState from './state/client-state-spec'
 import * as serverState from './state/server-state-spec'
 import * as SceneData from '../scene'
@@ -26,6 +26,7 @@ import { fetchPlayerCombinedInfo } from 'src/gamimall/login-flow';
 import { isErrorCode, isNormalDisconnect } from './connection-utils';
 import { REGISTRY } from 'src/registry';
 import { RewardNotification } from 'src/gamimall/coin';
+import * as BASE_CONFIG from 'src/config'
 
 //import { Schema, type, MapSchema } from "@colyseus/schema";
 
@@ -278,11 +279,23 @@ function onLevelConnect(room: Room<clientState.RaceRoomState>) {
 
     //initLevelData(room.state.levelData)
 
+    resetAllGameStateGameCoin()
+    resetAllGameStateGameCoinRewards()
+    
 
-    GAME_STATE.setGameCoinRewardGCValue(0)
-    GAME_STATE.setGameCoinRewardMCValue(0)
-    GAME_STATE.setGameCoinGCValue(0)
-    GAME_STATE.setGameCoinMCValue(0)
+    room.onMessage("update.config", (config:serverState.RemoteBaseCoinRoomConfig) => {
+        log("room.msg.update.config",config);
+        BASE_CONFIG.CONFIG.GAME_COIN_CAP_ENABLED = config?.coinCap.enabled
+        if(config?.coinCap.enabled){
+        if(REGISTRY.ui.staminaPanel.staminaPanel.visible) REGISTRY.ui.staminaPanel.show()
+        BASE_CONFIG.CONFIG.speedCapOverageReduction = config?.coinCap.overageReduction
+
+        //no change, but make ui update
+        REGISTRY.ui.staminaPanel.updateDailyCoins(REGISTRY.ui.staminaPanel.dailyCoins)
+        }else{
+        if(REGISTRY.ui.staminaPanel.staminaPanel.visible) REGISTRY.ui.staminaPanel.show()
+        }
+    })
     
     room.onMessage("notify.levelUp", (message) => {
         log("room.msg.notify.levelUp", message);
@@ -293,27 +306,82 @@ function onLevelConnect(room: Room<clientState.RaceRoomState>) {
           if(result.rewards!==undefined){
             let gc=0
             let mc=0
+
+            let bp=0
+            let ni=0
+
+            let bz=0
+ 
+            let r1=0
+            let r2=0
+            let r3=0
+
+            let bronzeShoe=0
             for(const p in result.rewards){
-              switch(result.rewards[p].id){
+                switch(result.rewards[p].id){
                 case CONFIG.GAME_COIN_TYPE_GC:
-                  gc=result.rewards[p].amount
-                break;
+                    gc=result.rewards[p].amount
+                    break; 
                 case CONFIG.GAME_COIN_TYPE_MC:
-                  mc=result.rewards[p].amount
-                break;
+                    mc=result.rewards[p].amount
+                    break; 
+                case CONFIG.GAME_COIN_TYPE_BP:
+                    bp=result.rewards[p].amount
+                    break; 
+                case CONFIG.GAME_COIN_TYPE_BZ:
+                    bz=result.rewards[p].amount
+                    break; 
+                case CONFIG.GAME_COIN_TYPE_NI:
+                    ni=result.rewards[p].amount
+                    break; 
+                case CONFIG.GAME_COIN_TYPE_R1:
+                    r1=result.rewards[p].amount
+                    break;
+                case CONFIG.GAME_COIN_TYPE_R2:
+                    r2=result.rewards[p].amount
+                    break;
+                case CONFIG.GAME_COIN_TYPE_R3:
+                    r3=result.rewards[p].amount
+                    break; 
+                case CONFIG.GAME_COIN_TYPE_BRONZE_SHOE_1_ID:
+                    bronzeShoe=result.rewards[p].amount
+                    break; 
                 default:
-                  log("unhandled reward type",result.rewards[p].id,result.rewards[p])
-              }
-            }
-            GAME_STATE.setGameCoinRewardGCValue(GAME_STATE.gameCoinRewardGCValue + gc)
-            GAME_STATE.setGameCoinRewardMCValue(GAME_STATE.gameCoinRewardMCValue + mc)
-    
-            GAME_STATE.setGameCoinGCValue(  GAME_STATE.gameCoinGCValue )      
-            GAME_STATE.setGameCoinMCValue(  GAME_STATE.gameCoinMCValue )      
+                    log("unhandled reward type",result.rewards[p].id,result.rewards[p])
+                } 
+                GAME_STATE.setGameItemRewardBronzeShoeValue(GAME_STATE.gameItemRewardBronzeShoeValue + bronzeShoe)
+
+                GAME_STATE.setGameCoinRewardGCValue(GAME_STATE.gameCoinRewardGCValue + gc)
+                GAME_STATE.setGameCoinRewardMCValue(GAME_STATE.gameCoinRewardMCValue + mc)
+        
+                GAME_STATE.setGameCoinRewardBPValue(GAME_STATE.gameCoinRewardBPValue + bp)
+                GAME_STATE.setGameCoinRewardNIValue(GAME_STATE.gameCoinRewardNIValue + ni)
+                GAME_STATE.setGameCoinRewardBZValue(GAME_STATE.gameCoinRewardBZValue + bz)
+        
+                GAME_STATE.setGameCoinRewardR1Value(GAME_STATE.gameCoinRewardR1Value + r1)
+                GAME_STATE.setGameCoinRewardR2Value(GAME_STATE.gameCoinRewardR2Value + r2)
+                GAME_STATE.setGameCoinRewardR3Value(GAME_STATE.gameCoinRewardR3Value + r3)
+        
+                //forces a refresh of stanima bar
+                GAME_STATE.setGameCoinGCValue(  GAME_STATE.gameCoinGCValue )
+                GAME_STATE.setGameCoinMCValue(  GAME_STATE.gameCoinMCValue )
+                
+                GAME_STATE.setGameCoinBPValue(  GAME_STATE.gameCoinBPValue )
+                GAME_STATE.setGameCoinNIValue(  GAME_STATE.gameCoinNIValue )
+                GAME_STATE.setGameCoinBZValue(  GAME_STATE.gameCoinBZValue )
+        
+                GAME_STATE.setGameCoinR1Value(  GAME_STATE.gameCoinR1Value )
+                GAME_STATE.setGameCoinR2Value(  GAME_STATE.gameCoinR2Value )
+                GAME_STATE.setGameCoinR3Value(  GAME_STATE.gameCoinR3Value )
+        
+                GAME_STATE.setGameItemBronzeShoeValue(GAME_STATE.gameItemBronzeShoeValue)
+        
+                REGISTRY.ui.inventoryPrompt.updateGrid()  
           }
           REGISTRY.ui.levelUpPrompt.update(result)
           if(CONFIG.GAME_SHOW_LEVEL_UP_DURING_RACE_ENABLED) REGISTRY.ui.levelUpPrompt.show()
         }
+        }//message not undefined
     
         //ui.displayAnnouncement(`${highestPlayer.name} wins!`, 8, Color4.White(), 60);
         //ui.displayAnnouncement(message, 8, Color4.White(), 60);
@@ -386,6 +454,7 @@ function onLevelConnect(room: Room<clientState.RaceRoomState>) {
                 log("room.state.levelData.trackFeatures.onAdd",trackFeat.name,trackFeat)
 
                 const trackFeature:TrackFeature = new TrackFeature({
+                    //id:trackFeat.id,
                     name:trackFeat.name,
                     position: serverState.createTrackFeaturePositionConstructorArgs(trackFeat.position),
                     type: serverState.getTrackFeatureType(trackFeat.type),

@@ -1,4 +1,5 @@
 //import * as dclTx from "decentraland-transactions";
+import * as utils from "@dcl/ecs-scene-utils";
 import * as eth from "eth-connect";
 //import { getProvider, Provider } from "@decentraland/web3-provider";
 //import { getUserAccount } from "@decentraland/EthereumController";
@@ -30,6 +31,7 @@ const CLAIM_CURRENCY = CONFIG.GAME_COIN_TYPE_GC//GAME_STATE.playerState.playFabU
 let CLAIM_CURRENCY_LABEL = ""
 switch(CLAIM_CURRENCY){
   case CONFIG.GAME_COIN_TYPE_GC:
+  case CONFIG.GAME_COIN_TYPE_BZ:
     CLAIM_CURRENCY_LABEL = "Coins"
   default: 
   ""
@@ -164,6 +166,7 @@ export async function buyVC(
     REGISTRY.ui.web3ProviderRequiredPrompt.show()
     return
   }
+
   if(nftUIData.claimWindowEnabled !== undefined && nftUIData.claimWindowEnabled === true){
     const args = nftUIData
     const now = Date.now()
@@ -279,10 +282,46 @@ export async function buyVC(
   };
   const currencies = currency;
   confirmPurchase.text.text.value = "Do you want to claim this item?"
+  if(CONFIG.STORE_WEARABLES_CONFIRM_CLAIM_PURCHASE_DELAY_OK_BTN > 0){
+    //disable the button for a second
+    confirmPurchase.buttonConfirmBtn.label.value = "."
+    confirmPurchase.buttonConfirmBtn.image.opacity = .5
+    confirmPurchase.buttonConfirmBtn.image.isPointerBlocker = false
+    let counter = 0
+    const INTERVAL = 300
+    const fnConcnat = ()=>{ 
+      if(counter < (CONFIG.STORE_WEARABLES_CONFIRM_CLAIM_PURCHASE_DELAY_OK_BTN/INTERVAL)){ //500*6 = 3 seconds
+        utils.setTimeout(INTERVAL,()=>{
+          confirmPurchase.buttonConfirmBtn.label.value += "."
+          fnConcnat()
+        })
+      }else{
+        confirmPurchase.buttonConfirmBtn.label.value = "OK"
+        confirmPurchase.buttonConfirmBtn.image.opacity = 1
+        confirmPurchase.buttonConfirmBtn.image.isPointerBlocker = true
+      }
+      counter++
+    }
+    fnConcnat()
+  }else{
+    confirmPurchase.buttonConfirmBtn.label.value = "OK"
+    confirmPurchase.buttonConfirmBtn.image.opacity = 1
+    confirmPurchase.buttonConfirmBtn.image.isPointerBlocker = true
+  }
   /*`You are about to buy an item for \n ${eth.fromWei(
       price,
       "ether"
     )} ${currencies}`;*/
+
+  //TODO add check scene side of values would help learn if needed
+  //TODO add callback promise so that can know if save completed before executing
+  //TODO make a custom save so that it knows the callback, maybe an arg to the save that is the callback?
+  //execute a save,hope its done by time they confirm
+  //this is to ensure they have enough VC on backend
+  if(CONFIG.STORE_WEARABLES_ON_CONFIRM_CLAIM_PURCHASE_PROMPT_DO_SAVE){
+    GAME_STATE.gameRoom.send("save-game",{})
+  }
+    
   confirmPurchase.show();
 
   log("assigned!!!", buttonCallBackMap);

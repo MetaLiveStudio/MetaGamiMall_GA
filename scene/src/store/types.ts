@@ -58,7 +58,29 @@ export type NFTUIData = {
   claimWindowEnabled?:boolean,//defaults to false
   claimStartMS?: number,
   claimEndMS?: number,
-};
+}
+export type LazyTriggerData ={
+    positionType: 'featureEnt'|'featureEnt.parent'|'absolute'//if parented to featuredEntityData object or not absolute scene position
+    debugEnabled?: boolean,
+    size:  Vector3
+    position?:  Vector3
+}
+
+export type LazyLoadingPlaceholderData ={
+  enabled: boolean,
+  shapeName:string
+  debugEnabled?: boolean,
+  size?:  Vector3
+  position?:  Vector3
+  positionType: 'featureEnt'|'featureEnt.parent'|'absolute'
+}
+export type FeaturedLazyLoadingData = 
+{
+  enabled: boolean,
+  debugEnabled?: boolean,
+  placeHolder?: LazyLoadingPlaceholderData
+  trigger: LazyTriggerData
+}
 export type FeaturedEntityData = {
   shapeName: string;
   entityName?: string;
@@ -66,6 +88,7 @@ export type FeaturedEntityData = {
   hoverText: string;
   transform?: TransformConstructorArgs;
   parent?: Entity;
+  lazyLoading?:FeaturedLazyLoadingData
 };
 export type CardData = {
   buttonData: ButtonDataType;

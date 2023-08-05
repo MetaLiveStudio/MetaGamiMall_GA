@@ -13,12 +13,28 @@ import { TrackData } from './modules/trackPlacement';
 import { createDebugUIButtons } from "./modules/ui/ui-hud-debugger";
 import { getAndSetUserData, getUserDataFromLocal } from './modules/userData';
 import { levelManager } from './tracks/levelManager';
+import { Game_2DUI } from './modules/ui/index';
 //MOVED TO src/meta-decentrally/modules/scene/race.ts
 
 //const Constants.SCENE_MGR = Constants.Constants.SCENE_MGR
 
+let setupDecentrallyAlready = false
+export async function setupDecentrally(){
+    GAME_STATE.raceData = new RaceData()
 
-export async function startDecentrally(){
+    if(CONFIG.DECENTRALLY_ENABLED){
+        log("CONFIG.DECENTRALLY_ENABLED skippping",CONFIG.DECENTRALLY_ENABLED)
+        return;
+    }
+    if(setupDecentrallyAlready){
+        log("setupDecentrallyAlready skippping",setupDecentrallyAlready)
+        return;
+    }
+    
+    setupDecentrallyAlready = true
+
+    Game_2DUI.hideAll()
+    Game_2DUI.reset() 
 
     //DO THIS FIRST so have it going forward
     //load user data
@@ -40,8 +56,16 @@ export async function startDecentrally(){
     //GAME_STATE.trackData.setTrackFeatures() OR GAME_STATE.trackData.addTrackFeature()
     GAME_STATE.trackData.init( levelManager.getCurrentLevel() )
 
-    GAME_STATE.raceData = new RaceData()
+}
+export async function startDecentrally(){
+
+    setupDecentrally()
   
+    if(!CONFIG.DECENTRALLY_ENABLED){
+        log("CONFIG.DECENTRALLY_ENABLED skippping",CONFIG.DECENTRALLY_ENABLED)
+        return;
+    }
+
     //moved to autologin.ts
     //addAutoPlayerLoginTrigger() 
         

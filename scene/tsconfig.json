@@ -34,6 +34,11 @@
       "@dcl/npc-scene-utils": [
         "node_modules/@dcl/npc-scene-utils/dist/index.d.ts",
         "node_modules\\@dcl\\npc-scene-utils\\dist\\index.d.ts"
+      ],
+      "@adshares/decentraland": [
+        "node_modules/@adshares/decentraland/dist/index.d.ts",
+        "node_modules\\@dcl\\decentraland\\dist\\index.d.ts",
+        "node_modules\\@adshares\\decentraland\\dist\\index.d.ts"
       ]
     },
     "baseUrl": "."

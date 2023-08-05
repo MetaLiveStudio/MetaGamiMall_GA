@@ -87,7 +87,7 @@ export class RaceSceneManager extends SceneManager implements IRaceSceneManager{
                 if( GAME_STATE.gameRoom !== null && GAME_STATE.gameRoom !== undefined 
                     && GAME_STATE.gameRoom !== undefined 
                     && GAME_STATE.gameRoom.name !== CONFIG.GAME_RACE_ROOM_NAME ){ 
-                  log(CLASS_NAME,METHOD_NAME,"currently connected to, disconnect that one " , GAME_STATE.gameRoom.name, GAME_STATE.gameRoomData.id )
+                  log(CLASS_NAME,METHOD_NAME,"currently connected to, disconnect that one " , GAME_STATE.gameRoom.name, GAME_STATE.gameRoomData?.id )
 
                   ui.displayAnnouncement("Launching DecentRally...",Math.min(3,CONFIG.GAME_OTHER_ROOM_DISCONNECT_TIMER_WAIT_TIME-1))
 
@@ -143,7 +143,7 @@ export class RaceSceneManager extends SceneManager implements IRaceSceneManager{
       }else{
         ///endGame|ConnectSystem|setGameConnected|onGameLeaveDisconnect|room.msg.finished|roomAboutToDisconnect/
         ///endGame|ConnectSystem|setGameConnected|onGameLeaveDisconnect|room.msg.finished|roomAboutToDisconnect/
-          log(CLASS_NAME,METHOD_NAME,"currently connected to, RACING disconnect that one " , GAME_STATE.gameRoom.name, GAME_STATE.gameRoomData.id )
+          log(CLASS_NAME,METHOD_NAME,"currently connected to, RACING disconnect that one " , GAME_STATE.gameRoom.name, GAME_STATE.gameRoomData?.id )
           //TODO consider popup to confirm?
           GAME_STATE.gameRoom.send("quit-game",{});
           //ADD TIMER IF takes longer than X do this anyways

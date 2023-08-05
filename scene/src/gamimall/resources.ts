@@ -119,7 +119,7 @@ export const RESOURCES = {
     loadingBg: TutorialBackgroundTexture,
     gameEndBg: TutorialBackgroundTexture,
     superDogerioBanner: new Texture("images/game/SuperDogerioBanner.png"),
-    voxBanner: new Texture("images/game/Vox_skate-craftBanner.png"),
+    //voxBanner: new Texture("images/game/Vox_skate-craftBanner.png"),
     darkThemeSemiTransparent: new Texture(darkThemeSemiTransparent),
   },
   materials: {

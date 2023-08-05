@@ -25,6 +25,7 @@ export class GameSceneManager {
   }
   
   moveTo(scene: string, movePos?:Vector3,cameraDir?:Vector3) {
+    //debugger
     log("GameSceneManager moveTo",scene,movePos)
     if (this.rootScene.sceneName == scene) {
       log("GameSceneManager moveTo.moving to rootScene")
@@ -33,8 +34,14 @@ export class GameSceneManager {
       this.activeScene = this.rootScene
       this.activeSceneName = this.rootScene.sceneName;
     } else {
-      this.rootScene.hide();
+      try{
+        this.rootScene.hide();
+      }catch(e){
+        //debugger
+        log("error hiding",e)
+      }
       this.alternativeScene.forEach(altScene =>{
+        //debugger
         if(altScene.sceneName === scene){
           this.activeSceneName = altScene.sceneName;
           this.activeScene = altScene
