@@ -3,9 +3,11 @@ import { Block, BlockType, MyRoomState, Player } from "./MyRoomState";
 //import PlayFab from "../playfab_sdk/PlayFabClientApi";
 //import * as PlayFabSDK from  '../playfab_sdk/index'
 //import { EntityTokenResponse, GetPlayerCombinedInfoResultPayload, LoginResult, TreatmentAssignment, UserSettings } from '../playfab_sdk/playfab.types'; 
-import { PlayFab,PlayFabAuthentication, PlayFabServer } from "playfab-sdk";
+import { PlayFab,PlayFabAdmin,PlayFabAuthentication, PlayFabServer } from "playfab-sdk";
 import date from "date-and-time";
 import { CONFIG } from "./config";
+import { PlayFabDataUtils } from "../utils/playFabDataUtils";
+import { GetPlayerCombinedInfoResultHelper } from "../utils/playfabGetPlayerCombinedInfoResultHelper";
 
 //var PlayFab: PlayFab ;//= require("PlayFab-sdk/Scripts/PlayFab/PlayFab");
 //var PlayFabClient: PlayFabClientModule.IPlayFabClient ;//= require("PlayFab-sdk/Scripts/PlayFab/PlayFabClient");
@@ -24,13 +26,14 @@ function isNull(val:any){
   return val === null && val === undefined
 }
 
-const c = (resolve:any, reject:any) => {
+const c = (resolve:any, reject:any, context?:{caller:string,params:object}) => {
+  const METHOD_NAME = "c"
   //flipped what Pablo gave me. why?
   //return (result:any,error:any) => {
   return (error:any,result:any) => {
       if(error){
-          console.log("PlayFab Error", error);
-          console.log("PlayFab Result", result);
+          console.log(METHOD_NAME,"PlayFab Error", error,context);
+          console.log(METHOD_NAME,"PlayFab Result FAILED!!!", result,context);
           reject(error)
       }else{
           resolve(result.data);
@@ -38,67 +41,98 @@ const c = (resolve:any, reject:any) => {
   }
 }
  
+
+export const GetPlayerStatisticVersions = (request:PlayFabServerModels.GetPlayerStatisticVersionsRequest):Promise<PlayFabServerModels.GetPlayerStatisticVersionsResult> => {
+  return new Promise((resolve, reject)=>{
+    PlayFabServer.GetPlayerStatisticVersions( request, c(resolve, reject,{caller:"GetPlayerStatisticVersions",params:request})) 
+  })
+};
+
+export const GetTime = (request:PlayFabServerModels.GetTimeRequest):Promise<PlayFabServerModels.GetTimeResult> => {
+  return new Promise((resolve, reject)=>{
+    PlayFabServer.GetTime( request, c(resolve, reject,{caller:"GetTime",params:request})) 
+  })
+};
+
 export const GetEntityToken = (request:PlayFabAuthenticationModels.GetEntityTokenRequest):Promise<PlayFabAuthenticationModels.ValidateEntityTokenResponse> => {
       return new Promise((resolve, reject)=>{
-        PlayFabAuthentication.GetEntityToken( request, c(resolve, reject)) 
+        PlayFabAuthentication.GetEntityToken( request, c(resolve, reject,{caller:"GetEntityToken",params:request})) 
       })
 };
 
 
 export const AddCharacterVirtualCurrency = (request:PlayFabServerModels.AddUserVirtualCurrencyRequest):Promise<PlayFabServerModels.ModifyUserVirtualCurrencyResult> => {
     return new Promise((resolve, reject)=>{
-      PlayFabServer.AddUserVirtualCurrency( request, c(resolve, reject)) 
+      PlayFabServer.AddUserVirtualCurrency( request, c(resolve, reject,{caller:"AddCharacterVirtualCurrency",params:request})) 
     })
 };
 
 
 export const SubtractUserVirtualCurrency = (request:PlayFabServerModels.SubtractUserVirtualCurrencyRequest):Promise<PlayFabServerModels.ModifyUserVirtualCurrencyResult> => {
   return new Promise((resolve, reject)=>{
-    PlayFabServer.SubtractUserVirtualCurrency( request, c(resolve, reject)) 
+    PlayFabServer.SubtractUserVirtualCurrency( request, c(resolve, reject,{caller:"SubtractUserVirtualCurrency",params:request})) 
   })
 };
 
 
 export const AddUserVirtualCurrency = (request:PlayFabServerModels.AddUserVirtualCurrencyRequest):Promise<PlayFabServerModels.ModifyUserVirtualCurrencyResult> => {
   return new Promise((resolve, reject)=>{
-    PlayFabServer.AddUserVirtualCurrency( request, c(resolve, reject)) 
+    PlayFabServer.AddUserVirtualCurrency( request, c(resolve, reject,{caller:"AddUserVirtualCurrency",params:request})) 
   })
 };
 
 
 export const GetPlayerCombinedInfo = (request:PlayFabServerModels.GetPlayerCombinedInfoRequest):Promise<PlayFabServerModels.GetPlayerCombinedInfoResult> => {
   return new Promise((resolve, reject)=>{
-    PlayFabServer.GetPlayerCombinedInfo( request, c(resolve, reject)) 
+    PlayFabServer.GetPlayerCombinedInfo( request, c(resolve, reject,{caller:"GetPlayerCombinedInfo",params:request})) 
   })
 };
 
 
 export const UpdateUserReadOnlyData = (request:PlayFabServerModels.UpdateUserDataRequest):Promise<PlayFabServerModels.UpdateUserDataResult> => {
   return new Promise((resolve, reject)=>{
-    PlayFabServer.UpdateUserReadOnlyData( request, c(resolve, reject)) 
+    PlayFabServer.UpdateUserReadOnlyData( request, c(resolve, reject,{caller:"UpdateUserReadOnlyData",params:request})) 
   })
 };
 
 
 export const UpdatePlayerStatistics = (request:PlayFabServerModels.UpdatePlayerStatisticsRequest):Promise<PlayFabServerModels.UpdatePlayerStatisticsResult> => {
   return new Promise((resolve, reject)=>{
-    PlayFabServer.UpdatePlayerStatistics( request, c(resolve, reject)) 
+    PlayFabServer.UpdatePlayerStatistics( request, c(resolve, reject,{caller:"UpdatePlayerStatistics",params:request})) 
   })
 };
 
 export const GrantItemsToUser = (request:PlayFabServerModels.GrantItemsToUserRequest):Promise<PlayFabServerModels.GrantItemsToUserResult> => {
   return new Promise((resolve, reject)=>{
-    PlayFabServer.GrantItemsToUser( request, c(resolve, reject)) 
+    PlayFabServer.GrantItemsToUser( request, c(resolve, reject,{caller:"GrantItemsToUser",params:request})) 
   })
 };
 
 
 export const AuthenticateSessionTicket = (request:PlayFabServerModels.AuthenticateSessionTicketRequest):Promise<PlayFabServerModels.AuthenticateSessionTicketResult> => {
   return new Promise((resolve, reject)=>{
-    PlayFabServer.AuthenticateSessionTicket( request, c(resolve, reject)) 
+    PlayFabServer.AuthenticateSessionTicket( request, c(resolve, reject,{caller:"AuthenticateSessionTicket",params:request})) 
   })
 };
 
+export const GetCatalogItems = (request:PlayFabServerModels.GetCatalogItemsRequest):Promise<PlayFabServerModels.GetCatalogItemsResult> => {
+  return new Promise((resolve, reject)=>{
+    PlayFabServer.GetCatalogItems( request, c(resolve, reject,{caller:"GetCatalogItems",params:request})) 
+  })
+};
+
+
+export const GetRandomResultTablesAdmin = (request:PlayFabAdminModels.GetRandomResultTablesRequest):Promise<PlayFabServerModels.GetRandomResultTablesResult> => {
+  return new Promise((resolve, reject)=>{
+    PlayFabAdmin.GetRandomResultTables( request, c(resolve, reject,{caller:"GetRandomResultTablesAdmin",params:request})) 
+  })
+};
+
+export const GetRandomResultTables = (request:PlayFabServerModels.GetRandomResultTablesRequest):Promise<PlayFabServerModels.GetRandomResultTablesResult> => {
+  return new Promise((resolve, reject)=>{
+    PlayFabServer.GetRandomResultTables( request, c(resolve, reject,{caller:"GetRandomResultTables",params:request})) 
+  })
+};
 
 // or re-usable `sleep` function:
 const doSleep = (milliseconds:number) => {
@@ -107,9 +141,10 @@ const doSleep = (milliseconds:number) => {
 
 //const list = [1, 2, 3, 4, 5]
 const sleep = async (val:number) => {
+  const METHOD_NAME = "sleep"
   //for (const item of list) {
     await doSleep(val);
-    console.log('slept for ' + val );
+    console.log(METHOD_NAME,'slept for ' + val );
   //}
 }
 
@@ -119,21 +154,48 @@ const sleepLoop = (seconds:number)=>{
 }
 
 function appendGrantMaterial(grantItemAgg:PlayFabServerModels.GrantItemsToUserRequest,grantItem:PlayFabServerModels.GrantItemsToUserRequest){
-  if(grantItem !== undefined && grantItem.ItemIds !== undefined && grantItem.ItemIds.length){
+  const METHOD_NAME = "appendGrantMaterial"
+  console.log(METHOD_NAME,"appendGrantMaterial START ",grantItemAgg,grantItem)
+
+  if(grantItem !== undefined && grantItem.ItemIds !== undefined && grantItem.ItemIds.length > 0){
+    console.log(METHOD_NAME,"appendGrantMaterial  grantItem.ItemIds.length",grantItem.ItemIds.length)
     for(let p in grantItem.ItemIds){
-      grantItemAgg.ItemIds.push(grantItem.ItemIds[p] )
+      console.log(METHOD_NAME,"appendGrantMaterial  grantItem.ItemIds",p,grantItem.ItemIds[p])
+      //TODO need to check quantities against player inventory
+      grantItemAgg.ItemIds.push( grantItem.ItemIds[p] )
     }
-  }  
+  }  else{
+    console.log(METHOD_NAME,"appendGrantMaterial  NO grantItem.ItemIds.length",grantItem)
+  }
 }
 
 //workaround, was seeing negative coin values
 function isGCLinkedToMC(){
   return CONFIG.GC_TO_MC_CONVESION < 9999999
 }
+//disabled for now, save money as not using anymore anyways
+//and costs to write to player profile
+function isTrackCollectEpocEnabled(){
+  return CONFIG.MAX_COINS_PER_EPOCH < 999
+}
+/**
+ * helper function to try and find this players end level results
+ * @param playfabId 
+ * @param results 
+ * @returns 
+ */
+export function getPlayerResultById(playfabId:string,results:EndLevelUpdatePlayerStatsResult[]):EndLevelUpdatePlayerStatsResult|undefined{
+  for(const r of results){
+    if(notNull(r.playerCombinedInfo) && r.playerCombinedInfo.PlayFabId === playfabId){
+      return r
+    }
+    return undefined
+  }
+}
 
-export const EndLevelGivePlayerUpdatePlayerStats = async (updateStats:EndLevelUpdatePlayerStatsRequest):Promise<EndLevelUpdatePlayerStatsResult> => {
-
-  console.log("EndLevelGivePlayerUpdatePlayerStats START ",updateStats)
+export const EndLevelGivePlayerUpdatePlayerStats = async (updateStats:EndLevelUpdatePlayerStatsRequest,playfabDataUtils?:PlayFabDataUtils):Promise<EndLevelUpdatePlayerStatsResult> => {
+  const METHOD_NAME = "EndLevelGivePlayerUpdatePlayerStats"
+  console.log(METHOD_NAME,"START ",updateStats)
 
   const results: EndLevelUpdatePlayerStatsResult = {}
   const promises:Promise<any>[] = [];
@@ -149,7 +211,7 @@ export const EndLevelGivePlayerUpdatePlayerStats = async (updateStats:EndLevelUp
     // Whether to get player profile. Defaults to false. Has no effect for a new player.
     GetPlayerProfile: false,
     // Whether to get player statistics. Defaults to false.
-    GetPlayerStatistics: false,
+    GetPlayerStatistics: true, //must fetch for on save update stats
     // Whether to get title data. Defaults to false.
     GetTitleData: false,
     // Whether to get the player's account Info. Defaults to false
@@ -157,7 +219,7 @@ export const EndLevelGivePlayerUpdatePlayerStats = async (updateStats:EndLevelUp
     // Whether to get the player's custom data. Defaults to false
     GetUserData: false,
     // Whether to get the player's inventory. Defaults to false
-    GetUserInventory: false,
+    GetUserInventory: true, //must fetch for inventory max checks
     // Whether to get the player's read only data. Defaults to false
     GetUserReadOnlyData: true,
     // Whether to get the player's virtual currency balances. Defaults to false
@@ -172,7 +234,7 @@ export const EndLevelGivePlayerUpdatePlayerStats = async (updateStats:EndLevelUp
     //UserDataKeys?: string[];
     // Specific keys to search for in the custom data. Leave null to get all keys. Has no effect if GetUserReadOnlyData is
     // false
-    UserReadOnlyDataKeys: ['testReadOnly','coinsCollectedEpoch','coinCollectingEpoch']
+    UserReadOnlyDataKeys: ['coinsCollectedEpoch','coinCollectingEpoch']
   }
   var getPlayerCombinedInfoRequest: PlayFabServerModels.GetPlayerCombinedInfoRequest= {
     // The optional custom tags associated with the request (e.g. build number, external trace identifiers, etc.).
@@ -187,13 +249,21 @@ export const EndLevelGivePlayerUpdatePlayerStats = async (updateStats:EndLevelUp
 
   const coinMultiplier = updateStats.coinMultiplier
 
-  var grantMaterials: PlayFabServerModels.GrantItemsToUserRequest = { ItemIds: [], PlayFabId: playFabId }
+  const CatalogVersion = CONFIG.CATALOG_VERSION_MINABLES
+  var grantMaterials: PlayFabServerModels.GrantItemsToUserRequest = { CatalogVersion:CatalogVersion,ItemIds: [], PlayFabId: playFabId }
 
   appendGrantMaterial( grantMaterials, updateStats.grantMaterial1 )
   appendGrantMaterial( grantMaterials, updateStats.grantMaterial2 ) 
   appendGrantMaterial( grantMaterials, updateStats.grantMaterial3 )
-
-  let anyCoinCollectedThisGame = updateStats.addGCCurrency.Amount + updateStats.addMCCurrency.Amount
+  appendGrantMaterial( grantMaterials, updateStats.grantBronzeShoe )
+  appendGrantMaterial( grantMaterials, updateStats.grantTicketRaffleCoinBag )
+  
+  let anyCoinCollectedThisGame = 
+      updateStats.addGCCurrency.Amount 
+    + updateStats.addMCCurrency.Amount 
+    + updateStats.addBZCurrency.Amount
+    
+  //TODO need to loop and count totals, not just length?? though i think to grant 2x is listning it 2x times so this is qty too?
   let anyMaterialCollectedThisGame = grantMaterials.ItemIds.length
 
   let coinsGCCollectedThisGame = updateStats.addGCCurrency.Amount
@@ -244,7 +314,13 @@ export const EndLevelGivePlayerUpdatePlayerStats = async (updateStats:EndLevelUp
     gcTotal:-1,
     coinMultiplier: coinMultiplier,
     gcBonusEarned:-1,
+    //bronzeShoeCollected:-1,
 
+    rock1Collected: -1,
+    rock2Collected: -1,
+    rock3Collected: -1,
+    petroCollected: -1,
+    nitroCollected: -1,
 
     material1Collected: -1,
     material2Collected: -1,
@@ -252,14 +328,38 @@ export const EndLevelGivePlayerUpdatePlayerStats = async (updateStats:EndLevelUp
 
   }
   
+  const playerCombinedInfoHelper:GetPlayerCombinedInfoResultHelper = new GetPlayerCombinedInfoResultHelper()
 
   var getPlayerCombinedInfo = new Promise((mainResolve, mainReject)=>{
+    //this is failing sometimes with this error. do we need it? its called post save too, only needed if doing precomputations
+    //can we seperate / isolate it?  for now just disable. search for isTrackCollectEpocEnabled where possibly bring back
+    //status: 'Service Unavailable',
+    //error: 'Connection error',
+    //errorCode: 2,
+    //errorMessage: 'Bad Gateway'
+
     GetPlayerCombinedInfo(getPlayerCombinedInfoRequest).then(
       function(result:PlayFabServerModels.GetPlayerCombinedInfoResult){
-        console.log("promise.EndLevelGivePlayerUpdatePlayerStats.GetPlayerCombinedInfoResult",result);
-        console.log("promise.EndLevelGivePlayerUpdatePlayerStats.GetPlayerCombinedInfoResult.UserReadOnlyData",result.InfoResultPayload.UserReadOnlyData);
+        //console.log(METHOD_NAME,"promise.EndLevelGivePlayerUpdatePlayerStats.GetPlayerCombinedInfoResult",result);
+        //console.log(METHOD_NAME,"promise.EndLevelGivePlayerUpdatePlayerStats.GetPlayerCombinedInfoResult.UserReadOnlyData",result.InfoResultPayload.UserReadOnlyData);
         //myRoom.authResult = result;
-        results.playerCombinedInfo = result;
+        //TODO sync save results so dont have to fetch again at end
+        //NOTE: issue here is STATS are inc/dec and dont return latest when called
+        //so not perfect so instead....
+        //maybe call this pre save
+        //and add an option to fetch latest so caller does not have to
+        //then store postSave too, so client can choose how to handle it
+        //isTrackCollectEpocEnabled
+        //results.playerCombinedInfo = result;
+        
+        //get me latest server side snapshop before we operate here
+        //isTrackCollectEpocEnabled
+        //playerCombinedInfoHelper.update(result.InfoResultPayload);
+        
+        //dont actually adjust, we are soo deep into this we already charged them for what ever
+        //will use it as a reciept; false means dont remove
+        adjustGantedMaterials(grantMaterials,playfabDataUtils,/*playerCombinedInfoHelper,*/false)
+        //TODO tweak material grants based on rule amounts
         
         //let coinsToCollectThisEpoch = 0
         //let coinsCollectedRemainder = 0
@@ -269,46 +369,47 @@ export const EndLevelGivePlayerUpdatePlayerStats = async (updateStats:EndLevelUp
         //let userData:any = {}
         //let resetEpoch = false;
 
-        if(result.InfoResultPayload.UserVirtualCurrency){
+        /*if(isTrackCollectEpocEnabled() && result.InfoResultPayload.UserVirtualCurrency){
           //see if they have GC already 
-          console.log("result.InfoResultPayload.UserVirtualCurrency.GC" , result.InfoResultPayload.UserVirtualCurrency.GC , result.InfoResultPayload.UserVirtualCurrency.XX)
+          console.log(METHOD_NAME,"result.InfoResultPayload.UserVirtualCurrency.GC" , result.InfoResultPayload.UserVirtualCurrency.GC , result.InfoResultPayload.UserVirtualCurrency.XX)
           if(result.InfoResultPayload.UserVirtualCurrency.GC){
             coinsGCCollectedPrev = result.InfoResultPayload.UserVirtualCurrency.GC
           }
-        }
+        }*/
         
-        if( notNull(result.InfoResultPayload.UserReadOnlyData[prefix+'coinsCollectedEpoch']) ){
+        //TODO REMOVE USAGE OF these UserReadOnlyData as coinsCollectedEpoch is a statistic instead
+        /*if(isTrackCollectEpocEnabled() && notNull(result.InfoResultPayload.UserReadOnlyData[prefix+'coinsCollectedEpoch']) ){
           const coinsCollectedEpochData = result.InfoResultPayload.UserReadOnlyData[prefix+'coinsCollectedEpoch']
-          console.log("read coinsCollectedEpoch " , coinsCollectedEpochData)
+          console.log(METHOD_NAME,"read coinsCollectedEpoch " , coinsCollectedEpochData)
           //TODO check if needs updating
           if(notNull(coinsCollectedEpochData.Value)){
             coinsCollectedEpoch = Number(coinsCollectedEpochData.Value)
-            console.log("using coinsCollectedEpoch " + coinsCollectedEpoch)
+            console.log(METHOD_NAME,"using coinsCollectedEpoch " + coinsCollectedEpoch)
           }else{
             coinsCollectedEpoch = 0
-            console.log("creating coinsCollectedEpoch " + coinsCollectedEpoch)  
+            console.log(METHOD_NAME,"creating coinsCollectedEpoch " + coinsCollectedEpoch)  
           }
         }else{
           coinsCollectedEpoch = 0
-          console.log("creating coinsCollectedEpoch " + coinsCollectedEpoch)
-        }
+          console.log(METHOD_NAME,"creating coinsCollectedEpoch " + coinsCollectedEpoch)
+        }*/
         
-        if( notNull(result.InfoResultPayload.UserReadOnlyData[prefix+'coinCollectingEpoch']) ){
+        /*if(isTrackCollectEpocEnabled() && notNull(result.InfoResultPayload.UserReadOnlyData[prefix+'coinCollectingEpoch']) ){
           //TODO switch to coinsMCEarnedDaily.lastReset (stat)???
           const lastEpochData = result.InfoResultPayload.UserReadOnlyData[prefix+'coinCollectingEpoch']
 
-          console.log("read curEpoch " , lastEpochData)
+          console.log(METHOD_NAME,"read curEpoch " , lastEpochData)
           if(notNull(lastEpochData.Value)){
             const lastEpoch = date.parse(lastEpochData.Value,CONFIG.DATE_FORMAT_PATTERN,true)
             const diff = (now.getTime() - lastEpoch.getTime()) / (1000 * 60) //minutes
-            console.log("read parsed " + lastEpoch + " epoch-now diff " + diff + " epoch size " + CONFIG.EPOCH_MINUTES + " minutes")
+            console.log(METHOD_NAME,"read parsed " + lastEpoch + " epoch-now diff " + diff + " epoch size " + CONFIG.EPOCH_MINUTES + " minutes")
             //TODO check if needs updating
             if(diff >= CONFIG.EPOCH_MINUTES){//needs updating
               //reset counter
               resetEpoch = true
             }else{
               //within current epoc
-              console.log("appending to  coinsCollectedEpoch " + coinsCollectedEpoch);
+              console.log(METHOD_NAME,"appending to  coinsCollectedEpoch " + coinsCollectedEpoch);
             }
           }else{
             //is null
@@ -318,9 +419,9 @@ export const EndLevelGivePlayerUpdatePlayerStats = async (updateStats:EndLevelUp
         }else{
           //does not exist make one
           resetEpoch = true
-        }
+        }*/
 
-        if(resetEpoch){
+        /*if(isTrackCollectEpocEnabled() && resetEpoch){
           //TODO use coinsCollectedDaily epoch so they sync. only override for testing?!?!?
           const newEpochtime = new Date()
 
@@ -330,9 +431,9 @@ export const EndLevelGivePlayerUpdatePlayerStats = async (updateStats:EndLevelUp
           currentEpoch = newEpochtime
           newEpoch = date.format(newEpochtime, CONFIG.DATE_FORMAT_PATTERN,true);
           coinsCollectedEpoch = 0
-          console.log("creating curEpoch " , newEpoch,newEpochtime.toUTCString(),'--',newEpochtime.toLocaleString());
-          console.log("resetting  coinsCollectedEpoch " + coinsCollectedEpoch);
-        }
+          console.log(METHOD_NAME,"creating curEpoch " , newEpoch,newEpochtime.toUTCString(),'--',newEpochtime.toLocaleString());
+          console.log(METHOD_NAME,"resetting  coinsCollectedEpoch " + coinsCollectedEpoch);
+        }*/
 
         //coinsGCCollectedPrev
 
@@ -353,7 +454,7 @@ export const EndLevelGivePlayerUpdatePlayerStats = async (updateStats:EndLevelUp
 
         const coinsCollectedEpochBeforeGame = coinsCollectedEpoch
         coinsCollectedEpoch += coinsMCCollectThisGame
-        console.log("coinsCollectedEpoch coinsCollectedThisGame:" + coinsGCCollectedThisGameWithBonuses + " carry over " + coinsGCCollectedPrev 
+        console.log(METHOD_NAME,"coinsCollectedEpoch coinsCollectedThisGame:" + coinsGCCollectedThisGameWithBonuses + " carry over " + coinsGCCollectedPrev 
           + " subtotal:" + (coinsGCCollectedSubTotal) + " gcToMC " + gcToMC + " epoch.subtotal " + coinsCollectedEpoch + " this game " + coinsMCCollectThisGame + " MC remainder " + coinsCollectedRemainder + " GC");
 
 
@@ -370,10 +471,14 @@ export const EndLevelGivePlayerUpdatePlayerStats = async (updateStats:EndLevelUp
         
         //TODO need to write to guest currency somehow!!!
 
+       
+        //START DEAD CODE?
         let subtractAmount = 0;
+        /*
+        if(isTrackCollectEpocEnabled()){
 
         if(coinsCollectedEpoch > CONFIG.MAX_COINS_PER_EPOCH){
-          console.log("maxed out collecting today epoch.pre:" + coinsCollectedEpochBeforeGame + " epoch.sum:" + coinsCollectedEpoch + " vs this.game:" + coinsMCCollectThisGame + " vs max:" + CONFIG.MAX_COINS_PER_EPOCH);
+          console.log(METHOD_NAME,"maxed out collecting today epoch.pre:" + coinsCollectedEpochBeforeGame + " epoch.sum:" + coinsCollectedEpoch + " vs this.game:" + coinsMCCollectThisGame + " vs max:" + CONFIG.MAX_COINS_PER_EPOCH);
 
           //coinsCollectedEpochBeforeGame
 
@@ -406,77 +511,108 @@ export const EndLevelGivePlayerUpdatePlayerStats = async (updateStats:EndLevelUp
 
           }
         }
+        }*/
 
 
-        console.log("coinsCollectedEpoch.adjusted","isGCLinkedToMC()",isGCLinkedToMC()," coinsCollectedThisGame:" + coinsGCCollectedThisGameWithBonuses + " mc:" + coinsMCCollectThisGame + " epoch.sum:" + coinsCollectedEpoch + "/" + CONFIG.MAX_COINS_PER_EPOCH + " MC remainder " + coinsCollectedRemainder + " GC subtractAmount:" + subtractAmount);
-  
+        console.log(METHOD_NAME,"coinsCollectedEpoch.adjusted","isGCLinkedToMC()",isGCLinkedToMC()," coinsCollectedThisGame:" + coinsGCCollectedThisGameWithBonuses + " mc:" + coinsMCCollectThisGame + " epoch.sum:" + coinsCollectedEpoch + "/" + CONFIG.MAX_COINS_PER_EPOCH + " MC remainder " + coinsCollectedRemainder + " GC subtractAmount:" + subtractAmount);
+        //END DEAD CODE?
 
         
-        if(newEpoch != null){
-          userData[prefix+"coinCollectingEpoch"] = newEpoch
+        
+        if(isTrackCollectEpocEnabled()){
+          //disabled for now, save money as not using anymore anyways
+          //and costs to write to player profile
+          if(newEpoch != null){
+            userData[prefix+"coinCollectingEpoch"] = newEpoch
+          }
+          userData[prefix+"coinsCollectedEpoch"] = coinsCollectedEpoch
         }
-        userData[prefix+"coinsCollectedEpoch"] = coinsCollectedEpoch
+        
         if(!runningGuestGame) gameEndResult.mcTotalEarnedToday = coinsCollectedEpoch
         if(!runningGuestGame) gameEndResult.gcEnded = coinsCollectedRemainder
                 
         const promisesInner:Promise<any>[] = [];
 
         
-        //must write it
-        const updateReadOnlyData = UpdateUserReadOnlyData(
-          {
-            // The optional custom tags associated with the request (e.g. build number, external trace identifiers, etc.).
-            //CustomTags?: { [key: string]: string | null };
-            // Key-value pairs to be written to the custom data. Note that keys are trimmed of whitespace, are limited in size, and may
-            // not begin with a '!' character or be null.
-            Data: userData,
-            // Optional list of Data-keys to remove from UserData. Some SDKs cannot insert null-values into Data due to language
-            // constraints. Use this to delete the keys directly.
-            //KeysToRemove?: string[];
-            // Permission to be applied to all user data keys written in this request. Defaults to "private" if not set.
-            //Permission?: string;
-            // Unique PlayFab assigned ID of the user on whom the operation will be performed.
-            PlayFabId: playFabId
-          }
-        )
-        promisesInner.push(updateReadOnlyData)
+        if(userData !== undefined && Object.keys(userData).length > 0){
+          console.log(METHOD_NAME,"promise.EndLevelGivePlayerUpdatePlayerStats.updateReadOnlyData writing",userData);
+          //must write it
+          const updateReadOnlyData = UpdateUserReadOnlyData(
+            {
+              // The optional custom tags associated with the request (e.g. build number, external trace identifiers, etc.).
+              //CustomTags?: { [key: string]: string | null };
+              // Key-value pairs to be written to the custom data. Note that keys are trimmed of whitespace, are limited in size, and may
+              // not begin with a '!' character or be null.
+              Data: userData,
+              // Optional list of Data-keys to remove from UserData. Some SDKs cannot insert null-values into Data due to language
+              // constraints. Use this to delete the keys directly.
+              //KeysToRemove?: string[];
+              // Permission to be applied to all user data keys written in this request. Defaults to "private" if not set.
+              //Permission?: string;
+              // Unique PlayFab assigned ID of the user on whom the operation will be performed.
+              PlayFabId: playFabId
+            }
+          )
+          promisesInner.push(updateReadOnlyData)
+        }else{
+          console.log(METHOD_NAME,"promise.EndLevelGivePlayerUpdatePlayerStats.updateReadOnlyData no data to write",userData);
+        }
 
         const thisGameStats:PlayFabServerModels.StatisticUpdate[] = []
 
-        if(!runningGuestGame){
+        if(!runningGuestGame && Math.floor(coinsMCCollectThisGame) > 0){
           thisGameStats.push(
             {StatisticName: "coinsMCEarnedDaily",
-                  Value: coinsMCCollectThisGame}
+                  Value: Math.floor(coinsMCCollectThisGame)}
           )
         }
 
         //PREFIX IT WHEN A GUEST GAME  VB_coinCollected....
+
+        //TODO split into its very own XP stat, must migrate all code to that
+        //only apply to epoch AKA XP, daily uses coin cap and u would buy subtractions from that? or seperate it into its own stat????
+        //TODO - stubbed for now
+        const paidForCoinsCollectedThisGame = 0
+
         for(const p in CONFIG.STATS_LEVEL_ANY_COIN_COLLECTED_NAMES){
           const statName = prefix + CONFIG.STATS_LEVEL_ANY_COIN_COLLECTED_NAMES[p]
+          if(Math.floor(anyCoinCollectedThisGame)!=anyCoinCollectedThisGame){
+            console.log(METHOD_NAME,"promise.EndLevelGivePlayerUpdatePlayerStats.UpdatePlayerStatistics.",statName,"saving WARNING HAD TO FLOOR VALUE!!!",anyCoinCollectedThisGame);
+          }
           thisGameStats.push(
             {
               // unique name of the statistic
               StatisticName: statName,
               // statistic value for the player
-              Value: anyCoinCollectedThisGame //FIXME this is not adding up coins, game config setting in playfab
+              Value: Math.floor(anyCoinCollectedThisGame + paidForCoinsCollectedThisGame) //FIXME this is not adding up coins, game config setting in playfab
               // for updates to an existing statistic value for a player, the version of the statistic when it was loaded. Null when
               // setting the statistic value for the first time.
               //Version?: number;
             }
           )
         }
-        for(const p in CONFIG.STATS_LEVEL_ANY_COIN_COLLECTED_NAMES){
+        for(const p in CONFIG.STATS_LEVEL_ANY_MATERIAL_COLLECTED_NAMES){
           const statName = prefix + CONFIG.STATS_LEVEL_ANY_MATERIAL_COLLECTED_NAMES[p]
+          if(Math.floor(anyMaterialCollectedThisGame)!=anyMaterialCollectedThisGame){
+            console.log(METHOD_NAME,"promise.EndLevelGivePlayerUpdatePlayerStats.UpdatePlayerStatistics.",statName,"saving WARNING HAD TO FLOOR VALUE!!!",anyMaterialCollectedThisGame);
+          }
           thisGameStats.push(
             {
               // unique name of the statistic
               StatisticName: statName,
               // statistic value for the player
-              Value: anyMaterialCollectedThisGame
+              Value: Math.floor(anyMaterialCollectedThisGame)
             }
           )
         }
+
+        //buy into coin bag raffle
+        const addStatRaffleCoinBag = updateStats.addStatRaffleCoinBag
+        if(addStatRaffleCoinBag && addStatRaffleCoinBag.Value && addStatRaffleCoinBag.Value > 0){
+          thisGameStats.push( addStatRaffleCoinBag )
+        }
         
+        console.log(METHOD_NAME,"promise.EndLevelGivePlayerUpdatePlayerStats.UpdatePlayerStatistics.","thisGameStats",thisGameStats)
 
         const updatePlayerStats = UpdatePlayerStatistics(
           {
@@ -496,24 +632,29 @@ export const EndLevelGivePlayerUpdatePlayerStats = async (updateStats:EndLevelUp
         //https://community.playfab.com/questions/43530/optimal-way-to-add-multiple-currencies-and-items-w.html
         if(grantMaterials !== undefined && grantMaterials.ItemIds !== undefined
           && grantMaterials.ItemIds.length > 0){
+            console.log(METHOD_NAME,"GrantItemsToUser","granting....",grantMaterials)
           const grantMaterialsPromise = GrantItemsToUser(
             grantMaterials
           )
+          grantMaterialsPromise.then((val:PlayFabServerModels.GrantItemsToUserResult)=>{
+            console.log(METHOD_NAME,"promisesInner grantMaterialsPromise.promised completed " ,grantMaterials,"result", val)
+            //gameEndResult.bronzeShoe = val.ItemGrantResults.length
+          })
           promisesInner.push(grantMaterialsPromise)
         }else{
           //no materials picked up
-          console.log("no materials picked up")
+          console.log(METHOD_NAME,"GrantItemsToUser","no materials picked up",grantMaterials)
         }
         
 
         const addCurrencyPromise = new Promise((currencyResolve, currencyReject)=>{
-          //console.log("start  " + 1, Date.now())
+          //console.log(METHOD_NAME,"start  " + 1, Date.now())
           //sleepLoop(1)
-          //console.log("returned from " + 1, Date.now())
+          //console.log(METHOD_NAME,"returned from " + 1, Date.now())
           
           const promisesCurrency:Promise<any>[] = [];
 
-          
+          /*
           if(coinsMCCollectThisGameWithBonuses>0){
             const addMCCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = {
               PlayFabId:updateStats.addMCCurrency.PlayFabId,
@@ -523,7 +664,7 @@ export const EndLevelGivePlayerUpdatePlayerStats = async (updateStats:EndLevelUp
 
             const addMCCurrencyPromise = AddUserVirtualCurrency(addMCCurrency).then(
               function(result:PlayFabServerModels.ModifyUserVirtualCurrencyResult){
-                console.log("promise.EndLevelGivePlayerUpdatePlayerStats.AddUserVirtualCurrency.MC",result);
+                console.log(METHOD_NAME,"promise.EndLevelGivePlayerUpdatePlayerStats.AddUserVirtualCurrency.MC",result);
                 //myRoom.authResult = result;
                 results.addMCCurrency = result;
 
@@ -546,7 +687,7 @@ export const EndLevelGivePlayerUpdatePlayerStats = async (updateStats:EndLevelUp
 
               const adjustGCCurrencyPromise = AddUserVirtualCurrency(adjustGCCurrency).then(
                 function(result:PlayFabServerModels.ModifyUserVirtualCurrencyResult){
-                  console.log("promise.EndLevelGivePlayerUpdatePlayerStats.AddUserVirtualCurrency.GC",result);
+                  console.log(METHOD_NAME,"promise.EndLevelGivePlayerUpdatePlayerStats.AddUserVirtualCurrency.GC",result);
                   //myRoom.authResult = result;
                   results.addGCCurrency = result;
 
@@ -565,7 +706,7 @@ export const EndLevelGivePlayerUpdatePlayerStats = async (updateStats:EndLevelUp
 
               const adjustGCCurrencyPromise = SubtractUserVirtualCurrency(adjustGCCurrency).then(
                 function(result:PlayFabServerModels.ModifyUserVirtualCurrencyResult){
-                  console.log("promise.EndLevelGivePlayerUpdatePlayerStats.SubtractUserVirtualCurrency.GC",result);
+                  console.log(METHOD_NAME,"promise.EndLevelGivePlayerUpdatePlayerStats.SubtractUserVirtualCurrency.GC",result);
                   //myRoom.authResult = result;
                   results.addGCCurrency = result;
 
@@ -574,35 +715,150 @@ export const EndLevelGivePlayerUpdatePlayerStats = async (updateStats:EndLevelUp
               })
               promisesCurrency.push(adjustGCCurrencyPromise)
             }
+          }*/
+
+          
+          
+          //TODO need to sum up duplicate VC from rewards
+          //workaround for now is do it manually
+          for( const vc of [   
+            
+            updateStats.addGCCurrency,updateStats.addMCCurrency,
+            updateStats.addGCRewardCurrency,updateStats.addMCRewardCurrency,
+
+            updateStats.addVBCurrency,
+            updateStats.addACCurrency,
+            updateStats.addZCCurrency,
+            updateStats.addRCCurrency,
+
+            updateStats.addR1Currency,updateStats.addR2Currency,updateStats.addR3Currency,
+            updateStats.addBPCurrency,updateStats.addNICurrency,
+            updateStats.addBZCurrency,
+
+            updateStats.addVBRewardCurrency,updateStats.addACRewardCurrency,updateStats.addZCRewardCurrency,
+            updateStats.addRCRewardCurrency,
+
+            updateStats.addR1RewardCurrency,updateStats.addR2RewardCurrency,updateStats.addR3RewardCurrency,
+            updateStats.addBZRewardCurrency,updateStats.addNIRewardCurrency,updateStats.addBPRewardCurrency
+          ]){
+              if( vc === undefined || vc.VirtualCurrency === undefined || vc.VirtualCurrency.length === 0){
+                console.log(METHOD_NAME,"promise.EndLevelGivePlayerUpdatePlayerStats.AddUserVirtualCurrency.zeroing",vc,"skipped as was undefined");
+                continue;
+              }
+
+                //if undefined make 0 so below math works cleanly
+              if(vc.Amount === undefined || Number.isNaN(vc.Amount)){
+                vc.Amount = 0
+              }
+          }
+          updateStats.addGCCurrency.Amount += updateStats.addGCRewardCurrency.Amount
+          updateStats.addMCCurrency.Amount += updateStats.addMCRewardCurrency.Amount
+
+          updateStats.addVBCurrency.Amount += updateStats.addVBRewardCurrency.Amount
+          updateStats.addACCurrency.Amount += updateStats.addACRewardCurrency.Amount
+          updateStats.addZCCurrency.Amount += updateStats.addZCRewardCurrency.Amount
+          updateStats.addRCCurrency.Amount += updateStats.addRCRewardCurrency.Amount
+
+          updateStats.addR1Currency.Amount += updateStats.addR1RewardCurrency.Amount
+          updateStats.addR2Currency.Amount += updateStats.addR2RewardCurrency.Amount
+          updateStats.addR3Currency.Amount += updateStats.addR3RewardCurrency.Amount
+
+          updateStats.addBZCurrency.Amount += updateStats.addBZRewardCurrency.Amount
+          updateStats.addNICurrency.Amount += updateStats.addNIRewardCurrency.Amount
+          updateStats.addBPCurrency.Amount += updateStats.addBPRewardCurrency.Amount
+          
+          for( const vc of [
+              updateStats.addGCCurrency,updateStats.addMCCurrency,
+
+              updateStats.addVBCurrency,updateStats.addACCurrency,updateStats.addZCCurrency,
+              updateStats.addRCCurrency,
+
+              updateStats.addR1Currency,updateStats.addR2Currency,updateStats.addR3Currency,
+              updateStats.addBPCurrency,updateStats.addNICurrency,updateStats.addBZCurrency
+          ]){
+            if( vc === undefined || vc.VirtualCurrency === undefined || vc.VirtualCurrency.length === 0){
+              console.log(METHOD_NAME,"promise.EndLevelGivePlayerUpdatePlayerStats.AddUserVirtualCurrency.executingSave",vc,"skipped as was undefined");
+              continue;
+            }
+              //TODO HANDLE SUBTRACTION!!!
+            if(vc.Amount === undefined || vc.Amount === 0 || Number.isNaN(vc.Amount)){
+              console.log(METHOD_NAME,"promise.EndLevelGivePlayerUpdatePlayerStats.AddUserVirtualCurrency.",vc.VirtualCurrency,"skipped has 0",vc.Amount);
+              continue
+            }
+            console.log(METHOD_NAME,"promise.EndLevelGivePlayerUpdatePlayerStats.AddUserVirtualCurrency.",vc.VirtualCurrency,"saving",vc.Amount);
+            if(Math.floor(vc.Amount)!=vc.Amount){
+              console.log(METHOD_NAME,"promise.EndLevelGivePlayerUpdatePlayerStats.AddUserVirtualCurrency.",vc.VirtualCurrency,"saving WARNING HAD TO FLOOR VALUE!!!",vc.Amount);
+            }
+            if( vc.Amount > 0){
+              const addMCCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = {
+                PlayFabId:vc.PlayFabId,
+                Amount: Math.floor(vc.Amount),
+                VirtualCurrency: vc.VirtualCurrency
+              }
+              
+              const addMCCurrencyPromise = AddUserVirtualCurrency(addMCCurrency).then(
+                function(result:PlayFabServerModels.ModifyUserVirtualCurrencyResult){
+                  console.log(METHOD_NAME,"promise.EndLevelGivePlayerUpdatePlayerStats.AddUserVirtualCurrency.",vc.VirtualCurrency,result);
+                  //myRoom.authResult = result;
+                  //DO WE NEED TO WRITE THIS??
+                  //results.addMCCurrency = result;
+
+                  //TODO update gameEndResult balances?
+              })
+              promisesCurrency.push(addMCCurrencyPromise)
+            }else{
+              const subMCCurrency: PlayFabServerModels.SubtractUserVirtualCurrencyRequest = {
+                PlayFabId:vc.PlayFabId,
+                Amount: Math.abs(Math.floor(vc.Amount)),
+                VirtualCurrency: vc.VirtualCurrency
+              }
+              
+              const subMCCurrencyPromise = SubtractUserVirtualCurrency(subMCCurrency).then(
+                function(result:PlayFabServerModels.ModifyUserVirtualCurrencyResult){
+                  console.log(METHOD_NAME,"promise.EndLevelGivePlayerUpdatePlayerStats.SubtractUserVirtualCurrency.",vc.VirtualCurrency,result);
+                  //myRoom.authResult = result;
+                  //DO WE NEED TO WRITE THIS??
+                  //results.addMCCurrency = result;
+
+                  //TODO update gameEndResult balances?
+              })
+              promisesCurrency.push(subMCCurrencyPromise)
+            }
           }
           
-          Promise.all( promisesCurrency ).then(()=>{
-            console.log("currencyResolve promised completed " , result)
-            //console.log("start.currencyResolve  " + 2, Date.now())
+          Promise.allSettled( promisesCurrency ).then((currResult)=>{
+            console.log(METHOD_NAME,"currencyResolve promised completed " , currResult)
+            //console.log(METHOD_NAME,"start.currencyResolve  " + 2, Date.now())
             //sleepLoop(2)
-            //console.log("returned.currencyResolve from " + 2, Date.now())
-            currencyResolve(result);
+            //console.log(METHOD_NAME,"returned.currencyResolve from " + 2, Date.now())
+            currencyResolve(currResult);
           }).catch((reason)=>{
+            console.log(METHOD_NAME,"currencyResolve promised FAILED!!!" , reason)
             currencyReject(reason)
           })
         })
         
         promisesInner.push( addCurrencyPromise )
 
-        Promise.all( promisesInner ).then(()=>{
-          console.log("promisesInner promised completed " , result)
-          //console.log("start  " + 2, Date.now())
+        Promise.all( promisesInner ).then((innerResults)=>{
+          console.log(METHOD_NAME,"promisesInner promised completed " , innerResults)
+          //console.log(METHOD_NAME,"start  " + 2, Date.now())
           //sleepLoop(2)
-          //console.log("returned from " + 2, Date.now())
+          //console.log(METHOD_NAME,"returned from " + 2, Date.now())
 
 
           results.endGameResult=gameEndResult
 
           mainResolve(results);
         }).catch((reason)=>{
+          console.log(METHOD_NAME,"promisesInner promised FAILED!!!" , reason)
           mainReject(reason)
         })
         
+
+    }).catch((reason)=>{
+      console.log(METHOD_NAME,"GetPlayerCombinedInfo.promised FAILED!!!" , reason)
+      mainReject(reason)
     })
   })
   //promises.push( addCurrencyPromise )
@@ -613,7 +869,7 @@ export const EndLevelGivePlayerUpdatePlayerStats = async (updateStats:EndLevelUp
   }*/
 
   return Promise.all( promises ).then(function(result){
-    console.log("all promised completed " , result)
+    console.log(METHOD_NAME,"all promised completed " , result)
     return results;
   })
 };
@@ -623,14 +879,43 @@ export type EndLevelUpdatePlayerStatsRequest= {
   coinMultiplier: number
   addGCCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest
   addMCCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest
+
+  addVBCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest
+  addACCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest
+  addZCCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest
+  addRCCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest
+  
   addGuestCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest
+
+  addBZCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest  
+  addNICurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest  
+  addBPCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest
+  addR1Currency: PlayFabServerModels.AddUserVirtualCurrencyRequest
+  addR2Currency: PlayFabServerModels.AddUserVirtualCurrencyRequest
+  addR3Currency: PlayFabServerModels.AddUserVirtualCurrencyRequest
 
   addGCRewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest
   addMCRewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest
 
+  addVBRewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest
+  addACRewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest
+  addZCRewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest
+  addRCRewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest
+
+  addBZRewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest
+  addNIRewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest
+  addBPRewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest
+  addR1RewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest
+  addR2RewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest
+  addR3RewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest
+
   grantMaterial1: PlayFabServerModels.GrantItemsToUserRequest
   grantMaterial2: PlayFabServerModels.GrantItemsToUserRequest
   grantMaterial3: PlayFabServerModels.GrantItemsToUserRequest
+  grantBronzeShoe: PlayFabServerModels.GrantItemsToUserRequest
+  grantTicketRaffleCoinBag: PlayFabServerModels.GrantItemsToUserRequest
+  
+  addStatRaffleCoinBag: PlayFabServerModels.StatisticUpdate
 
   //playerCombinedInfo?: PlayFabServerModels.GetPlayerCombinedInfoRequest
 }
@@ -652,6 +937,13 @@ export type GameEndResultType={
   coinMultiplier:number
   gcBonusEarned:number
 
+
+  rock1Collected: number,
+  rock2Collected: number,
+  rock3Collected: number,
+  petroCollected: number,
+  nitroCollected: number,
+
   material1Collected: number;
   material2Collected: number;
   material3Collected: number;
@@ -660,6 +952,7 @@ export type GameEndResultType={
 export type EndLevelUpdatePlayerStatsResult= {
   addGCCurrency?: PlayFabServerModels.ModifyUserVirtualCurrencyResult
   addMCCurrency?: PlayFabServerModels.ModifyUserVirtualCurrencyResult
+  addBZCurrency?: PlayFabServerModels.ModifyUserVirtualCurrencyResult
   playerCombinedInfo?: PlayFabServerModels.GetPlayerCombinedInfoResult
   endGameResult?: GameEndResultType
 }
@@ -678,12 +971,13 @@ function DoExampleLoginWithCustomID(): void {
 }
 
 function LoginCallback(error: PlayFabModule.IPlayFabError, result: PlayFabModule.IPlayFabSuccessContainer<PlayFabAuthenticationModels.ValidateEntityTokenResponse>): void {
+    const METHOD_NAME = "LoginCallback"
     if (result !== null) {
-        console.log("Congratulations, you made your first successful API call!",result);
+        console.log(METHOD_NAME,"Congratulations, you made your first successful API call!",result);
     } else if (error !== null) {
-        console.log("Something went wrong with your first API call.");
-        console.log("Here's some debug information:");
-        console.log(CompileErrorReport(error));
+        console.log(METHOD_NAME,"Something went wrong with your first API call.");
+        console.log(METHOD_NAME,"Here's some debug information:");
+        console.log(METHOD_NAME,CompileErrorReport(error));
     }
 }
 
@@ -697,3 +991,66 @@ function CompileErrorReport(error: PlayFabModule.IPlayFabError): string {
             fullErrors += "\n" + paramName + ": " + error.errorDetails[paramName][msgIdx];
     return fullErrors;
 }
+
+export function adjustGantedMaterials(grantMaterials: PlayFabServerModels.GrantItemsToUserRequest, playfabDataUtils: PlayFabDataUtils/*, playerCombinedInfoHelper: GetPlayerCombinedInfoResultHelper*/,remove:boolean) {
+  const METHOD_NAME = "adjustGantedMaterials"
+  //throw new Error("Function not implemented. check grants against allowments and adjust where needed!!!");
+  //loop to get catalogs / max inventory
+
+  const materialMaxMap = new Map<string,number>()
+  const materialTotalMap = new Map<string,number>()
+  const newItemIds: string[] = []
+
+  const catalogItemMapById = playfabDataUtils && playfabDataUtils.catalogItemMapById ? playfabDataUtils.catalogItemMapById : new Map<string,PlayFabServerModels.CatalogItem>()
+
+  if(!playfabDataUtils || !playfabDataUtils.catalogItemMapById){
+    console.log(METHOD_NAME,"adjustGantedMaterials WARNING playfabDataUtils.catalogItemMapById is missing" , playfabDataUtils ? playfabDataUtils.catalogItemMapById:"playfabDataUtils undefined");
+    console.log(METHOD_NAME,"adjustGantedMaterials WARNING playfabDataUtils.catalogItemMapById is missing" , playfabDataUtils? playfabDataUtils.catalogItemMapById:"playfabDataUtils undefined");
+  }
+
+  for(const p of grantMaterials.ItemIds){
+    //finding maxInventory rules
+    let maxInventoryRule = -1
+    const item = catalogItemMapById.get(p)
+    if(item){
+      //parse for item
+      //TODO move to helper!!!
+      maxInventoryRule = getMaxInventoryProp( item )
+    }
+    //summing grants by item
+    if(materialTotalMap.has(p)){
+      materialTotalMap.set(p,materialTotalMap.get(p)+1)
+    }else{
+      materialTotalMap.set(p,1)
+    }
+    if( (maxInventoryRule === undefined || maxInventoryRule < 0 ) ||  materialTotalMap.get(p) <= maxInventoryRule ){
+      newItemIds.push( p )
+    }else{
+      console.log(METHOD_NAME,"adjustGantedMaterials ignoring item, too many" ,p,  materialMaxMap,"materialTotalMap",materialTotalMap,"maxInventoryRule",maxInventoryRule);
+    }
+  }
+  
+  //loop over materialMaxMap and check qty to maxMap building a new newItemIds
+  
+  console.log(METHOD_NAME,"adjustGantedMaterials materialMaxMap" ,  materialMaxMap,"materialTotalMap",materialTotalMap,"remove",remove);
+
+  console.log(METHOD_NAME,"adjustGantedMaterials adjusted" ,  grantMaterials.ItemIds ,"vs adjusted:",newItemIds,"remove",remove);
+
+  if(remove){
+    //compare id vs max rules and adjust returning new grant grantMaterials array
+    grantMaterials.ItemIds = newItemIds
+  }
+}
+export function getMaxInventoryProp(item: PlayFabServerModels.CatalogItem): number {
+  let maxInventoryRule = -1
+  try{
+    const customData = JSON.parse(item.CustomData)
+    if(customData.inventoryMax){
+      maxInventoryRule = parseInt( customData.inventoryMax )
+    }
+  }catch(e){
+    //logWarn(CLASSNAME,this.roomId,METHOD_NAME,"failed to parse rewardItem.CustomData for", containerItm ,"rewardItem.CustomData",rewardItem.CustomData) 
+  }
+  return maxInventoryRule
+}
+

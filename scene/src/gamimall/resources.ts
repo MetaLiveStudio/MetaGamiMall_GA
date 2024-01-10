@@ -1,54 +1,8 @@
-import { GlobalCanvas } from "../dclconnect/gui/canvas";
 
-export const MATERIAL_CACHE: Record<string, ObservableComponent> = {};
-export const FONT_CACHE: Record<string, Font> = {};
+//export const MATERIAL_CACHE: Record<string, ObservableComponent> = {};
+//export const FONT_CACHE: Record<string, Font> = {};
 
-const serviceBaseDomain = "todo";
-
-const SDK_664_OR_HIGHER = typeof onSceneReadyObservable !== "undefined";
-const IN_BUILDER = SDK_664_OR_HIGHER == false;
-
-export const GLOBAL_CANVAS = GlobalCanvas; //from DCL connect
-
-export const setInBuilderSetting = (val: boolean) => {
-  RESOURCES.IN_BUILDER = val;
-  RESOURCES.ENABLE_REMOVE_ENTITY = !RESOURCES.IN_BUILDER;
-};
-
-type ItemServiceConfig = {
-  customBaseUrl: string;
-  fetchLimit: number;
-  netType: string; //when blank service should fallback to PROD
-  contractAddress: string; //testnet monstercat final 150 tokens
-  contractId: string;
-  version: string;
-  profile: string;
-};
-type ItemModelConfig = {};
-
-type ItemResourceUris = {
-  sprite_sheet: string;
-  use_external_sprite_sheet: boolean;
-};
-
-type ItemStringConfig = {};
-type ItemBootupConfig = {
-  check_intervals_ms: number;
-  max_wait_time_ms: number; //5 seconds
-};
-export type ItemConfig = {
-  service: ItemServiceConfig;
-  strings: ItemStringConfig;
-  bootup: ItemBootupConfig;
-  model: ItemModelConfig;
-  resourceUris: ItemResourceUris;
-};
-
-export type ItemConfigResponse = {
-  errorMsg?: string;
-  config?: ItemConfig;
-};
-
+//TODO move to a "types" file
 export type GameLevelData = {
   id: string;
   loadingHint: string;
@@ -62,72 +16,7 @@ let spriteSheetMaterial = new BasicMaterial()//new Material()//new BasicMaterial
 //resolveSpriteSheetMaterial().transparencyMode = 1
 //resolveSpriteSheetMaterial().alphaTest=1
 spriteSheetMaterial.texture = spriteSheetTexture*/
-
-const TutorialBackgroundTexture = new Texture(
-  "images/game/TutorialBackground.png"
-);
-
-const darkThemeSemiTransparent = "images/ui/dialog-dark-atlas-v3-semi-tran.png";
-
-//TODO REFACTOR SO can call it type ItemConfig to help enforce var name formatting correctly
-export const RESOURCES = {
-  SDK_664_OR_HIGHER: SDK_664_OR_HIGHER, // TODO add move detective ways.?  Avatar.alive?
-  IN_BUILDER: IN_BUILDER,
-  ENABLE_REMOVE_ENTITY: !IN_BUILDER, //builder does not handle remove entity well
-  TEST_MODE_ENABLED: true, //long term must publish with this false
-  ENABLE_EXTERNAL_CONFIG: true,
-  TEST_MODE_ENABLED_MANUAL_DATA: true,
-  testOverrides: {
-    //local developer test values goes here
-    ownerAddress: "0xECbb8C195Cc4AFD2966cB86C191F050d28AEdcdD",
-    service: {
-      fetchLimit: 999, //999
-      //customBaseUrl: null, //test domain?
-      netType: "test", //when blank service should fallback to PROD
-      contractAddress: "", //testnet monstercat final 150 tokens
-      //contractId: "",
-      //version: "1",
-      //profile: ""
-      //maxRows: 1 //999
-    },
-    resourceUris: {
-      //use_external_sprite_sheet: true,
-      sprite_sheet:
-        "https://images.unsplash.com/photo-1604537466608-109fa2f16c3b?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=2338&q=80",
-    },
-  },
-  service: {
-    fetchLimit: 999, //999
-    customBaseUrl: serviceBaseDomain,
-    netType: "", //when blank service should fallback to PROD
-    contractAddress: "", //
-    contractId: "todo",
-    version: "1",
-    profile: "dcl-gamimall",
-
-    //maxRows: 1 //999
-  },
-  model: {},
-  resourceUris: {
-    use_external_sprite_sheet: false
-    //,sprite_sheet: null,
-  },
-  textures: {
-    //sprite_sheet: spriteSheetTexture,
-    transparent: new Texture("images/transparent-texture.png"),
-    gameTutorialBg: TutorialBackgroundTexture,
-    loadingBg: TutorialBackgroundTexture,
-    gameEndBg: TutorialBackgroundTexture,
-    superDogerioBanner: new Texture("images/game/SuperDogerioBanner.png"),
-    voxBanner: new Texture("images/game/Vox_skate-craftBanner.png"),
-    darkThemeSemiTransparent: new Texture(darkThemeSemiTransparent),
-  },
-  materials: {
-    //sprite_sheet: spriteSheetMaterial
-  },
-  strings: {},
-};
-
+/*
 export function createFont(textFont: string): Font {
   let font = FONT_CACHE[textFont];
   if (!font) {
@@ -254,3 +143,4 @@ export function getColorFromString(strColor: string, theDefault: Color3) {
   //log("getColorFromString " + strColor + ";->" + color)
   return color;
 }
+*/

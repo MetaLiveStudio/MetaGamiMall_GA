@@ -1,0 +1,224 @@
+//import * as utils from '@dcl/ecs-scene-utils';
+import { Entity, GltfContainer, Transform, engine } from '@dcl/sdk/ecs';
+import { Quaternion, Vector3 } from '@dcl/sdk/math';
+import { movePlayerTo,openExternalUrl } from '~system/RestrictedActions'
+
+
+//
+// Most of the code on this file have been generated through Decentraland Builder.
+// https://builder.decentraland.org/
+//
+
+export function initStatic(){
+    const _scene = engine.addEntity()
+    
+    Transform.create(_scene,{
+        position: Vector3.create(5 * 16, 0, 0), //-6*16
+        //rotation: new Quaternion(0, 0, 0, 1),
+        rotation: Quaternion.fromEulerDegrees(0, -90, 0),
+        scale: Vector3.create(1, 1, 1),
+    });
+
+    //making main model
+    const main = engine.addEntity()
+    Transform.create(main,{
+        position: Vector3.create(48, 0, 40),
+        rotation: Quaternion.create(0, 0, 0, 1),
+        scale: Vector3.create(1, 1, 1),
+        parent: _scene
+    }); 
+
+    GltfContainer.create(main,{
+        src:"models/mains/main.glb"
+    })
+
+<<<<<<< HEAD
+    return _scene
+}
+=======
+     //making adsshop model
+     const adsshop = engine.addEntity()
+     Transform.create(adsshop,{
+         position: Vector3.create(48, 0, 40),
+         rotation: Quaternion.create(0, 0, 0, 1),
+         scale: Vector3.create(1, 1, 1),
+         parent: _scene
+     }); 
+ 
+     GltfContainer.create(adsshop,{
+         src:"models/mains/adsshops.glb"
+     })
+        //making ExchangeCenter model
+        const ExchangeCenter = engine.addEntity()
+        Transform.create(ExchangeCenter,{
+            position: Vector3.create(48, 0, 40),
+            rotation: Quaternion.create(0, 0, 0, 1),
+            scale: Vector3.create(1, 1, 1),
+            parent: _scene
+        }); 
+    
+        GltfContainer.create(ExchangeCenter,{
+            src:"models/mains/ExchangeCenter.glb"
+        })
+
+        
+         //making Plant model
+         const plants = engine.addEntity()
+         Transform.create(plants,{
+             position: Vector3.create(48, 0, 40),
+             rotation: Quaternion.create(0, 0, 0, 1),
+             scale: Vector3.create(1, 1, 1),
+             parent: _scene
+         }); 
+     
+         GltfContainer.create(plants,{
+             src:"models/mains/plants.glb"
+         })
+
+         //making musclesquareupdownpad model
+         const musclesquareupdownpad = engine.addEntity()
+         Transform.create(musclesquareupdownpad,{
+             position: Vector3.create(48, 0, 40),
+             rotation: Quaternion.create(0, 0, 0, 1),
+             scale: Vector3.create(1, 1, 1),
+             parent: _scene
+         }); 
+     
+         GltfContainer.create(musclesquareupdownpad,{
+             src:"models/mains/musclesquareupdownpad.glb"
+         })
+
+         
+         //making squares model
+         const squares = engine.addEntity()
+         Transform.create(squares,{
+             position: Vector3.create(48, 0, 40),
+             rotation: Quaternion.create(0, 0, 0, 1),
+             scale: Vector3.create(1, 1, 1),
+             parent: _scene
+         }); 
+     
+         GltfContainer.create(squares,{
+             src:"models/mains/squares.glb"
+         })
+
+           
+         //making DAOAlchemist model
+         const DAOAlchemist = engine.addEntity()
+         Transform.create(DAOAlchemist,{
+             position: Vector3.create(48, 0, 40),
+             rotation: Quaternion.create(0, 0, 0, 1),
+             scale: Vector3.create(1, 1, 1),
+             parent: _scene
+         }); 
+     
+         GltfContainer.create(DAOAlchemist,{
+             src:"models/mains/DAOAlchemist.glb"
+         })
+
+          //making Adsboxes Goldtier model
+          const Goldtier = engine.addEntity()
+          Transform.create(Goldtier,{
+              position: Vector3.create(48, 0, 40),
+              rotation: Quaternion.create(0, 0, 0, 1),
+              scale: Vector3.create(1, 1, 1),
+              parent: _scene
+          }); 
+      
+          GltfContainer.create(Goldtier,{
+              src:"models/mains/Goldtier.glb"
+          })
+
+          //making Adsboxes Silvertier model
+          const Silvertier = engine.addEntity()
+          Transform.create(Silvertier,{
+              position: Vector3.create(48, 0, 40),
+              rotation: Quaternion.create(0, 0, 0, 1),
+              scale: Vector3.create(1, 1, 1),
+              parent: _scene
+          }); 
+      
+          GltfContainer.create(Silvertier,{
+              src:"models/mains/Silvertier.glb"
+          })
+
+           //making AutoPad model
+           const AutoPad = engine.addEntity()
+           Transform.create(AutoPad,{
+               position: Vector3.create(25.78, 0.87, 49.32),
+               rotation: Quaternion.create(0, 0, 0, 1),
+               scale: Vector3.create(1, 1, 1),
+               parent: _scene
+           }); 
+
+           GltfContainer.create(AutoPad,{
+               src:"models/AutoPad.gltf"
+           })
+
+           //making teleportermuscle model
+           const teleportermuscle = engine.addEntity()
+           Transform.create(teleportermuscle,{
+               position: Vector3.create(48, 0, 40),
+               rotation: Quaternion.create(0, 0, 0, 1),
+               scale: Vector3.create(1, 1, 1),
+               parent: _scene          
+           }); 
+           GltfContainer.create(teleportermuscle,{
+               src:"models/Teleporter/Musclesquare.glb"
+           })
+        
+       
+           //making teleportermoon model
+           const teleportermoon = engine.addEntity()
+           Transform.create(teleportermoon,{
+               position: Vector3.create(48, 0, 40),
+               rotation: Quaternion.create(0, 0, 0, 1),
+               scale: Vector3.create(1, 1, 1),
+               parent: _scene
+           }); 
+
+           GltfContainer.create(teleportermoon,{
+               src:"models/Teleporter/Moonsquare.glb"
+           })
+
+           //making teleportermars model
+           const teleportermars = engine.addEntity()
+           Transform.create(teleportermars,{
+               position: Vector3.create(48, 0, 40),
+               rotation: Quaternion.create(0, 0, 0, 1),
+               scale: Vector3.create(1, 1, 1),
+               parent: _scene
+           }); 
+
+           GltfContainer.create(teleportermars,{
+               src:"models/Teleporter/Marssquare.glb"
+           })
+        
+             //making teleporterheaven model
+             const teleporterheaven = engine.addEntity()
+             Transform.create(teleporterheaven,{
+                 position: Vector3.create(48, 0, 40),
+                 rotation: Quaternion.create(0, 0, 0, 1),
+                 scale: Vector3.create(1, 1, 1),
+                 parent: _scene
+             }); 
+  
+             GltfContainer.create(teleporterheaven,{
+                 src:"models/Teleporter/Heavensquare.glb"
+             })      
+ 
+            //Add TwitterL1 
+             const TwitterL1 = engine.addEntity()
+             Transform.create(TwitterL1,{
+                 position: Vector3.create(48, 0, 40),
+                 rotation: Quaternion.create(0, 0, 0, 1),
+                 scale: Vector3.create(1, 1, 1),
+                 parent: _scene
+             }); 
+
+             GltfContainer.create(teleporterheaven,{
+                src:"models/Teleporter/TwitterL1.glb"
+            })      
+
+            }
+>>>>>>> origin/master

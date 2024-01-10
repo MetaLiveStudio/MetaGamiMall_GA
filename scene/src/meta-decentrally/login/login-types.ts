@@ -6,6 +6,6 @@ export type LoginFlowCallback={
 }
 export type LoginFlowResult={
     chain:string[]
-    playfabResult?:LoginResult
+    playfabResult?:LoginResult|null
     customId?:string
 }

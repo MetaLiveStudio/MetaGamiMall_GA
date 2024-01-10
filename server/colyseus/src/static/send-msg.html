@@ -1,0 +1,47 @@
+
+<html>
+    <head>
+      <script>
+        function submitForm(){
+          var domain= document.getElementById("env").value//"https://us-central1-gamimall-games.cloudfunctions.net/studio/leaderboard/get-details"
+          //domain = ""http://localhost:5001/gamimall-games/us-central1/studio/leaderboard/get-details"
+          const payload = {
+            "msg":document.getElementById("msg").value
+            ,"duration":document.getElementById("duration").value
+          }
+          //document.getElementById('resultsIframe').src = domain+"/"+document.getElementById("type").value
+          document.getElementById("payload").value = JSON.stringify(payload)
+          document.getElementById("form").action = domain+"/"+document.getElementById("type").value +"?payload="+ encodeURIComponent(JSON.stringify(payload))
+        }
+      </script>
+    </head>
+    <body>
+    <form target="resultsIframe" id="form" method="POST" enctype="application/x-www-form-urlencoded">
+        Message
+      <textarea name="msg" id="msg" cols="60" rows="3">Game server will be restarted in 5 minutes.
+You must reconnect to continue playing
+We apologize for the inconvenience</textarea>
+      
+      </br>
+      Duration:
+      <input id="duration" value="5"/>
+
+      <select name="env" id="env">
+        <option value="http://localhost:2567">local</option>
+        <option value="https://wnc9pc.colyseus.dev">dev</option>
+        <!--<option value="https://z34-ff.colyseus.dev">prod</option>-->
+        <option value="https://metagamimall.herokuapp.com">prod</option>
+        <option value="">THIS INSTANCE</option>
+      </select>
+      <select name="type" id="type">
+        <option value="announce">announce</option>
+        <option value="maintance">maintanace</option>
+      </select>
+      </br>
+      <input type="submit" value="submit" onClick="submitForm()"> 
+      </br>
+      <textarea name="payload" id="payload" cols="60" rows="10"></textarea>
+    </form>
+    <iframe name="resultsIframe" id="resultsIframe" width="800px"></iframe>
+    </body>
+    </html>

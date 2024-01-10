@@ -1,5 +1,0 @@
-Official Asset ID
-
-"id": "683aa047-8043-40f8-8d31-ceb7ab1b138c",
-
-683aa047-8043-40f8-8d31-ceb7ab1b138c

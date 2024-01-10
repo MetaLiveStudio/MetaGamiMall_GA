@@ -1,4 +1,6 @@
-import { ImageSection } from '@dcl/npc-scene-utils'
+//import { ImageSection } from '@dcl/npc-scene-utils'
+import { Entity, Transform, TransformTypeWithOptionals } from '@dcl/sdk/ecs';
+import { Quaternion, Vector3 } from '@dcl/sdk/math';
 
 export type WearableBoothInitArgs = {
   sceneId?: string;
@@ -15,7 +17,7 @@ export type WearableBoothArgs = {
   name?: string;
   contract: string;
   itemId: string;
-  transform?: TransformConstructorArgs;
+  transform?: TransformTypeWithOptionals;
   options: WearableOptionsType;
 };
 
@@ -44,7 +46,7 @@ export type NFTUIData = {
   title: string;
   detailsTitle?: string
   image: string;
-  imageSection?: ImageSection
+  //imageSection?: ImageSection
   imageHeight?:number
   imageWidth?:number
   cost?: NFTUIDataCost[];
@@ -58,14 +60,40 @@ export type NFTUIData = {
   claimWindowEnabled?:boolean,//defaults to false
   claimStartMS?: number,
   claimEndMS?: number,
-};
+  checkLatestMarketPrices?:boolean//defaults false, if true, will check latest market prices
+  checkRemoteCostPrices?:boolean //defaults true, if true, will check remote cost prices
+}
+export type LazyTriggerData ={
+    positionType: 'featureEnt'|'featureEnt.parent'|'absolute'//if parented to featuredEntityData object or not absolute scene position
+    debugEnabled?: boolean,
+    size:  Vector3
+    position?:  Vector3
+}
+
+export type LazyLoadingPlaceholderData ={
+  enabled: boolean,
+  shapeName:string
+  debugEnabled?: boolean,
+  size?:  Vector3
+  position?:  Vector3
+  positionType: 'featureEnt'|'featureEnt.parent'|'absolute'
+}
+export type FeaturedLazyLoadingData = 
+{
+  enabled: boolean,
+  debugEnabled?: boolean,
+  placeHolder?: LazyLoadingPlaceholderData
+  trigger: LazyTriggerData
+}
+
 export type FeaturedEntityData = {
   shapeName: string;
   entityName?: string;
   motionData?: MotionDataType;
   hoverText: string;
-  transform?: TransformConstructorArgs;
+  transform?: TransformTypeWithOptionals;
   parent?: Entity;
+  lazyLoading?:FeaturedLazyLoadingData
 };
 export type CardData = {
   buttonData: ButtonDataType;

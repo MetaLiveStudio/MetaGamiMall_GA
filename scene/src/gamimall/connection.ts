@@ -1,336 +1,447 @@
 //
 // IMPORTANT :
-// - include `noLib: false` to your tsconfig.json file, under "compilerOptions"
+// - trying vanilla without refernce imports and see if it works
 //
-///<reference lib="es2015.symbol" />
-///<reference lib="es2015.symbol.wellknown" />
-///<reference lib="es2015.collection" />
-///<reference lib="es2015.iterable" />
-
-import * as utils from "@dcl/ecs-scene-utils";
+import * as utils from '@dcl-sdk/utils'
+import * as ui from 'dcl-ui-toolkit'
+import { Color4 } from "@dcl/sdk/math";
 import { Client, Room } from "colyseus.js";
-import { isPreviewMode, getCurrentRealm } from "@decentraland/EnvironmentAPI";
-import { GAME_STATE } from "src/state";
-import {
-  decodeConnectionCode,
-  isErrorCode,
-  removeGameElements,
-} from "./connection-utils";
-import { CONFIG } from "src/config";
-import { GLOBAL_CANVAS } from "./resources";
-import { REGISTRY } from "src/registry";
-import { isNormalDisconnect } from "src/meta-decentrally/modules/connection/connection-utils";
+import { log } from "../back-ports/backPorts";
+import { getUserData } from "~system/UserIdentity"
+import { getRealm } from "~system/Runtime"
+import { GAME_STATE } from "../state";
+import { CONFIG } from "../config";
+import { decodeConnectionCode, isErrorCode, isNormalDisconnect, removeGameElements } from "../gamimall/connection-utils";
+import { CenterLabel } from "../ui/ext/CenterLabel";
+import { fetchColyseusInfo } from '../store/fetch-utils';
+//import { isPreviewMode, getCurrentRealm } from '@decentraland/EnvironmentAPI'
+//import { getUserData } from "@decentraland/Identity";
 
 class ConnectionEventReg {
-  onJoinActions?: (room: Room, eventName: string) => void;
+    onJoinActions?: (room: Room, eventName: string) => void;
 }
-
+  
 export const CONNECTION_EVENT_REGISTRY = new ConnectionEventReg();
+  
+/*
+export async function connect(roomName: string, options: any = {}) {
+    GAME_STATE.setGameConnected("connecting")
 
-const canvas = GLOBAL_CANVAS;
+    const realm = await getRealm({
 
-const debugMessageUI = new UIText(canvas);
-debugMessageUI.fontSize = 15;
-debugMessageUI.width = 120;
-debugMessageUI.height = 30;
-debugMessageUI.hTextAlign = "center";
-debugMessageUI.vAlign = "bottom";
-debugMessageUI.positionX = -80;
-debugMessageUI.positionY = 20;
+    });
+    const isPreview = realm.realmInfo?.isPreview
 
-log("created debugMessageUI " + debugMessageUI);
+    //
+    // make sure users are matched together by the same "realm".
+    //
+    //used for matching rooms
+    //for px prefixing with "px-scene:"
+    options.playerId = GAME_STATE.playerState.playerDclId;
+    options.randomId = Math.random()//GAME_STATE.playerState.playerDclId;
+    options.realm = realm?.realmInfo?.realmName;
 
-const message = new UIText(canvas);
-message.fontSize = 15;
-message.width = 120;
-message.height = 30;
-message.hTextAlign = "center";
-message.vAlign = "bottom";
-message.positionX = -80;
+    //other data
+    //options.userData = await getUserData({});
+    options.userData = GAME_STATE.playerState.dclUserData;
+
+    options.playFabData = {
+        id: GAME_STATE.playerState.playFabLoginResult?.PlayFabId,
+        sessionTicket: GAME_STATE.playerState.playFabLoginResult?.SessionTicket,
+        titleId: CONFIG.PLAYFAB_TITLEID
+    };
+
+    log(
+        "userData:",
+        options.userData + " playFabData:",
+        options.playFabData + " isPreview " + isPreview
+    );
+
+    //const ENDPOINT = CONFIG.COLYSEUS_ENDPOINT
+    const ENDPOINT = isPreview
+    ? CONFIG.COLYSEUS_ENDPOINT_LOCAL // local environment
+    : CONFIG.COLYSEUS_ENDPOINT_NON_LOCAL; // production environment
+
+    log("connecting to " + ENDPOINT);
+    if (isPreview || CONFIG.SHOW_CONNECTION_DEBUG_INFO) {
+    addConnectionDebugger(ENDPOINT);
+    }
+    const client = new Client(ENDPOINT);
+
+
+    try {
+        //
+        // Docs: https://docs.colyseus.io/client/client/#joinorcreate-roomname-string-options-any
+        //
+        const room = await client.joinOrCreate<any>(roomName, options);
+        GAME_STATE.gameRoomInstId = new Date().getTime();
+        //TODO ADD BACK updateConnectionGame(room, "connect");
+        if (isPreview || CONFIG.SHOW_CONNECTION_DEBUG_INFO) {
+        updateConnectionDebugger(room);
+        }
+
+        return room;
+    } catch (e: any) {
+        log("connect. room.event.connection error", ENDPOINT, e);
+        log("connect. room.event.connection error", ENDPOINT, ".....");
+        
+        GAME_STATE.setGameConnectedCode(e.code);
+        GAME_STATE.setGameErrorMsg(e);
+        GAME_STATE.setGameConnected("error");
+        GAME_STATE.setGameStarted(false);
+        GAME_STATE.setGameHudActive(false);
+        GAME_STATE.setScreenBlockLoading(false);
+    
+        console.error(e)
+        updateConnectionMessage(
+          `Error: ${e.message} ` + decodeConnectionCode(e.code),
+          Color4.Red()
+        );
+        
+        throw e;
+    }
+}*/
+
+const message: CenterLabel = ui.createComponent(CenterLabel
+        , { value: 'Connection status', size: 18 })
+message.color = Color4.Green()
+message.show()
+
+
+
+const debugMessageUI: CenterLabel = ui.createComponent(CenterLabel
+    , { value: '...', size: 15, yOffset:50 })
+    debugMessageUI.color = Color4.White()
+    debugMessageUI.show() 
+
+function getErrorMsg(e:any){
+    if(e.code){
+        return e.code + " " + decodeConnectionCode(e.code)
+    }else if(e.message){
+      return e.message
+    }else{
+      return e
+    }
+}
 
 export function initColyseusConnection() {
-  if (CONFIG.IN_PREVIEW || CONFIG.SHOW_CONNECTION_DEBUG_INFO)
-    addConnectionDebugger("not-started-yet");
+    if (CONFIG.IN_PREVIEW || CONFIG.SHOW_CONNECTION_DEBUG_INFO)
+      addConnectionDebugger("not-started-yet");
 }
-
+  
 export async function connect(roomName: string, options: any = {}) {
-  GAME_STATE.setGameConnected("connecting")
-  
-  const isPreview = CONFIG.IN_PREVIEW;
-  const realm = await getCurrentRealm();
+    GAME_STATE.setGameConnected("connecting")
+    updateConnectionMessage("connecting to " + roomName, Color4.White())        
 
-  
-  //
-  // make sure users are matched together by the same "realm".
-  //
+    const realm = await getRealm({}); 
+    const isPreview = CONFIG.IN_PREVIEW //realm.realmInfo?.isPreview
 
-  //used for matching rooms
-  options.playerId = GAME_STATE.playerState.playerDclId;
-  options.randomId = Math.random()//GAME_STATE.playerState.playerDclId;
-  options.realm = realm?.displayName;
-
-  //other data
-  options.userData = GAME_STATE.playerState.dclUserData;
-
-  options.playFabData = {
-    id: GAME_STATE.playerState.playFabLoginResult?.PlayFabId,
-    sessionTicket: GAME_STATE.playerState.playFabLoginResult?.SessionTicket,
-    titleId: CONFIG.PLAYFAB_TITLEID
-  };
-
-  log(
-    "userData:",
-    options.userData + " playFabData:",
-    options.playFabData + " isPreview " + isPreview
-  );
-
-  //const ENDPOINT = CONFIG.COLYSEUS_ENDPOINT
-  const ENDPOINT = isPreview
-    ? CONFIG.COLYSEUS_ENDPOINT_LOCAL // local environment
-    : CONFIG.COLYSEUS_ENDPOINT_NON_LOCAL; // production environment*/
-
-  log("connecting to " + ENDPOINT);
-  if (isPreview || CONFIG.SHOW_CONNECTION_DEBUG_INFO) {
-    addConnectionDebugger(ENDPOINT);
-  }
-  const client = new Client(ENDPOINT);
-
-  try {
     //
-    // Docs: https://docs.colyseus.io/client/client/#joinorcreate-roomname-string-options-any
+    // make sure users are matched together by the same "realm".
     //
-    const room = await client.joinOrCreate<any>(roomName, options);
-    GAME_STATE.gameRoomInstId = new Date().getTime();
-    updateConnectionGame(room, "connect");
+    options.clientSDK = "7.x.x"
+    //used for matching rooms
+    //for px prefixing with "px-scene:"
+    options.playerId = GAME_STATE.playerState.playerDclId;
+    options.randomId = Math.random()//GAME_STATE.playerState.playerDclId;
+
+    options.realmInfo = realm?.realmInfo
+    //still passed for room filterby
+    options.realm = options.realmInfo.realmName;
+  
+    //other data
+    options.userData = GAME_STATE.playerState.dclUserData;
+  
+    options.playFabData = {
+      id: GAME_STATE.playerState.playFabLoginResult?.PlayFabId,
+      sessionTicket: GAME_STATE.playerState.playFabLoginResult?.SessionTicket,
+      titleId: CONFIG.PLAYFAB_TITLEID
+    };
+  
+    log(
+      "connect.userData:",   
+      options.userData , " playFabData:",
+      options.playFabData , " isPreview " , isPreview
+    );
+  
+    //const ENDPOINT = CONFIG.COLYSEUS_ENDPOINT
+    const ENDPOINT = isPreview
+      ? CONFIG.COLYSEUS_ENDPOINT_LOCAL // local environment
+      : CONFIG.COLYSEUS_ENDPOINT_NON_LOCAL; // production environment*/
+  
+    log("connecting to " + ENDPOINT);
     if (isPreview || CONFIG.SHOW_CONNECTION_DEBUG_INFO) {
-      updateConnectionDebugger(room);
+      addConnectionDebugger(`Connecting to ${ENDPOINT}`);
     }
-
-    return room;
-  } catch (e: any) {
-    log("connect. room.event.connection error", ENDPOINT, e);
-    log("connect. room.event.connection error", ENDPOINT, "44444");
-    
-    GAME_STATE.setGameConnectedCode(e.code);
-    GAME_STATE.setGameErrorMsg(e);
-    GAME_STATE.setGameConnected("error");
-    GAME_STATE.setGameStarted(false);
-    GAME_STATE.setGameHudActive(false);
-    GAME_STATE.setScreenBlockLoading(false);
-
-    updateConnectionMessage(
-      `Error: ${e.message} ` + decodeConnectionCode(e.code),
-      Color4.Red()
-    );
-    throw e;
-  }
-}
-
-export async function reconnect(
-  roomId: string,
-  sessionId: string,
-  options: any = {}
-) {
-  log("reconnect entered", roomId, sessionId);
-  const isPreview = CONFIG.IN_PREVIEW;
-  const realm = await getCurrentRealm();
-
-  //const ENDPOINT = CONFIG.COLYSEUS_ENDPOINT
-  const ENDPOINT = isPreview
-    ? CONFIG.COLYSEUS_ENDPOINT_LOCAL // local environment
-    : CONFIG.COLYSEUS_ENDPOINT_NON_LOCAL; // production environment*/
-
-  log("reconnecting to " + ENDPOINT);
-  if (isPreview || CONFIG.SHOW_CONNECTION_DEBUG_INFO) {
-    addConnectionDebugger(ENDPOINT);
-  }
-  const client = new Client(ENDPOINT);
-
-  try {
-    //
-    // Docs: https://docs.colyseus.io/client/client/#joinorcreate-roomname-string-options-any
-    //
-    //let newRoom = null
-    let oldRoom = GAME_STATE.gameRoom;
-    const newRoom = await client.reconnect(roomId, sessionId); //.then(room_instance => {
-    GAME_STATE.gameRoomInstId = new Date().getTime();
-    //newRoom = room_instance;
-    //onjoin();
-    updateConnectionGame(newRoom, "reconnect");
-    if (isPreview || (CONFIG.SHOW_CONNECTION_DEBUG_INFO && newRoom !== null)) {
-      updateConnectionDebugger(newRoom);
-    }
-    log("Reconnected successfully!");
-
-    return newRoom;
-    // }).catch(e => {
-    //     log("reconnect Error", e);
-    // });
-  } catch (e: any) {
-    log("reconnect room.event.connection error", ENDPOINT, e);
-    log("reconnect. room.event.connection error", ENDPOINT, "44444");
-    GAME_STATE.setGameConnectedCode(e.code);
-    GAME_STATE.setGameErrorMsg(e);
-    GAME_STATE.setGameConnected("error");
-    GAME_STATE.setGameStarted(false);
-    GAME_STATE.setGameHudActive(false);
-    GAME_STATE.setScreenBlockLoading(false);
-
-    updateConnectionMessage(
-      `Reconnect Error: ${e.message} ` + decodeConnectionCode(e.code),
-      Color4.Red()
-    );
-    throw e;
-  }
-}
-export async function disconnect(_consent?:boolean) {
-  if(REGISTRY.intervals.connectCheckInterval) REGISTRY.intervals.connectCheckInterval.reset()
- 
-  const consent = _consent === undefined || _consent
-  log("disconnect","consent",consent,"room",GAME_STATE.gameRoom)
-
-  if (GAME_STATE.gameRoom !== null && GAME_STATE.gameRoom !== undefined) {
-      GAME_STATE.setGameConnected('disconnecting',"disconnect")
-
-      //onDisconnect(GAME_STATE.gameRoom)
-      onGameLeaveDisconnect(0)  
-      try{
-        await GAME_STATE.gameRoom.leave(consent)
-        GAME_STATE.setGameConnected('disconnected',"gami.disconnect") 
-      }catch(e){
-        log("disconnect failed calling leave",e)
+    const client = new Client(ENDPOINT);
+  
+    try {
+      //
+      // Docs: https://docs.colyseus.io/client/client/#joinorcreate-roomname-string-options-any
+      //
+      const room = await client.joinOrCreate<any>(roomName, options);
+      GAME_STATE.gameRoomInstId = new Date().getTime();
+      updateConnectionGame(room, "connect");
+      if (isPreview || CONFIG.SHOW_CONNECTION_DEBUG_INFO) {
+        updateConnectionDebugger(room);
       }
-      try{
-        GAME_STATE.gameRoom.removeAllListeners()
-      }catch(e){
-        log("disconnect failed calling removeAllListeners",e)
-      }
-      if(consent) GAME_STATE.setGameRoom(undefined)  
-      updateConnectionMessage("not-connected", Color4.White())        
-  }
-}
-function addConnectionDebugger(endpoint: string) {
-  log(
-    "addConnectionDebugger called debugMessageUI " + debugMessageUI,
-    endpoint
-  );
-  (debugMessageUI.value = `Connecting to ${endpoint}`), Color4.White();
-}
-
-function updateConnectionMessage(value: string, color: Color4) {
-  message.value = value;
-  message.color = color;
-}
-
-function updateConnectionDebugger(room: Room) {
-  updateConnectionMessage("Connected.", Color4.Green());
-  //https://docs.colyseus.io/colyseus/client/client/#onleave
-  room.onLeave((code) => {
-    log("room.event.leave " + code);
-    if (!isErrorCode(code)) {
-      updateConnectionMessage("Left Room " + code, Color4.White());
-    } else {
+  
+      return room;
+    } catch (e: any) {
+      log("connect. room.event.connection error", ENDPOINT, e);
+      log("connect. room.event.connection error", ENDPOINT, "44444");
+      
+      GAME_STATE.setGameConnectedCode(e.code);
+      GAME_STATE.setGameErrorMsg( getErrorMsg(e));
+      GAME_STATE.setGameConnected("error");
+      GAME_STATE.setGameStarted(false);
+      GAME_STATE.setGameHudActive(false);
+      GAME_STATE.setScreenBlockLoading(false);
+  
       updateConnectionMessage(
-        "Connection lost " + code + " " + decodeConnectionCode(code),
+        `Error: ${e.message} ` + decodeConnectionCode(e.code),
         Color4.Red()
       );
+      if (isPreview || CONFIG.SHOW_CONNECTION_DEBUG_INFO) {
+        addConnectionDebugger(`Failed Connecting to ${ENDPOINT}`);
+      }
+      throw e;
     }
-  });
-  room.onError((code, message) => {
-    //console.log("oops, error ocurred:");
-    //console.log(message);
-    const msg =
-      "room.event.error oops, error ocurred:" +
-      code +
-      " " +
-      message +
-      " " +
-      decodeConnectionCode(code);
-    log("room.onError " + msg);
+}
+  
+ export async function reconnect(
+    roomId: string,
+    sessionId: string,
+    options: any = {}
+  ) {
+    log("reconnect entered", roomId, sessionId);
+    const isPreview = CONFIG.IN_PREVIEW;
+    //const realm = await getRealm({});
+    //const isPreview = realm.realmInfo?.isPreview
+  
+    //const ENDPOINT = CONFIG.COLYSEUS_ENDPOINT
+    const ENDPOINT = isPreview
+      ? CONFIG.COLYSEUS_ENDPOINT_LOCAL // local environment
+      : CONFIG.COLYSEUS_ENDPOINT_NON_LOCAL; // production environment*/
+  
+    log("reconnecting to " + ENDPOINT);
+    updateConnectionMessage("Reconnecting... ", Color4.White())        
+    if (isPreview || CONFIG.SHOW_CONNECTION_DEBUG_INFO) {
+      addConnectionDebugger(`Connecting to ${ENDPOINT}`);
+    }
+    const client = new Client(ENDPOINT);
+  
+    try {
+      //
+      // Docs: https://docs.colyseus.io/client/client/#joinorcreate-roomname-string-options-any
+      //
+      //let newRoom = null
+      let oldRoom = GAME_STATE.gameRoom;
+      const newRoom = await client.reconnect(roomId, sessionId); //.then(room_instance => {
+      GAME_STATE.gameRoomInstId = new Date().getTime();
+      //newRoom = room_instance;
+      //onjoin();
+      updateConnectionGame(newRoom, "reconnect");
+      if (isPreview || (CONFIG.SHOW_CONNECTION_DEBUG_INFO && newRoom !== null)) {
+        updateConnectionDebugger(newRoom);
+      }
 
-    updateConnectionMessage(msg, Color4.Red());
-  });
+      updateConnectionMessage("Reconnected to " + newRoom.name, Color4.White())        
+
+      log("Reconnected successfully!");
+  
+      return newRoom;
+      // }).catch(e => {
+      //     log("reconnect Error", e);
+      // });
+    } catch (e: any) {
+      log("reconnect room.event.connection error", ENDPOINT, e);
+      log("reconnect. room.event.connection error", ENDPOINT, "44444");
+      GAME_STATE.setGameConnectedCode(e.code);
+      GAME_STATE.setGameErrorMsg(e);
+      GAME_STATE.setGameConnected("error");
+      GAME_STATE.setGameStarted(false);
+      GAME_STATE.setGameHudActive(false);
+      GAME_STATE.setScreenBlockLoading(false);
+  
+      updateConnectionMessage(
+        `Reconnect Error: ${e.message} ` + decodeConnectionCode(e.code),
+        Color4.Red()
+      );
+      throw e;
+    }
+ }
+export function showConnectingStarted(){
+    //REGISTRY.ui.gameTools.ReloginPanel.setActive(false)//.opacity = .2
+}
+export function showConnectingEnded(success:boolean){
+    //REGISTRY.ui.gameTools.ReloginPanel.setActive(true)//.opacity = 1
+} 
+export async function disconnect(_consent?:boolean) {
+    //if(REGISTRY.intervals.connectCheckInterval) REGISTRY.intervals.connectCheckInterval.reset()
+   
+    const consent = _consent === undefined || _consent
+    log("disconnect","consent",consent,"room",GAME_STATE.gameRoom)
+  
+    if (GAME_STATE.gameRoom !== null && GAME_STATE.gameRoom !== undefined) {
+        GAME_STATE.setGameConnected('disconnecting',"disconnect")
+  
+        //onDisconnect(GAME_STATE.gameRoom)
+        onGameLeaveDisconnect(0)  
+        try{
+          await GAME_STATE.gameRoom.leave(consent)
+          GAME_STATE.setGameConnected('disconnected',"gami.disconnect") 
+        }catch(e){
+          log("disconnect failed calling leave",e)
+        }
+        try{
+          GAME_STATE.gameRoom.removeAllListeners()
+        }catch(e){
+          log("disconnect failed calling removeAllListeners",e)
+        }
+        if(consent) GAME_STATE.setGameRoom(undefined)  
+        updateConnectionMessage("not-connected", Color4.White())    
+        if (CONFIG.IN_PREVIEW || CONFIG.SHOW_CONNECTION_DEBUG_INFO) {
+          addConnectionDebugger("disconnected");
+        }    
+    }
 }
 
-const onGameLeaveDisconnect = (code: number) => {
-  log("onGameLeaveDisconnect ENTRY",code)
-  //GAME_STATE.setGameRoom(null)
-  GAME_STATE.setGameConnectedCode(code);
-  if(isNormalDisconnect(code)){
-    GAME_STATE.setGameConnected('disconnected',"onGameLeaveDisconnect")
-  }else{
-    GAME_STATE.setGameConnected('disconnecting')
-  }
-   // GAME_STATE.setGameConnected("disconnecting");
-  //}else{
-    //GAME_STATE.setGameConnected("disconnected");
-  //}
-  GAME_STATE.setGameStarted(false);
-  GAME_STATE.setScreenBlockLoading(false);
-  GAME_STATE.setGameHudActive(false);
-
-  if (isErrorCode(code)) {
-    //show error box!?!
-  }
-  removeGameElements();
-};
-
-function updateConnectionGame(room: Room, eventName: string) {
-  //updateConnectionMessage("Connected.", Color4.Green());
-  //https://docs.colyseus.io/colyseus/client/client/#onleave
-  //const instance = GAME_STATE.gameRoomInstId//toLocaleDateString
-  const instance = eventName + "." + GAME_STATE.gameRoomInstId; //toLocaleDateString
-  log("updateConnectionGame room.instance", instance, room.id);
-  room.onLeave((code) => {
+  export function addConnectionDebugger(msg: string) {
     log(
-      instance,
-      ".room.event.leave. updateConnectionGame room.onLeave ENTRY " + code
+      "addConnectionDebugger called debugMessageUI ",
+      msg
     );
-    if (code === 1000) {
-      //updateConnectionMessage("Left Room " + code, Color4.White())
-    } else {
-      //updateConnectionMessage("Connection lost " + code, Color4.Red())
+    debugMessageUI.set( msg )//, Color4.White();*/
+  }
+  
+  export function updateConnectionMessage(value: string, color: Color4) {
+    log("updateConnectionMessage","ENTRY",value,color)
+    message.set(value);
+    message.color = color;
+  }
+  async function fetchAndDisplayServerDebugInfo(room: Room) {
+    if (CONFIG.IN_PREVIEW || CONFIG.SHOW_CONNECTION_DEBUG_INFO){
+      const resp:any = await fetchColyseusInfo()
+      
+      addConnectionDebugger(JSON.stringify(resp));//debugMessageUI.value = JSON.stringify(resp)
     }
-    //debugger
-
-    if (!isErrorCode(code)) {
-      onGameLeaveDisconnect(code);
-    } else {
-      //wait 500 ms for playfab scores to sync
-      log("will attempt reconnect shortly");
-      utils.setTimeout(200, () => {
-        const oldRoom = GAME_STATE.gameRoom;
-        //try reconnect
-        if (oldRoom)
-          reconnect(oldRoom.id, oldRoom.sessionId, {})
-            .then((newroom) => {
-              log(instance, ".ReConnected!");
-              //GAME_STATE.setGameConnected('connected')
-
-              CONNECTION_EVENT_REGISTRY.onJoinActions!(newroom, "reconnect");
-            })
-            .catch((err) => {
-              log(instance, ".room.event.leave. reconnect failed", err, code);
-              error(err);
-              onGameLeaveDisconnect(code);
-              //GAME_STATE.setGameConnected("disconnected");
-            });
-      });
-    }
-  });
-  room.onError((code, message) => {
-    //console.log("oops, error ocurred:");
-    //console.log(message);
-    const msg = "room.event.error. oops, error ocurred:" + code + " " + message;
-    log(instance, ".room.onError " + msg,"44444");
-    GAME_STATE.setGameErrorMsg(code + " " + message);
+  }
+  function updateConnectionDebugger(room: Room) {
+    updateConnectionMessage("Connected to " + room.name, Color4.Green());
+    if (CONFIG.IN_PREVIEW || CONFIG.SHOW_CONNECTION_DEBUG_INFO) {
+      addConnectionDebugger("Connected to " + room.name);
+    }   
+    fetchAndDisplayServerDebugInfo(room)
+    //https://docs.colyseus.io/colyseus/client/client/#onleave
+    room.onLeave((code) => {
+      log("room.event.leave " + code);
+      if (!isErrorCode(code)) {
+        updateConnectionMessage("Left Room " + code, Color4.White());
+      } else {
+        updateConnectionMessage(
+          "Connection lost " + code + " " + decodeConnectionCode(code),
+          Color4.Red()
+        );
+      }
+    });
+    room.onError((code, message) => {
+      //console.log("oops, error ocurred:");
+      //console.log(message);
+      const msg =
+        "room.event.error oops, error ocurred:" +
+        code +
+        " " +
+        message +
+        " " +
+        decodeConnectionCode(code);
+      log("room.onError " + msg);
+  
+      updateConnectionMessage(msg, Color4.Red());
+    });
+  }
+  
+  const onGameLeaveDisconnect = (code: number) => {
+    log("onGameLeaveDisconnect ENTRY",code)
+    //GAME_STATE.setGameRoom(null)
     GAME_STATE.setGameConnectedCode(code);
-    GAME_STATE.setGameConnected("error");
+    if(isNormalDisconnect(code)){
+      GAME_STATE.setGameConnected('disconnected',"onGameLeaveDisconnect")
+    }else{
+      GAME_STATE.setGameConnected('disconnecting')
+    }
+    updateConnectionMessage("not-connected", Color4.White())        
+     // GAME_STATE.setGameConnected("disconnecting");
+    //}else{
+      //GAME_STATE.setGameConnected("disconnected");
+    //}
     GAME_STATE.setGameStarted(false);
     GAME_STATE.setScreenBlockLoading(false);
-
-    //GAME_STATE.setGameConnected(false)
-
-    updateConnectionMessage(msg, Color4.Red());
-  });
-}
+    GAME_STATE.setGameHudActive(false);
+  
+    if (isErrorCode(code)) {
+      //show error box!?!
+    }
+    removeGameElements();
+  };
+  
+  function updateConnectionGame(room: Room, eventName: string) {
+    //updateConnectionMessage("Connected.", Color4.Green());
+    //https://docs.colyseus.io/colyseus/client/client/#onleave
+    //const instance = GAME_STATE.gameRoomInstId//toLocaleDateString
+    const instance = eventName + "." + GAME_STATE.gameRoomInstId; //toLocaleDateString
+    log("updateConnectionGame room.instance", instance, room.id);
+    room.onLeave((code) => {
+      log(
+        instance,
+        ".room.event.leave. updateConnectionGame room.onLeave ENTRY " + code
+      );
+      if (code === 1000) {
+        //updateConnectionMessage("Left Room " + code, Color4.White())
+      } else {
+        //updateConnectionMessage("Connection lost " + code, Color4.Red())
+      }
+      //debugger
+  
+      if (!isErrorCode(code)) {
+        onGameLeaveDisconnect(code);
+      } else {
+        //wait 500 ms for playfab scores to sync
+        log("will attempt reconnect shortly");
+        utils.timers.setTimeout( () => {
+          const oldRoom = GAME_STATE.gameRoom;
+          //try reconnect
+          if (oldRoom)
+            reconnect(oldRoom.id, oldRoom.sessionId, {})
+              .then((newroom) => {
+                log(instance, ".ReConnected!");
+                //GAME_STATE.setGameConnected('connected')
+  
+                CONNECTION_EVENT_REGISTRY.onJoinActions!(newroom, "reconnect");
+              })
+              .catch((err) => {
+                log(instance, ".room.event.leave. reconnect failed", err, code);
+                //error(err);
+                onGameLeaveDisconnect(code);
+                //GAME_STATE.setGameConnected("disconnected");
+              });
+        },200);
+      }
+    }); 
+    room.onError((code, message) => {
+      //console.log("oops, error ocurred:");
+      //console.log(message);
+      const msg = "room.event.error. oops, error ocurred:" + code + " " + message;
+      log(instance, ".room.onError " + msg,"44444");
+      GAME_STATE.setGameErrorMsg(code + " " + message);
+      GAME_STATE.setGameConnectedCode(code);
+      GAME_STATE.setGameConnected("error");
+      GAME_STATE.setGameStarted(false);
+      GAME_STATE.setScreenBlockLoading(false);
+  
+      //GAME_STATE.setGameConnected(false)
+  
+      updateConnectionMessage(msg, Color4.Red());
+    });
+  }
+  

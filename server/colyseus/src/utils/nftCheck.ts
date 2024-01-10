@@ -1,8 +1,9 @@
 import fetch from 'decentraland-crypto-fetch'
 import { CONFIG } from "../mall_rooms/config"
-import { Player } from '../mall_rooms/MyRoomState';
+//import { Player } from '../mall_rooms/MyRoomState';
 import { PlayerState, UserData, UserDataList, WearablesByOwnerData } from '../racing_room/state/server-state'
 import { NFTOwnership } from './nftOwnership'
+import { RealmInfo } from '../mall_rooms/MyRoomStateSpec';
 
 
 function logEntry(
@@ -261,6 +262,14 @@ export function fetchProfile(roomId:string,publicKey:string):Promise<UserData>{
     return nftCheckPromise
 }
 
+export function getCheckMultiplierVersionNum(clientVersion:number){
+  //version 3 or higher of client supports new version of bonus logic
+  if(clientVersion !== undefined && clientVersion >= 3){
+    return 2 //uses what the player is wearing
+  }else{
+    return 1 //uses what the player owns
+  }
+}
 
 //{"ok":true,"msg":"success","multiplier":1.1,"debug":{"nftCheckMultiplier":1,"nftCheckDogeHeadMultiplier":1.02,"nftCheckWearablesMultiplier":1.1}}
 export type CheckMultiplierResultType={
@@ -269,10 +278,25 @@ export type CheckMultiplierResultType={
   multiplier:number
   debug:any
 }
-export function checkMultiplier(roomId:string,publicKey:string):Promise<CheckMultiplierResultType>{
+export function checkMultiplier(roomId:string,version:number,publicKey:string,bronzeShoeQty:number,userData:UserData,realmInfo?:RealmInfo):Promise<CheckMultiplierResultType>{
   const METHOD_NAME = "checkMultiplier"
   //publicKey = "0xbd5b79D53D75497673e699A571AFA85492a2cc74"
-  logEntry(CLASSNAME,roomId,METHOD_NAME, [roomId,publicKey]);
+  logEntry(CLASSNAME,roomId,METHOD_NAME, [roomId,version,publicKey,bronzeShoeQty,userData?.displayName,realmInfo]);
+    let pairedDownCopy:UserData
+    if(userData){
+      //copy only what we need
+      pairedDownCopy = {
+        userId: userData.userId,
+        publicKey: userData.publicKey,
+        displayName: userData.displayName,
+        hasConnectedWeb3: userData.hasConnectedWeb3,
+        version: userData.version,
+        avatar:{
+          //npe check on possible null here
+          wearables: userData?.avatar?.wearables
+        }
+      }//JSON.parse(JSON.stringify(userData))
+    }
     const nftCheckPromise = new Promise<CheckMultiplierResultType>((mainResolve, reject) => {
       //console.log("nftMetaDogeCheckCall entered promise")
       (async () => {
@@ -285,7 +309,12 @@ export function checkMultiplier(roomId:string,publicKey:string):Promise<CheckMul
           return retData
         }
         const nftURL = 
-          CONFIG.CHECK_MULTIPLIER_API_CALL + CONFIG.CHECK_MULTIPLIER_API_CALL_OWNER_FIELD + publicKey
+          CONFIG.CHECK_MULTIPLIER_API_CALL 
+          + CONFIG.CHECK_MULTIPLIER_API_CALL_VERSION_FIELD + version
+          + CONFIG.CHECK_MULTIPLIER_API_CALL_OWNER_FIELD + publicKey 
+          + CONFIG.CHECK_MULTIPLIER_API_CALL_BRONZE_SHOE_FIELD + bronzeShoeQty 
+          + CONFIG.CHECK_MULTIPLIER_API_CALL_REALM_BASE_URL_FIELD + realmInfo?.baseUrl 
+          + CONFIG.CHECK_MULTIPLIER_API_CALL_USERDATA_FIELD + encodeURIComponent(JSON.stringify( pairedDownCopy ) )
         try {
           log(CLASSNAME,roomId,METHOD_NAME," calling",nftURL)
           let nftResponse = await fetch(nftURL, {

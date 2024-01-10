@@ -1,15 +1,18 @@
 import { Room, Client, ServerError } from "colyseus";
 import { Schema, type, MapSchema } from "@colyseus/schema";
 import { CONFIG } from "./config";
+import * as OTHER_CONFIG from "../mall_rooms/config";
 import { PlayerButtonState, PlayerServerSideData, PlayerState, RaceState, RacingRoomState, TrackFeatureState } from "./state/server-state";
 import * as serverStateSpec from "./state/server-state-spec";
 import * as PlayFabHelper from "./playfab/PlayFabWrapper";
 import * as PlayFabHelperCoin from "../mall_rooms/PlayFabWrapper";
 import { LEVEL_MGR } from "./levelData/levelData";
-import { nftMetaDogeCheckCall, nftCheckMultiplier, nftDogeHeadCheckCall, nftCheckDogeHeadMultiplier, initPlayerStateNftOwnership, fetchWearableData,  wearablesByOwnerToStringUrlArray, checkMultiplier, CheckMultiplierResultType } from "../utils/nftCheck";
-import { BlockTypeTypeConst, Player, RewardData, RewardNotification } from "../mall_rooms/MyRoomState";
+import { nftMetaDogeCheckCall, nftCheckMultiplier, nftDogeHeadCheckCall, nftCheckDogeHeadMultiplier, initPlayerStateNftOwnership, fetchWearableData,  wearablesByOwnerToStringUrlArray, checkMultiplier, CheckMultiplierResultType, getCheckMultiplierVersionNum } from "../utils/nftCheck";
+import { BlockTypeTypeConst, Player } from "../mall_rooms/MyRoomState";
 import { addMaterialToUser, createAddUserVirtualCurrency } from "../utils/playFabUtils";
-import { getLevelFromXp, getLevelPercentFromXp, getXPDiffBetweenLevels } from "../utils/leveling/levelingUtils";
+import { getCoinCap, getLevelFromXp, getLevelPercentFromXp, getXPDiffBetweenLevels } from "../utils/leveling/levelingUtils";
+import { RealmInfo, RewardData, RewardNotification } from "../mall_rooms/MyRoomStateSpec";
+import { GetPlayerCombinedInfoResultHelper } from "../utils/playfabGetPlayerCombinedInfoResultHelper";
 
 function logEntry(classname:string,roomId:string,method:string,params?:any){
     console.log(classname,roomId,method," ENTRY",params)
@@ -18,22 +21,46 @@ function log(classname:string,roomId:string,method:string,msg?:string,...args:an
     console.log(classname,roomId,method,msg,...args)
 }
 
+function pickWithinRange(range: number[]) {
+    const METHOD_NAME = "pickWithinRange";
+
+    let retVal = 0;
+
+    const max = Math.max(range[0], range[1]);
+    const min = Math.min(range[0], range[1]);
+    //Math.floor(Math.random() * (max - min + 1) + min)
+    const delta = range[1] - range[0];
+    retVal = Math.random() * (max - min) + min;
+
+    return retVal;
+}
+
 const CLASSNAME = "RacingRoom"
 const ENTRY = " ENTRY"
 export class RacingRoom extends Room<RacingRoomState> {
     
     maxClients = 8;
     roomCreateTime: number
-    
+    clientVersion: number;
+    timeSyncLapseTime: number = 0
+
+    protected coinCapEnabled:boolean = false
+    protected coinCapOverageReduction:number
+  
 
     //globalOrientation:OrientationType = {alpha:0,beta:0,gamma:0,absolute:true}
 
-    onCreate (options: any) {
+    async onCreate (options: any) {
         const METHOD_NAME = "onCreate"
         logEntry(CLASSNAME,this.roomId,METHOD_NAME, options);
 
         this.roomCreateTime = Date.now()
         this.setSimulationInterval((deltaTime) => this.update(deltaTime));
+
+
+        //version of client, to know if client ready for activated features or not
+        this.clientVersion = options.clientVersion;
+
 
         const state = new RacingRoomState()
         state.enrollment.maxPlayers = this.maxClients
@@ -159,7 +186,7 @@ export class RacingRoom extends Room<RacingRoomState> {
         const racingDataOptions:serverStateSpec.RaceDataOptions = options.raceDataOptions
 
         // set-up the game!
-        this.setup(racingDataOptions);
+        await this.setup(racingDataOptions);
     }
     checkIsRaceOver(){
         const METHOD_NAME = "checkIsRaceOver"
@@ -173,16 +200,21 @@ export class RacingRoom extends Room<RacingRoomState> {
         let totalPlayers = 0
         let playersConnected = 0
         let playersGone = 0
+        let playersGoneNeverFinished = 0
         //const playerData:PlayerRankingsType[] = []
         this.state.players.forEach(
             (val:PlayerState)=>{
-                if(val.racingData.hasFinishedRace()){
-                    countPlayersDone ++
+                const playerGoneBln = val.connStatus != 'connected' && val.type == 'racer'
+                if (val.racingData.hasFinishedRace()) {
+                    countPlayersDone++;
+                } else if (playerGoneBln) {
+                    playersGoneNeverFinished++;
                 }
+
                 if(val.connStatus == 'connected' && val.type == 'racer'){
                     playersConnected ++
                 }
-                if(val.connStatus != 'connected' && val.type == 'racer'){
+                if(playerGoneBln){
                     playersGone ++
                 }
                 if(val.type == 'racer'){
@@ -193,8 +225,10 @@ export class RacingRoom extends Room<RacingRoomState> {
 
         let raceOver = false
 
-        if( totalPlayers <= (countPlayersDone+playersGone) ){
-            log(CLASSNAME,this.roomId,METHOD_NAME,"players done","totalPlayers",totalPlayers,"playersGone",playersGone,"countPlayersDone",countPlayersDone,"playersConnected",playersConnected
+        if( totalPlayers <= (countPlayersDone+playersGoneNeverFinished) ){
+            log(CLASSNAME,this.roomId,METHOD_NAME,"players done","totalPlayers",totalPlayers
+            ,"playersGoneNeverFinished",playersGoneNeverFinished
+            ,"playersGone",playersGone,"countPlayersDone",countPlayersDone,"playersConnected",playersConnected
             ,"raceOver",raceOver,"raceData.status",this.state.raceData.status,"raceData.hasRaceStarted()",this.state.raceData.hasRaceStarted()
             ,"raceData.isRaceOver",this.state.raceData.isRaceOver())
                 
@@ -332,6 +366,7 @@ export class RacingRoom extends Room<RacingRoomState> {
 
         let playerState:PlayerState
 
+        const realmInfo:RealmInfo = options.realmInfo
         const userData = options.userData
         const playfabData = options.playFabData
 
@@ -345,9 +380,6 @@ export class RacingRoom extends Room<RacingRoomState> {
         }
 
         let defaultPlayerMultiplier = 1
-        const wearablePromise = checkMultiplier("/check-multiplier",userDataForDebug.publicKey)
-        promises.push(wearablePromise)
-
 
         if(CONFIG.PLAYFAB_ENABLED){
             if(userData && playfabData && CONFIG.PLAYFAB_TITLEID !== playfabData.titleId){
@@ -398,16 +430,6 @@ export class RacingRoom extends Room<RacingRoomState> {
                             
 
                             initPlayerStateNftOwnership(player)
-                            if(userData && userData.userId){
-                                wearablePromise.then((result:CheckMultiplierResultType)=>{
-                                    console.log(METHOD_NAME,"checkMultiplier",result)
-                                    if(result && result.ok && result.multiplier){
-                                        defaultPlayerMultiplier = result.multiplier 
-                                        retData.coinMultiplier = defaultPlayerMultiplier
-                                    }
-                                    console.log(METHOD_NAME,"checkMultiplier",retData.coinMultiplier)
-                                })
-                            }
                             
                             log(CLASSNAME,this.roomId,METHOD_NAME,"client.sessionId " + client.sessionId)
                 
@@ -420,22 +442,45 @@ export class RacingRoom extends Room<RacingRoomState> {
                                     //retData.playFabCombinedInfoResult = result
                                     
                                     console.log(METHOD_NAME,player.userData.name, "fetching combined data returned....",result.InfoResultPayload.PlayerStatistics);
+                                    
+                                    const playerCombinedInfoHelper:GetPlayerCombinedInfoResultHelper = new GetPlayerCombinedInfoResultHelper()
+                                    playerCombinedInfoHelper.update(result.InfoResultPayload)
 
+
+                                    const wearablePromise = checkMultiplier("/check-multiplier",getCheckMultiplierVersionNum(this.clientVersion)
+                                        ,userDataForDebug.publicKey ? userDataForDebug.publicKey : userDataForDebug.userId
+                                        ,playerCombinedInfoHelper.inventory.bronzeShoe,userData,realmInfo)
+                                    promises.push(wearablePromise)
+
+                                    if(userData && userData.userId){
+                                        wearablePromise.then((result:CheckMultiplierResultType)=>{
+                                            console.log(METHOD_NAME,"checkMultiplier",result)
+                                            if(result && result.ok && result.multiplier){
+                                                defaultPlayerMultiplier = result.multiplier 
+                                                retData.coinMultiplier = defaultPlayerMultiplier
+                                            }
+                                            console.log(METHOD_NAME,"checkMultiplier",retData.coinMultiplier)
+                                        })
+                                    }
+                            
+                                    
                                     let playerStatics = result.InfoResultPayload.PlayerStatistics
                                     let coinCollectingEpochStat:PlayFabServerModels.StatisticValue
+                                    let coinCollectingDailyStat:PlayFabServerModels.StatisticValue
                                     if (playerStatics) {
                                         for (const p in playerStatics) {
-                                        const stat: PlayFabServerModels.StatisticValue = playerStatics[p];
-                                        console.log(METHOD_NAME,"stat ", stat);
-                                        if (
-                                            stat.StatisticName == "coinsCollectedEpoch"
-                                        ) {
-                                            coinCollectingEpochStat = stat;
-                                        }
+                                            const stat: PlayFabServerModels.StatisticValue = playerStatics[p];
+                                            console.log(METHOD_NAME,"stat ", stat);
+                                            if ( stat.StatisticName == "coinsCollectedEpoch" ) {
+                                                coinCollectingEpochStat = stat;
+                                            }else if ( stat.StatisticName == "coinsCollectedDaily" ) {
+                                                coinCollectingDailyStat = stat;
+                                            }
                                         }
                                         
                                     }
                                     player.inventory.coinsCollectedEpoch = coinCollectingEpochStat!==undefined ? coinCollectingEpochStat.Value : 0
+                                    player.inventory.coinsCollectedDaily = coinCollectingDailyStat!==undefined ? coinCollectingDailyStat.Value : 0
                                     player.inventory.currentLevel = Math.floor(getLevelFromXp(player.inventory.coinsCollectedEpoch,CONFIG.GAME_LEVELING_FORMULA_CONST))
                                     //not map it both ways sessionId and playfabId 
                                     //only map session id, keep it secret? can just loop serverside data object
@@ -592,6 +637,7 @@ export class RacingRoom extends Room<RacingRoomState> {
                 log(CLASSNAME,this.roomId,METHOD_NAME,"reconnect failed!!!", [player.userData.name, client.sessionId, e])
 
                 if(playerWasCreated) player.connStatus = "lost connection"
+                this.checkIsRaceOver()
             }
         }else{
             if(playerWasCreated) player.connStatus = "disconnected"
@@ -886,21 +932,49 @@ export class RacingRoom extends Room<RacingRoomState> {
         const playerData = player
         const playFabId = playerData.userPrivateData.playFabData.id;
 
+       
+        
         var addGCPlayerCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.GC.symbol,player.inventory.coinGcCount )
         var addMCPlayerCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.MC.symbol,player.inventory.coinMcCount )
         
+        var addVBPlayerCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.VB.symbol,0 )
+        var addACPlayerCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.AC.symbol,0 )
+        var addZCPlayerCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.ZC.symbol,0 )
+        var addRCPlayerCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.RC.symbol,0 )
+
         var addGCRewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.GC.symbol, this.sumRewards(player.inventory.rewards,BlockTypeTypeConst.GC.symbol) )
         var addMCRewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.MC.symbol, this.sumRewards(player.inventory.rewards,BlockTypeTypeConst.MC.symbol) )
+        
+        var addVBRewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.VB.symbol, this.sumRewards(player.inventory.rewards,BlockTypeTypeConst.VB.symbol) )
+        var addACRewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.AC.symbol, this.sumRewards(player.inventory.rewards,BlockTypeTypeConst.AC.symbol) )
+        var addZCRewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.ZC.symbol, this.sumRewards(player.inventory.rewards,BlockTypeTypeConst.ZC.symbol) )
+        var addRCRewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.RC.symbol, this.sumRewards(player.inventory.rewards,BlockTypeTypeConst.RC.symbol) )
+        
+        var addBZPlayerCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.BZ.symbol,player.inventory.bronzeCollected )
+        var addNIPlayerCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.NI.symbol,player.inventory.nitroCollected )
+        var addBPPlayerCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.BP.symbol,player.inventory.petroCollected )
+        var addR1PlayerCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.R1.symbol,player.inventory.rock1Collected )
+        var addR2PlayerCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.R2.symbol,player.inventory.rock2Collected )
+        var addR3PlayerCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.R3.symbol,player.inventory.rock3Collected )
+
+        var addBZRewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.BZ.symbol, this.sumRewards(player.inventory.rewards,BlockTypeTypeConst.BZ.symbol) )
+        var addNIRewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.NI.symbol, this.sumRewards(player.inventory.rewards,BlockTypeTypeConst.NI.symbol) )
+        var addBPRewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.BP.symbol, this.sumRewards(player.inventory.rewards,BlockTypeTypeConst.BP.symbol) )
+        var addR1RewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.R1.symbol, this.sumRewards(player.inventory.rewards,BlockTypeTypeConst.R1.symbol) )
+        var addR2RewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.R2.symbol, this.sumRewards(player.inventory.rewards,BlockTypeTypeConst.R2.symbol) )
+        var addR3RewardCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest = createAddUserVirtualCurrency( playFabId, BlockTypeTypeConst.R3.symbol, this.sumRewards(player.inventory.rewards,BlockTypeTypeConst.R3.symbol) )
         
         
         var grantMaterial1: PlayFabServerModels.GrantItemsToUserRequest = { ItemIds: [], PlayFabId: playFabId }
         var grantMaterial2: PlayFabServerModels.GrantItemsToUserRequest = { ItemIds: [], PlayFabId: playFabId }
         var grantMaterial3: PlayFabServerModels.GrantItemsToUserRequest = { ItemIds: [], PlayFabId: playFabId }
+        var grantBronzeShoe1: PlayFabServerModels.GrantItemsToUserRequest = { ItemIds: [], PlayFabId: playFabId }
 
         addMaterialToUser( grantMaterial1,BlockTypeTypeConst.M1,player.inventory.material1Count )
         addMaterialToUser( grantMaterial2,BlockTypeTypeConst.M2,player.inventory.material2Count )
         addMaterialToUser( grantMaterial3,BlockTypeTypeConst.M3,player.inventory.material3Count )
 
+        addMaterialToUser( grantBronzeShoe1,BlockTypeTypeConst.BRONZE_SHOE1,0 )
         //this.addMaterialToUser( grantMaterials,BlockTypeTypeConst.C1,player.container1Count )
         
         var addGuestPlayerCurrency: PlayFabServerModels.AddUserVirtualCurrencyRequest= { 
@@ -915,16 +989,41 @@ export class RacingRoom extends Room<RacingRoomState> {
           coinMultiplier: playerData.userPrivateData && playerData.userPrivateData.coinMultiplier ? playerData.userPrivateData.coinMultiplier : 1,
           addGCCurrency: addGCPlayerCurrency,
           addMCCurrency: addMCPlayerCurrency,
-          
+          addVBCurrency: addVBPlayerCurrency,
+          addACCurrency: addACPlayerCurrency,
+          addZCCurrency: addZCPlayerCurrency,
+          addRCCurrency: addRCPlayerCurrency,
+          addR1Currency: addR1PlayerCurrency,
+          addR2Currency: addR2PlayerCurrency,
+          addR3Currency: addR3PlayerCurrency,
+          addBZCurrency: addBZPlayerCurrency,
+          addNICurrency: addNIPlayerCurrency,
+          addBPCurrency: addBPPlayerCurrency,
           addGCRewardCurrency: addGCRewardCurrency,
           addMCRewardCurrency: addMCRewardCurrency,
+          addVBRewardCurrency: addVBRewardCurrency,
+          addACRewardCurrency: addACRewardCurrency,
+          addZCRewardCurrency: addZCRewardCurrency,
+          addRCRewardCurrency: addRCRewardCurrency,
+          addR1RewardCurrency: addR1RewardCurrency,
+          addR2RewardCurrency: addR2RewardCurrency,
+          addR3RewardCurrency: addR3RewardCurrency,
+          addNIRewardCurrency: addNIRewardCurrency,
+          addBZRewardCurrency: addBZRewardCurrency,
+          addBPRewardCurrency: addBPRewardCurrency,
 
           grantMaterial1: grantMaterial1,
           grantMaterial2: grantMaterial2,
           grantMaterial3: grantMaterial3,
 
-          addGuestCurrency: addGuestPlayerCurrency
+          grantBronzeShoe: grantBronzeShoe1,
+
+          addGuestCurrency: addGuestPlayerCurrency,
           //playerCombinedInfo: getPlayerCombinedInfo
+                    
+          addStatRaffleCoinBag: undefined,
+          grantTicketRaffleCoinBag: undefined
+
         }
   
         const promise = PlayFabHelperCoin.EndLevelGivePlayerUpdatePlayerStats(updatePlayerStats)
@@ -980,6 +1079,21 @@ export class RacingRoom extends Room<RacingRoomState> {
         log("sumRewards",symbol,"sum",sum.toFixed(0))
         return sum
     }
+    //clock loop update, 1 second
+    clockIntervalUpdate(elapsedTime:number,dt:number){
+        const METHOD_NAME = "clockIntervalUpdate"
+        //log(CLASSNAME,this.roomId,METHOD_NAME,"elapsedTime",elapsedTime.toFixed(2),"dt",dt,"this.timeSyncLapseTime",this.timeSyncLapseTime)
+        //noop
+        this.timeSyncLapseTime += dt
+
+        //update every 10 seconds good?
+        if(this.timeSyncLapseTime > 10000 ){
+            this.timeSyncLapseTime = 0
+            this.state.playFabTime += dt
+            this.state.serverTime += dt
+        }
+
+    }
     start(){
         const METHOD_NAME = "start()"
         logEntry(CLASSNAME,this.roomId,METHOD_NAME)
@@ -1021,6 +1135,11 @@ export class RacingRoom extends Room<RacingRoomState> {
 
         }, CONFIG.STARTING_COUNTDOWN_TIME_MILLIS)
         
+        this.clock.setInterval(() => {
+        
+            this.clockIntervalUpdate(this.clock.elapsedTime,this.clock.deltaTime+1000)
+    
+          }, 1000);
         
     }
     startEnrollTimer(){
@@ -1035,13 +1154,32 @@ export class RacingRoom extends Room<RacingRoomState> {
             this.doEnrollment()
         },this.state.enrollment.endTime - Date.now())
     }
-    setup(raceDataOptions:serverStateSpec.RaceDataOptions){
+
+    getCurrentTime(){
+        return this.clock.currentTime
+    }
+    
+    async setup(raceDataOptions:serverStateSpec.RaceDataOptions){
         const METHOD_NAME = "setup()"
         logEntry(CLASSNAME,this.roomId,METHOD_NAME,raceDataOptions)
 
         // setup round countdown
         //this.state.countdown = this.levelDuration;
     
+        PlayFabHelper.GetTime({}).then((val:PlayFabServerModels.GetTimeResult)=>{
+            log(CLASSNAME,this.roomId,"PlayFabHelper.GetTime"," result",val)
+        
+            this.state.serverTime = this.getCurrentTime()
+            this.state.playFabTime = Date.parse( val.Time )
+        
+            log(CLASSNAME,this.roomId,"PlayFabHelper.GetTime"," result",val,new Date(this.state.playFabTime).toUTCString())
+        })
+
+        //drives coin distribution logic
+        //minable reward logic
+        await this.fetchAndStoreRemoteConfig()
+  
+
         // make sure we clear previous interval
         this.clock.clear();
     
@@ -1067,7 +1205,18 @@ export class RacingRoom extends Room<RacingRoomState> {
         if(raceDataOptions){
             this.state.raceData.id = raceDataOptions.levelId
             this.state.levelData.id = raceDataOptions.levelId
-
+            this.state.levelData._featureDef =
+                raceDataOptions.featureDefinition !== undefined
+                    ? raceDataOptions.featureDefinition
+                    : {
+                        features: [
+                            { type: "boost", enabled:true }, { type: "slow-down",enabled:true },
+                            { type: "coin-gc" ,spawnAmount: [3,5], spawnPercentage: [.7,.9] ,enabled:true}, 
+                            { type: "coin-gc" ,spawnAmount: [3,5], spawnPercentage: [.7,.9] ,enabled:true}, //add multi times for more weight
+                            { type: "coin-gc" ,spawnAmount: [3,5], spawnPercentage: [.7,.9] ,enabled:true}, //add multi times for more weight
+                            { type: "coin-mc" ,enabled:true } //default values when not passed
+                        ] 
+                    };
             //TODO WIRE THIS INTO TRACK DATA TO BROADCAST BACK BEFORE START!
             if(raceDataOptions.levelId == 'custom'){
                 if(raceDataOptions.name) this.state.raceData.name = raceDataOptions.name
@@ -1118,17 +1267,36 @@ export class RacingRoom extends Room<RacingRoomState> {
         
         //TODO FIXME pull data from track ID
 
+        const featureDef = this.state.levelData._featureDef;
         
+        if(!featureDef){
+            log(CLASSNAME, this.roomId, METHOD_NAME, "WARNING featureDef missing", featureDef);
+            return
+        }
+        
+        const featuresEnabledTypeArray:serverStateSpec.TrackFeatureType[] = []
+        const featuresEnabledMapByType: Map<serverStateSpec.TrackFeatureType,serverStateSpec.TrackFeatureInstDef> = new Map()
+        for (const itm of featureDef.features) {
+            log(CLASSNAME, this.roomId, METHOD_NAME, "featuresEnabled.itm", itm);
+            if (itm.enabled !== undefined && itm.enabled) {
+                featuresEnabledMapByType.set(itm.type, itm);
+                //TODO add weighted, push it multiple times???
+                featuresEnabledTypeArray.push(itm.type)//TODO dedoup?? but not while using for weighted picking
+            }
+        }
+
         //by not passing triggersize and shape, it allows current theme to define them
         const numSegements = 200 //FIXME //level1.trackPath.length
         const keepStartClear = 1
-        const featureTypes = CONFIG.TRACK_FEATURE_TYPE_COUNT
-        const featureTrackDensity = 7 //bigger the number, less dense it will be, 1 will be 1 segement
+        const featureTypesCnt = featuresEnabledMapByType.size //CONFIG.TRACK_FEATURE_TYPE_COUNT //
+        //featureTrackDensity: bigger the number, less dense it will be, 1 will be 1 segement
+        const featureTrackDensity =
+            featureDef.featureDensity !== undefined ? featureDef.featureDensity : featureTypesCnt + 5; 
         //let spawnAmount = 2 //1 for 1.  2 for more if reaches the value randomly
         const maxOffset = 2
         const maxCloseness = .3
 
-        const _featureDensitiy = Math.max(featureTypes,featureTrackDensity)
+        const _featureDensitiy = Math.max(featureTypesCnt,featureTrackDensity)
         let totalSpawned = 0
         let attemptedSpawned = 0
 
@@ -1136,18 +1304,28 @@ export class RacingRoom extends Room<RacingRoomState> {
         let lastSpawnedOffset = 99
         let lastCenterOffset = 99
 
+        const debugTrackFeat = false
 
         const trackFeatures:serverStateSpec.TrackFeatureConstructorArgs[] = []
 
-        //for quick testing could spawn some at very beginning
-        trackFeatures.push( {name:"test.1",type:"boost", position:new serverStateSpec.TrackFeaturePosition({startSegment:2,endSegment:1, centerOffset:1}) } )
-        trackFeatures.push( {name:"test.2a",type:"slow-down", position:new serverStateSpec.TrackFeaturePosition({startSegment:2,endSegment:1, centerOffset:-1}) } )
-        if(featureTypes > 2) trackFeatures.push( {name:"test.2.5",type:"coin-gc", position:new serverStateSpec.TrackFeaturePosition({startSegment:2.5,endSegment:1, centerOffset:-1}) } )
-        if(featureTypes > 2) trackFeatures.push( {name:"test.3",type:"coin-mc", position:new serverStateSpec.TrackFeaturePosition({startSegment:3,endSegment:1, centerOffset:-1}) } )
+
+        log(CLASSNAME,this.roomId,METHOD_NAME,"featureTypes",featureTypesCnt,"featuresEnabledTypeArray",featuresEnabledTypeArray)
+
+        if (CONFIG.DEBUG_HARCODED_TRACK_FEATURE_TESTING_ENABLED) {
+            //for quick testing could spawn some at very beginning
+            trackFeatures.push( {name:"test.1",type:"boost", position:new serverStateSpec.TrackFeaturePosition({startSegment:2,endSegment:1, centerOffset:1}) } )
+            trackFeatures.push( {name:"test.2a",type:"slow-down", position:new serverStateSpec.TrackFeaturePosition({startSegment:2,endSegment:1, centerOffset:-1}) } )
+            if(featuresEnabledMapByType.has('coin-gc')) trackFeatures.push( {name:"test.2.5",type:"coin-gc", position:new serverStateSpec.TrackFeaturePosition({startSegment:2.5,endSegment:1, centerOffset:-1}) } )
+            if(featuresEnabledMapByType.has('coin-mc')) trackFeatures.push( {name:"test.3",type:"coin-mc", position:new serverStateSpec.TrackFeaturePosition({startSegment:3,endSegment:1, centerOffset:-1}) } )
 
 
-        trackFeatures.push( {name:"test.-1",type:"boost", position:new serverStateSpec.TrackFeaturePosition({startSegment:175,endSegment:1, centerOffset:1}) } )
-        trackFeatures.push( {name:"test.-2",type:"slow-down", position:new serverStateSpec.TrackFeaturePosition({startSegment:175,endSegment:1, centerOffset:-1}) } )
+            trackFeatures.push( {name:"test.-1",type:"boost", position:new serverStateSpec.TrackFeaturePosition({startSegment:175,endSegment:1, centerOffset:1}) } )
+            trackFeatures.push( {name:"test.-2",type:"slow-down", position:new serverStateSpec.TrackFeaturePosition({startSegment:175,endSegment:1, centerOffset:-1}) } )
+
+            if(featuresEnabledMapByType.has('coin-bp')) trackFeatures.push( {name:"test.coin-bp",type:"coin-bp", position:new serverStateSpec.TrackFeaturePosition({startSegment:2.5,endSegment:1, centerOffset:1}) } )
+            if(featuresEnabledMapByType.has('coin-ni')) trackFeatures.push( {name:"test.coin-ni",type:"coin-ni", position:new serverStateSpec.TrackFeaturePosition({startSegment:3,endSegment:1, centerOffset:1}) } )
+        }
+        log(CLASSNAME,this.roomId,METHOD_NAME,"featureTypes",featureTypesCnt,"CONFIG.DEBUG_HARCODED_TRACK_FEATURE_TESTING_ENABLED",CONFIG.DEBUG_HARCODED_TRACK_FEATURE_TESTING_ENABLED,"trackFeatures",trackFeatures)
 
         for(let x = keepStartClear ; x< numSegements - keepStartClear ; x++){
             //dont put stuff in near beginning or end
@@ -1155,37 +1333,73 @@ export class RacingRoom extends Room<RacingRoomState> {
             let type:serverStateSpec.TrackFeatureType=undefined
             let spawnAmount = 2
             let spawnPercentage = .5
+
+            let segmentFeatureDef:serverStateSpec.TrackFeatureInstDef|undefined = undefined
+
+            /*
             switch(randomType){
                 case 0: //boost
-                type = "boost"
+                    featureDef = featuresEnabledMapByType.get("boost")
                 break;
                 case 1: //slowdown
-                type = "slow-down"
-                break;
+                    featureDef = featuresEnabledMapByType.get("slow-down")
+                    break;
                 case 2: //gc
-                spawnAmount = 3
-                spawnPercentage = .9
-                if(featureTypes > 2) type = "coin-gc"
+                    spawnAmount = 3
+                    spawnPercentage = .9
+                    
+                    featureDef = featuresEnabledMapByType.get("coin-gc")
                 break;
                 case 3: //gc
-                spawnAmount = 4
-                spawnPercentage = .7
-                if(featureTypes > 2) type = "coin-gc"
-                break;
+                    spawnAmount = 4
+                    spawnPercentage = .7
+                    featureDef = featuresEnabledMapByType.get("coin-gc")
+                    break;
                 case 4: //gc
                 case 5: //gc
-                spawnAmount = 5
-                spawnPercentage = .7
-                if(featureTypes > 2) type = "coin-gc"
-                break;
+                    spawnAmount = 5
+                    spawnPercentage = .7
+                    featureDef = featuresEnabledMapByType.get("coin-gc")
+                    break;
                 case 6: //mc 
-                if(featureTypes > 2) type = "coin-mc"
-                break;
+                    featureDef = featuresEnabledMapByType.get("coin-mc")
+                    break;
+                case 7: //petro 
+                    featureDef = featuresEnabledMapByType.get("coin-bp")
+                    break;
+                case 8: //nitro 
+                    featureDef = featuresEnabledMapByType.get("coin-ni")
+                    break;
+            }*/
+            
+            if (randomType < featuresEnabledTypeArray.length) {
+                segmentFeatureDef = featuresEnabledMapByType.get( featuresEnabledTypeArray[randomType] );
+                if (segmentFeatureDef === undefined || (segmentFeatureDef.enabled !== undefined && !segmentFeatureDef.enabled)) {
+                    if (debugTrackFeat)
+                        log(
+                            CLASSNAME, this.roomId, METHOD_NAME,
+                            "spawn type not enabled", randomType, "not enabled", segmentFeatureDef
+                        );
+                }else{
+                    type = segmentFeatureDef.type
+                }
+            } else {
+                if (segmentFeatureDef)
+                    log(CLASSNAME, this.roomId, METHOD_NAME, "out of bounds", randomType, "not enabled", segmentFeatureDef);
             }
+
+            spawnPercentage = segmentFeatureDef !== undefined && segmentFeatureDef.spawnPercentage !== undefined ? pickWithinRange(segmentFeatureDef.spawnPercentage) : spawnPercentage
 
             const spawnIt = Math.random() < spawnPercentage
             
+
+            //log(CLASSNAME, this.roomId, METHOD_NAME, "randomType", randomType, "type", type);
+
+
             if(spawnIt && type !== undefined){
+                type = segmentFeatureDef.type
+                spawnAmount = segmentFeatureDef.spawnAmount !== undefined ?  Math.floor(pickWithinRange(segmentFeatureDef.spawnAmount)) : spawnAmount
+                
 
                 attemptedSpawned++
                 const spawnCount = Math.max(1,Math.round(Math.random() * spawnAmount))
@@ -1194,25 +1408,25 @@ export class RacingRoom extends Room<RacingRoomState> {
                 
                 let spawnCnt = 0
                 while(spawnCnt<spawnCount){
-                //TODO prevent overlap
-                //take full offset then subtract half to get somewhere in the middle
-                const centerOffset = (Math.random() * maxOffset*2) - maxOffset
-                const xOffset = x + Math.random()
-                //too close, try again
-                if(Math.abs(xOffset - lastSpawnedOffset) < maxCloseness && Math.abs(centerOffset - lastCenterOffset) < maxCloseness){
-                    log(CLASSNAME,this.roomId,METHOD_NAME,"adding addTrackFeature  too close try again",type,x+"",spawnIt+"",xOffset , lastSpawnedOffset , centerOffset , lastCenterOffset)
-                    continue;
-                }
-                
-                //log(CLASSNAME,this.roomId,METHOD_NAME,"adding addTrackFeature ",type,x,spawnIt)
-                //level1.addTrackFeature( new TrackFeature( {name:type+"-"+spawnCnt+"."+xOffset.toFixed(1),type:type,triggerSize:undefined,shape:undefined, position:new TrackFeaturePosition({startSegment:xOffset,endSegment:xOffset, centerOffset:centerOffset, offset: new Vector3(0,0,0)}) } ))
+                    //TODO prevent overlap
+                    //take full offset then subtract half to get somewhere in the middle
+                    const centerOffset = (Math.random() * maxOffset*2) - maxOffset
+                    const xOffset = x + Math.random()
+                    //too close, try again
+                    if(Math.abs(xOffset - lastSpawnedOffset) < maxCloseness && Math.abs(centerOffset - lastCenterOffset) < maxCloseness){
+                        log(CLASSNAME,this.roomId,METHOD_NAME,"adding addTrackFeature  too close try again",type,x+"",spawnIt+"",xOffset , lastSpawnedOffset , centerOffset , lastCenterOffset)
+                        continue;
+                    }
+                    
+                    //log(CLASSNAME,this.roomId,METHOD_NAME,"adding addTrackFeature ",type,x,spawnIt)
+                    //level1.addTrackFeature( new TrackFeature( {name:type+"-"+spawnCnt+"."+xOffset.toFixed(1),type:type,triggerSize:undefined,shape:undefined, position:new TrackFeaturePosition({startSegment:xOffset,endSegment:xOffset, centerOffset:centerOffset, offset: new Vector3(0,0,0)}) } ))
 
-                trackFeatures.push( {name:type+"-"+spawnCnt+"."+xOffset.toFixed(1),type:type, position:new serverStateSpec.TrackFeaturePosition({startSegment:xOffset,endSegment:xOffset, centerOffset:centerOffset}) } )
+                    trackFeatures.push( {name:type+"-"+spawnCnt+"."+xOffset.toFixed(1),type:type, position:new serverStateSpec.TrackFeaturePosition({startSegment:xOffset,endSegment:xOffset, centerOffset:centerOffset}) } )
 
-                totalSpawned++
-                spawnCnt++
-                lastSpawnedOffset = xOffset
-                lastCenterOffset = centerOffset
+                    totalSpawned++
+                    spawnCnt++
+                    lastSpawnedOffset = xOffset
+                    lastCenterOffset = centerOffset
                 }
             }else{
                 //log("nospawn addTrackFeature ",type,x,spawnIt)
@@ -1234,14 +1448,58 @@ export class RacingRoom extends Room<RacingRoomState> {
 
         //export type TrackFeatureType='boost'|'slow-down'|'inert'|'wall'|'coin-gc'|'coin-mc'|'material-a'
         
+        const maxCoinsPerLevel = getCoinCap( Math.floor(player.inventory.currentLevel),CONFIG.GAME_DAILY_COIN_MAX_FORMULA_CONST)
+        
+        //this.state.playFabTime
+        //this.state.levelData.coinsCollectedDailyVersion
+        /*if(this.coinCapEnabled){
+        player.coinCollectDailyCapPercent = player.coinsCollectedDaily / maxCoinsPerLevel
+        }else{
+        player.coinCollectDailyCapPercent = -1
+        }*/
+        
+        const hitCoinCap = player.inventory.coinsCollectedDaily >= maxCoinsPerLevel //player.coinCollectDailyCapPercent >= 1
+        //set it to .1 if its every 10 == 1
+        const coinCapOverageReduction = hitCoinCap ? this.coinCapOverageReduction : 1
+        
+        const incValue = 1 * coinCapOverageReduction
+
         switch(trackFeature.type){
             case 'coin-gc':
-                player.inventory.coinGcCount++
-                player.inventory.coinsCollectedEpoch++
+                player.inventory.coinGcCount+=incValue
+                player.inventory.coinsCollectedEpoch+=incValue
+                player.inventory.coinsCollectedDaily+=incValue
                 break;
             case 'coin-mc': 
-                player.inventory.coinMcCount++
-                player.inventory.coinsCollectedEpoch++
+                player.inventory.coinMcCount+=incValue
+                player.inventory.coinsCollectedEpoch+=incValue
+                player.inventory.coinsCollectedDaily+=incValue
+                break;
+            case 'coin-bp': 
+                //player.inventory.coinsCollectedEpoch++
+                player.inventory.petroCollected++
+                break;
+            case 'coin-bz': 
+                //player.inventory.coinsCollectedEpoch+=incValue
+                player.inventory.bronzeCollected+=incValue
+                player.inventory.coinsCollectedEpoch+=incValue
+                player.inventory.coinsCollectedDaily+=incValue
+                break;
+            case 'coin-ni': 
+                //player.inventory.coinsCollectedEpoch++
+                player.inventory.nitroCollected++
+                break;
+            case 'coin-r1': 
+                //player.inventory.coinsCollectedEpoch++
+                player.inventory.rock1Collected++
+                break;
+            case 'coin-r2': 
+                //player.inventory.coinsCollectedEpoch++
+                player.inventory.rock2Collected++
+                break;
+            case 'coin-r3': 
+                //player.inventory.coinsCollectedEpoch++
+                player.inventory.rock3Collected++
                 break;
             case 'material-a':
                 player.inventory.material1Count++
@@ -1265,6 +1523,11 @@ export class RacingRoom extends Room<RacingRoomState> {
         }
         console.log("collectBlock",  player.id , player.userData.name 
             ,"player.coinsCollectedEpoch",player.inventory.coinsCollectedEpoch
+            ,"player.coinsCollectedDaily",player.inventory.coinsCollectedDaily
+            ,"coinCapEnabled",this.coinCapEnabled
+            ,"hitCoinCap",hitCoinCap
+            ,"maxCoinsPerLevel",maxCoinsPerLevel
+            ,"coinCapOverageReduction",coinCapOverageReduction
             ,"level",levelRecalced,"vs",player.inventory.currentLevel
             ,"lvl.percent",getLevelPercentFromXp(player.inventory.coinsCollectedEpoch,CONFIG.GAME_LEVELING_FORMULA_CONST).toFixed(2), leveledUp ? "LEVELED UP!!!!":"");
 
@@ -1337,5 +1600,78 @@ export class RacingRoom extends Room<RacingRoomState> {
 
 
     client.send("notify.levelUp",notifyLevelUp)
+  }
+
+  async fetchAndStoreRemoteConfig(){
+    const METHOD_NAME = "fetchAndStoreRemoteConfig"
+    const promises:Promise<any>[] = [];
+
+    const remoteConfigPromise = new Promise<{data:serverStateSpec.RemoteBaseCoinRoomConfig}>((mainResolve, reject) => {
+      //console.log("nftMetaDogeCheckCall entered promise")
+      (async () => {
+        /*if( isInvalidPublicKey(publicKey) ){
+          const retData:any = {"ok":false,"msg":"invalid key"}
+          
+          log(CLASSNAME,roomId,METHOD_NAME," ERROR","publicKey was empty. returning empty array",retData)
+
+          mainResolve(retData)
+          return retData
+        }*/
+        const nftURL = 
+          OTHER_CONFIG.CONFIG.CHECK_REMOTE_CONFIG_API_CALL + OTHER_CONFIG.CONFIG.CHECK_REMOTE_CONFIG_API_CALL_ROOM_ID + this.roomName //+ publicKey
+        try {
+          log(CLASSNAME,this.getLogRoomIdent(),METHOD_NAME," calling",nftURL)
+          let nftResponse = await fetch(nftURL, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            //body: body,
+            //   identity: myIdentity,
+          })
+      
+          //let rewardsResponseData: RewardData = await rewardsResponse.json()
+          let configData:{data:serverStateSpec.RemoteBaseCoinRoomConfig} = await nftResponse.json()// as WearablesByOwnerData
+      
+          log(CLASSNAME,this.getLogRoomIdent(),METHOD_NAME,'config response: ', configData)
+      
+          if(configData){
+            if(configData.data.coinCap ){
+              //short term, long term 
+              
+              this.coinCapEnabled = configData.data.coinCap.enabled
+              this.coinCapOverageReduction = configData.data.coinCap.overageReduction
+              if(this.coinCapEnabled){
+                log(CLASSNAME,this.getLogRoomIdent(),METHOD_NAME," WARNING", "this.coinCap",configData.data.coinCap,this.coinCapEnabled,"client version wrong",this.clientVersion,"need v4 or greating")
+              }
+              
+              log(CLASSNAME,this.getLogRoomIdent(),METHOD_NAME," copying", "this.coinCap.enabled",configData.data.coinCap,this.coinCapEnabled)
+              log(CLASSNAME,this.getLogRoomIdent(),METHOD_NAME," copying", "this.coinCap",configData.data.coinCap,this.coinCapOverageReduction)
+            }else if(configData.data.coinCap ){
+              
+            }
+          }
+
+          mainResolve(configData)
+          return configData
+        } catch (error) {
+          const retData:any = {"ok":false,"msg":error}
+          log(CLASSNAME,this.getLogRoomIdent(),METHOD_NAME," ERROR FETCHING FROM",nftURL,error,"publicKey was empty. returning empty array",retData)
+          mainResolve(retData)
+          return retData
+        }
+      })()
+    })
+    
+    promises.push(remoteConfigPromise)
+
+    return Promise.all( promises ).then(function(result){
+      console.log(METHOD_NAME,". all promised completed " , result)
+      //return retData;
+
+      //playfabDataUtils.init()
+      return;
+    })
+  }
+  getLogRoomIdent(){
+    return this.roomName + "." + this.roomId
   }
 }

@@ -6,11 +6,11 @@ import { Block, BlockType,  BlockTypeTypeConst, MyRoomState, Player } from "./My
 import { PlayFab,PlayFabAuthentication, PlayFabServer } from "playfab-sdk";
 import * as PlayFabHelper from "./PlayFabWrapper";
 
-import { coins, voxParkCoins } from "./coins";
+import { coins, voxParkCoins } from "../coin_config/coins";
 import { CONFIG } from "./config";
 import { BaseCoinRoom } from "./BaseCoinRoom";
 import { GameEndType, PlayerData } from "./types";
-
+import * as serverStateSpec from "./MyRoomStateSpec";
 
 //var PlayFab: PlayFab ;//= require("PlayFab-sdk/Scripts/PlayFab/PlayFab");
 //var PlayFabClient: PlayFabClientModule.IPlayFabClient ;//= require("PlayFab-sdk/Scripts/PlayFab/PlayFabClient");
@@ -23,8 +23,8 @@ PlayFab.settings.developerSecretKey = CONFIG.PLAYFAB_DEVELOPER_SECRET
 
 export class VoxBoardParkRoom extends BaseCoinRoom {
   
-  onCreate (options: any) {
-    super.onCreate(options)
+  async onCreate (options: any) {
+    return super.onCreate(options)
   }
 
   gameEndedNotify(data:GameEndType){
@@ -32,13 +32,13 @@ export class VoxBoardParkRoom extends BaseCoinRoom {
   }
 
 
-  setUp() {
+  async setUp(coinDataOptions:serverStateSpec.CoinRoomDataOptions) {
 
     this.levelDuration = 90
     this.guestCoinType = BlockTypeTypeConst.VB
     this.levelCoinPos = voxParkCoins
 
-    super.setUp()
+    return super.setUp(coinDataOptions)
   }
 
   setupCoins(){

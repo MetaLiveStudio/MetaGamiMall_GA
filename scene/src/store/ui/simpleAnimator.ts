@@ -1,3 +1,4 @@
+/*
 import { NoArgCallBack } from "./resources/globals";
 
 @Component("AnimatedItem")
@@ -170,3 +171,4 @@ class ItemAnimationSystem {
   }
 }
 engine.addSystem(new ItemAnimationSystem());
+*/

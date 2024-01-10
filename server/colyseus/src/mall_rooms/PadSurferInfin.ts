@@ -7,7 +7,7 @@ import { BaseCoinRoom } from "./BaseCoinRoom";
 import { CONFIG } from "./config";
 import { Block, BlockType } from "./MyRoomState";
 import { GameEndType, PlayerData } from "./types";
-
+import * as serverStateSpec from "./MyRoomStateSpec";
 
 
 //var PlayFab: PlayFab ;//= require("PlayFab-sdk/Scripts/PlayFab/PlayFab");
@@ -21,11 +21,12 @@ PlayFab.settings.developerSecretKey = CONFIG.PLAYFAB_DEVELOPER_SECRET
 
 export class PadSurferInfin extends BaseCoinRoom {
   
-  private reloadLevelElapseTime = 0
-  private reloadLevelIntervalMillis = 10 * 1000
+  protected reloadLevelElapseTime = 0
+  protected reloadLevelIntervalMillis = 10 * 1000
 
-  onCreate (options: any) {
-    super.onCreate(options)
+  async onCreate (options: any) {
+    const promise = super.onCreate(options)
+    return promise
   }
 
   gameEndedNotify(data:GameEndType){
@@ -58,7 +59,7 @@ export class PadSurferInfin extends BaseCoinRoom {
   setupCoins(){
     super.setupCoins()
   }
-  setUp() {
+  async setUp(coinDataOptions:serverStateSpec.CoinRoomDataOptions) {
     this.expireTimeInSeconds = -1
     //make respawn time what was default a level duration
     
@@ -80,11 +81,10 @@ export class PadSurferInfin extends BaseCoinRoom {
     }
 
     this.startGameWaitTime = 0//for inite no wait time
-    super.setUp()
+    return super.setUp(coinDataOptions)
   }
 
   start(){
-    this.isStarted = true
     super.start();
     
   } 
@@ -117,6 +117,7 @@ export class PadSurferInfin extends BaseCoinRoom {
 
     //this.returnBlockToPool(blockToCollect)
 
+    console.log("reSpawnCollectedBlock","calling getBlockFromPool",blockToCollect?.id)
     const block = this.getBlockFromPool(blockToCollect)//blockToCollect
 
     //place block
@@ -124,7 +125,7 @@ export class PadSurferInfin extends BaseCoinRoom {
     //console.log("collectBlock atIndex:" + atIndex," blockSize",this.state.blocks.size)
     
 
-    const nowMs = new Date().getTime()
+    const nowMs = this.getCurrentTime()
     let createTime = nowMs
     if(this.onCollectRespawnTimeInSeconds >=0 ){
       createTime = nowMs + (this.onCollectRespawnTimeInSeconds*1000)

@@ -6,4 +6,5 @@ export type LevelingFormulaConfig={
   y:number
   min:number
   max:number
+  levelOffset:number //offset to move to correct starting level if not 0
 }

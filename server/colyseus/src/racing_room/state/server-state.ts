@@ -1,5 +1,5 @@
 import { Schema, type, MapSchema, ArraySchema } from "@colyseus/schema";
-import { RewardNotification } from "../../mall_rooms/MyRoomState";
+import { RewardNotification } from "../../mall_rooms/MyRoomStateSpec";
 import { NFTOwnership } from "../../utils/nftOwnership";
 import { CONFIG } from "../config";
 import * as serverStateSpec from "./server-state-spec";
@@ -266,6 +266,14 @@ export class PlayerInventoryState extends Schema implements serverStateSpec.Play
   @type("number") coinMcCount: number=0;
   @type("number") coinGuestCount: number=0;
 
+
+  @type("number") rock1Collected: number=0;
+  @type("number") rock2Collected: number=0;
+  @type("number") rock3Collected: number=0;
+  @type("number") petroCollected: number=0;
+  @type("number") nitroCollected: number=0;
+  @type("number") bronzeCollected: number=0;
+  
   @type("number") material1Count: number=0;
   @type("number") material2Count: number=0;
   @type("number") material3Count: number=0;
@@ -275,6 +283,7 @@ export class PlayerInventoryState extends Schema implements serverStateSpec.Play
   //not sharing right now (should i?) server side can manage its own way?
   rewards:RewardNotification[]
   coinsCollectedEpoch: number
+  coinsCollectedDaily: number
   currentLevel:number
 }
 
@@ -433,6 +442,8 @@ export class LevelDataState extends Schema implements serverStateSpec.LevelDataS
   name: string
   //status:RaceStatus
 
+  //coinsCollectedDailyVersion
+
   //theme:Theme
   //@type([ TrackFeatureState ])
   //trackFeatures = new ArraySchema<TrackFeatureState>();
@@ -443,6 +454,8 @@ export class LevelDataState extends Schema implements serverStateSpec.LevelDataS
   maxLaps: number //move to track data or is max laps race data?
 
   trackPath: serverStateSpec.Vector3State[]
+
+  _featureDef: serverStateSpec.TrackFeatureDef;
 
   copyFrom(retval: serverStateSpec.LevelDataState) {
     this.id = retval.id
@@ -575,6 +588,9 @@ export class RacingRoomState extends Schema implements serverStateSpec.RacingRoo
 
   @type(EnrollmentState)
   enrollment = new EnrollmentState()
+
+  @type("number") serverTime: number = -1;//-1 not set
+  @type("number") playFabTime: number = -1;//-1 not set
 
   something = "This attribute won't be sent to the client-side";
 

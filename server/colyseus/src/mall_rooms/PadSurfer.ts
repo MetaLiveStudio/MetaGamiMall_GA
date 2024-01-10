@@ -7,7 +7,7 @@ import { BaseCoinRoom } from "./BaseCoinRoom";
 import { CONFIG } from "./config";
 import { BlockType } from "./MyRoomState";
 import { GameEndType, PlayerData } from "./types";
-
+import * as serverStateSpec from "./MyRoomStateSpec";
 
 
 //var PlayFab: PlayFab ;//= require("PlayFab-sdk/Scripts/PlayFab/PlayFab");
@@ -21,8 +21,8 @@ PlayFab.settings.developerSecretKey = CONFIG.PLAYFAB_DEVELOPER_SECRET
 
 export class PadSurfer extends BaseCoinRoom {
   
-  onCreate (options: any) {
-    super.onCreate(options)
+  async onCreate (options: any) {
+    return super.onCreate(options)
   }
 
   gameEndedNotify(data:GameEndType){
@@ -30,9 +30,6 @@ export class PadSurfer extends BaseCoinRoom {
   }
 
 
-  setUp() {
-    super.setUp()
-  }
 
   start(){
 

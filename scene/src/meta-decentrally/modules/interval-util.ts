@@ -1,3 +1,4 @@
+import { log } from "../../back-ports/backPorts"
 
 export type IntervalUtilType = 'delta'|'abs-time'
 
@@ -25,8 +26,10 @@ export class IntervalUtil {
         }
         this.onTimeReachedCallback = onTimeReachedCallback
         this.onTargetTimeReached = () => {
-            this.elapsedTime = 0
             if (this.onTimeReachedCallback) this.onTimeReachedCallback()
+            //debugger 
+            this.elapsedTime = 0
+            //this.elapsedTime -= this.targetTime //push back
         }
     }
 
@@ -51,7 +54,8 @@ export class IntervalUtil {
     update(dt?:number): boolean{
         const now = Date.now()
         if(this.type == 'delta'){
-            this.elapsedTime += dt
+            this.elapsedTime += (dt ? dt : 0)
+            //log("this.elapsedTime",this.elapsedTime.toFixed(3))
         }else{
             
             //real time
@@ -64,6 +68,7 @@ export class IntervalUtil {
 
         if(this.elapsedTime > this.targetTime){
             this.onTargetTimeReached()
+            //log("padLogic returning true",this.elapsedTime)
             return true
             //this.elapsedTime -= this.targetTime //push back
         }

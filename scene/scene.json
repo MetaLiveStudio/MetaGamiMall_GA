@@ -1,72 +1,63 @@
 {
-  "display": {
-    "title": "Meta GamiMall ",
-    "favicon": "favicon_asset",
-    "navmapThumbnail": "scene-thumbnail.png",
-    "description":"MetaGamiMall is a Metaverse Gamifi-Mall for games, exhibitions & social. Meta GamiMall is operated by MetaLiveStudio and MetaDoge. Currently, we are holding a huge event called MetaMine, where players and brands meet with each other."
-  },
-  "owner": "",
-  "contact": {
-    "name": "Meta Live Studio",
-    "email": "metalivestudio@gmail.com"
-  },
-  "main": "bin/game.js",
-  "tags": [],
-  "scene": {
-    "parcels": [
-      "145,60",
-      "145,61",
-      "145,62",
-      "145,63",
-      "145,64",
-      "145,65",
-      "146,60",
-      "146,61",
-      "146,62",
-      "146,63",
-      "146,64",
-      "146,65",
-      "147,60",
-      "147,61",
-      "147,62",
-      "147,63",
-      "147,64",
-      "147,65",
-      "148,60",
-      "148,61",
-      "148,62",
-      "148,63",
-      "148,64",
-      "148,65",
-      "149,60",
-      "149,61",
-      "149,62",
-      "149,63",
-      "149,64",
-      "149,65"
-    ],
-    "base": "145,60"
-  },
-  "communications": {
-    "type": "webrtc",
-    "signalling": "https://signalling-01.decentraland.org"
-  },
-  "policy": {
-    "contentRating": "E",
-    "fly": true,
-    "voiceEnabled": true,
-    "blacklist": [],
-    "teleportPosition": ""
-  },
+	"ecs7": true,
+	"runtimeVersion": "7",
+	"display": {
+	    "title": "Meta GamiMall",
+	    "favicon": "favicon_asset",
+	    "navmapThumbnail": "images/scene-thumbnail.png",
+	    "description":"We are migrating to SDK7!!!MetaGamiMall is a Metaverse Gamifi-Mall that is operated by MetaLiveStudio and MetaDoge. We hold a huge event called MetaMine, where players meet brands."
+	  },
+	"owner": "",
+	"contact": {
+	    "name": "Meta Live Studio",
+	    "email": "metalivestudio@gmail.com"
+	},
+	"main": "bin/index.js",
+	"tags": [],
+	"scene": {
+		"parcels": [
+			"145,60",
+			"145,61",
+			"145,62",
+			"145,63",
+			"145,64",
+			"145,65",
+			"146,60",
+			"146,61",
+			"146,62",
+			"146,63",
+			"146,64",
+			"146,65",
+			"147,60",
+			"147,61",
+			"147,62",
+			"147,63",
+			"147,64",
+			"147,65",
+			"148,60",
+			"148,61",
+			"148,62",
+			"148,63",
+			"148,64",
+			"148,65",
+			"149,60",
+			"149,61",
+			"149,62",
+			"149,63",
+			"149,64",
+			"149,65"
+		  ],
+		  "base": "145,60"
+	},
 
   "spawnPoints": [
     {
       "name": "spawn1",
       "default": true,
       "position": {
-        "x": 40,
-        "y": 0,
-        "z": 0.5 },
+        "x": [38,42],
+        "y": [0.5,0.5],
+        "z": [0.5,1.5] },
         "cameraTarget": {
           "x": 39.5,
           "y": 3.4,
@@ -74,5 +65,14 @@
         }
     }
   ],
-  "requiredPermissions": ["ALLOW_TO_MOVE_PLAYER_INSIDE_SCENE","ALLOW_TO_TRIGGER_AVATAR_EMOTE"]
+	"requiredPermissions": [
+		"ALLOW_TO_TRIGGER_AVATAR_EMOTE",
+		"ALLOW_TO_MOVE_PLAYER_INSIDE_SCENE",
+		"ALLOW_MEDIA_HOSTNAMES","USE_FETCH", "USE_WEB3_API", "USE_WEBSOCKET"
+	],
+	"allowedMediaHostnames": [
+		"decentraland.org","playfabapi.com","lb.vectorappstudio.com","vectorappstudio.com","metadoge.art"
+		,"peer-lb.decentraland.org","nft-api.decentraland.org"
+	],
+	"featureToggles": {}
 }

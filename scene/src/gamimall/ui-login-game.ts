@@ -1,12 +1,15 @@
-import * as ui from "@dcl/ui-scene-utils";
-import { CONFIG, initConfig } from "src/config";
-import { CustomPrompt } from "src/dcl-scene-ui-workaround/CustomPrompt";
-import resources, { setSection } from "src/dcl-scene-ui-workaround/resources";
-import { REGISTRY } from "src/registry";
-import { GAME_STATE } from "src/state";
-import { CustomOptionsPrompt } from "src/ui/modals";
-import { startGame } from "./gameplay";
-import { RESOURCES } from "./resources";
+//import * as ui from "@dcl/ui-scene-utils";
+import { CONFIG, initConfig } from "../config";
+//import { CustomPrompt } from "src/dcl-scene-ui-workaround/CustomPrompt";
+//import resources, { setSection } from "src/dcl-scene-ui-workaround/resources";
+import { REGISTRY } from "../registry";
+import { GAME_STATE } from "../state";
+import { CustomOptionsPrompt } from "../ui/modals";
+import { startGame } from "../gameplay";
+//import { RESOURCES } from "../../resources";
+import { Color4 } from "@dcl/sdk/math";
+import { openExternalUrl } from "~system/RestrictedActions";
+import { _openExternalURL, log } from "../back-ports/backPorts";
 
 /*
 const entity = new Entity()
@@ -38,23 +41,23 @@ loginGamePrompt.addText("Play",0,180,Color4.White(),20)
 const SHIFTY = -30;
 const SHIFTY_TEXT = -10;
 
-export const PROMPT_PICKER_WIDTH = 530;
-export const PROMPT_PICKER_HEIGHT = 500; //550
-export const PROMPT_OFFSET_X = 0; //80//move it away from communications box as cant click thru it
-export const PROMPT_OFFSET_Y = 40;
-export const MAIN_CONTENT_START_Y = 180;
-export const PROMPT_TITLE_HEIGHT = 230 + SHIFTY; //250 + SHIFTY
-export const PROMPT_TITLE_COLOR = Color4.White();
-export const BUTTON_HEIGHT = 60;
+ const PROMPT_PICKER_WIDTH = 530;
+ const PROMPT_PICKER_HEIGHT = 500; //550
+ const PROMPT_OFFSET_X = 0; //80//move it away from communications box as cant click thru it
+ const PROMPT_OFFSET_Y = 40;
+ const MAIN_CONTENT_START_Y = 180;
+ const PROMPT_TITLE_HEIGHT = 230 + SHIFTY; //250 + SHIFTY
+ const PROMPT_TITLE_COLOR = Color4.White();
+ const BUTTON_HEIGHT = 60;
 
-export const PROMPT_OVERLAY_TEXT_COLOR = Color4.White();
+ const PROMPT_OVERLAY_TEXT_COLOR = Color4.White();
 
-export const PROMPT_PICKER_OVERLAY_WIDTH = PROMPT_PICKER_WIDTH;
-export const PROMPT_PICKER_OVERLAY_HEIGHT = 320;
-export const PROMPT_OVERLAY_OFFSET_X = 0;
-export const PROMPT_OVERLAY_OFFSET_Y = 60;
+ const PROMPT_PICKER_OVERLAY_WIDTH = PROMPT_PICKER_WIDTH;
+ const PROMPT_PICKER_OVERLAY_HEIGHT = 320;
+ const PROMPT_OVERLAY_OFFSET_X = 0;
+ const PROMPT_OVERLAY_OFFSET_Y = 60;
 
-export const BUTTON_POS_Y = -120; //-180
+ const BUTTON_POS_Y = -120; //-180
 
 const BANNER_SOURCE_WIDTH = 1093; //1038
 const BANNER_SOURCE_HEIGHT = 128;
@@ -69,10 +72,10 @@ const buttonHeight = BUTTON_HEIGHT;
 
 let yCounter = startX;
 
-const gameTutorialImg = RESOURCES.textures.gameTutorialBg.src;
-const gameTutorialImgTexture = RESOURCES.textures.gameTutorialBg;
+//const gameTutorialImg = RESOURCES.textures.gameTutorialBg.src;
+//const gameTutorialImgTexture = RESOURCES.textures.gameTutorialBg;
 const gameTutorialImgDesc =
-  "You must login first.  To login click the 'Login button'.  Make sure you sign the login signature request that pops up.";
+  "You must login first.  \nTo login click the 'Login button'."//  Make sure you sign the login signature request that pops up.";
 
 const gameTutorialImgDescNoWallet =
   "You must login first.  To login click the 'Login button'.  ";
@@ -81,25 +84,26 @@ export function initUILoginGame() {
   let buttonPosY = BUTTON_POS_Y;
 
   const loginOptions = {
-    width: 420,
+    width: 550,
     modalWidth: -200,
   };
   
   const web3ProviderRequiredPrompt = new CustomOptionsPrompt(
     "Wallet Required",
-    "A Digital Wallet is required to perform this action.",
+    "A Digital Wallet is required to perform \nthis action.",
     "Get Metamask",
     "",
     "Cancel",
     "",
     () => {
       log("get");
-      openExternalURL("https://metamask.io/download/");
+      _openExternalURL("https://metamask.io/download/");
       hideloginGamePrompt();
     },
     undefined,
     loginOptions
   );
+  
   const loginGamePrompt20 = new CustomOptionsPrompt(
     "Login",
     gameTutorialImgDesc,
@@ -115,7 +119,12 @@ export function initUILoginGame() {
     undefined,
     loginOptions
   );
-
+  //uncomment for testing
+  //loginGamePrompt20.show()
+  //uncomment for testing
+  //web3ProviderRequiredPrompt.show()
+  
+    /*
   const gameImageList: Texture[] = [
     gameTutorialImgTexture,
     gameTutorialImgTexture,
@@ -168,7 +177,7 @@ export function initUILoginGame() {
     //gameImage.image.source = gameImageList[index];
     //gameImageSubTitle.text.value = gameImageDescList[index];
   }
-
+  */
   function openloginGamePrompt() {
     //loginGamePrompt.show();
 
@@ -179,9 +188,9 @@ export function initUILoginGame() {
       web3ProviderRequiredPrompt.hide();
 
       if(CONFIG.LOGIN_FLOW_TYPE == 'dclSignedFetch'){
-        loginGamePrompt20.text.text.value = gameTutorialImgDescNoWallet
+        loginGamePrompt20.text.value = gameTutorialImgDescNoWallet
       }else{
-        loginGamePrompt20.text.text.value = gameTutorialImgDesc
+        loginGamePrompt20.text.value = gameTutorialImgDesc
       }
       
 
