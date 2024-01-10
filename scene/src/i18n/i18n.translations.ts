@@ -1,3 +1,4 @@
+import { log } from "../back-ports/backPorts";
 import { namespaces } from "./i18n.constants";
 
 
@@ -8,6 +9,10 @@ export const en = {
       ok: "OK",
       cancel: "Cancel", //T,
       claim: "Claim", //T,
+      tradeFloorPrice: "Trade (Floor price: {{floorPrice}} MANA)",
+      tradeFloorPriceGoToMarketPlace: "Click Here to View in DCL Marketplace",
+      raffleCoinBagHowItWorks: "How does it work?", //T,
+      raffleViewEntries: "View Entries", //T,
     },
     title:{
       cost:"Cost",
@@ -53,6 +58,7 @@ export const en = {
     levelDisplay: "Level {{currentValue}} ({{remainingValue}} till next) {{currentPercent}}%" //+ "
   },
   [namespaces.ui.sideButton]: {
+    visitGamiMall: "Visit MetaGamiMall", //T,
     avatarSwap: "Avatar Swap", //T,
     summonPet: "Summon Pet", //T,
     locationButton: "Location", //T,
@@ -62,12 +68,12 @@ export const en = {
     reloginButton: "Relogin", //T,
     refreshSave: "Refresh&Save", //T,
     gameTool: "Game Tools", //T,
-    showLvlLeaderBoard: "Level Leaderboard", //T,
+    showLvlLeaderBoard: "Levelboard", //T,
     language: "Language", //T,
   },
   [namespaces.ui.locationButton]: {
     zone: "Zone 1",
-    tpPoint: "Teleport Point",
+    tpPoint: "Entrance",
     muscleSquare: "Muscle Square", //T,
     moonSquare: "Moon Square", //T,
     marsSquare: "Mars Square", //T,
@@ -76,10 +82,12 @@ export const en = {
   },
   [namespaces.ui.prompts]: { 
     checkingLatestPrices: "Checking Latest Prices...",
+    checkingLatestMarketPriceUI: "Checking Latest Market Prices...",
     stockNotAvailable: "(Stock Not Available)", //T
     attemptRelogin: "Attempting Re-Login", //T
     pickLanuage: "Pick Lanuage", //T
-    closeAutomaticallyCountdown: "Will close automatically in {{timeLeftSeconds}} seconds"
+    closeAutomaticallyCountdown: "Will close automatically in {{timeLeftSeconds}} seconds",
+    howToBuyCoinNMaterialsWithMana: "How to buy coins & materials with cheap MANA?", 
   },
   [namespaces.ui.hovers]: { 
     hoverSensorium: "Go to Sensorium Stage Party", //T,
@@ -188,7 +196,7 @@ export const de = {
   },
   "ui.locationButton": {
     "zone": "Zone 1",
-    "tpPoint": "Teleportpunkt",
+    "tpPoint": "Eingang",
     "muscleSquare": "Muskelquadrat",
     "moonSquare": "Mondquadrat",
     "marsSquare": "Marsplatz",
@@ -295,7 +303,7 @@ export const tr = {
   },
   "ui.locationButton": {
     "zone": "1. Bölge",
-    "tpPoint": "ışınlanma noktası",
+    "tpPoint": "giriş",
     "muscleSquare": "Kas Meydanı",
     "moonSquare": "Ay Meydanı",
     "marsSquare": "Mars Meydanı",
@@ -402,7 +410,7 @@ export const it = {
   },
   "ui.locationButton": {
     "zone": "Zona 1",
-    "tpPoint": "punto di teletrasporto",
+    "tpPoint": "Entrata",
     "muscleSquare": "Quadrato muscolare",
     "moonSquare": "Piazza Luna",
     "marsSquare": "Piazza Marte",
@@ -509,7 +517,7 @@ export const es = {
   },
   "ui.locationButton": {
     "zone": "Zona 1",
-    "tpPoint": "punto di teletrasporto",
+    "tpPoint": "Entrada",
     "muscleSquare": "Plaza del músculo",
     "moonSquare": "Plaza de la luna",
     "marsSquare": "Plaza de Marte",
@@ -616,7 +624,7 @@ export const sa = {
   },
   "ui.locationButton": {
     "zone": "क्षेत्रम् १",
-    "tpPoint": "दूरस्थापन बिन्दु",
+    "tpPoint": "प्रवेश",
     "muscleSquare": "मांसपेशी वर्ग",
     "moonSquare": "चन्द्रचतुष्कोण",
     "marsSquare": "मंगलचतुष्कोण",
@@ -665,31 +673,31 @@ export const zh = {
     "button": {
       "ok": "好的",
       "cancel": "取消",
-      "claim": "宣称"
+      "claim": "领取"
     },
     "title": {
-      "cost": "费用",
-      "costToUpper": "费用"
+      "cost": "花费",
+      "costToUpper": "花费"
     }
   },
   "ui.languages": {
     "english": "英语",
-    "chinese": "中国人",
+    "chinese": "中文",
     "german": "德语",
-    "japenese": "日本人",
-    "korean": "韩国人",
+    "japenese": "日语",
+    "korean": "韩语",
     "spanish": "西班牙语",
-    "turkey": "火鸡",
+    "turkey": "土耳其语",
     "saudi": "沙特阿拉伯",
     "portuguese": "葡萄牙语",
-    "iran": "伊朗"
+    "iran": "伊朗语"
   },
   "translation": {
     "welcome": "欢迎",
     "deep": {
       "look": "深看"
     },
-    "closePoster": "衣柜"
+    "closePoster": "关闭"
   },
   "npc": {
     "m2dmsg1": "你好。 ",
@@ -697,42 +705,42 @@ export const zh = {
     "m2dHelp": "我能提供什么帮助？ "
   },
   "ui.staminaPanel": {
-    "bonusDisplay": "奖金： {{value}}%",
+    "bonusDisplay": "金币加成： {{value}}%",
     "deep": {
-      "look": "深入查看耐力面板！"
+      "look": "深入查看面板！"
     },
     "dailyCap": {
       "test": "每天测试",
-      "notMet": "每日上限 {{currentValue}}/{{maxValue}} ({{remainingValue}} 最多） {{currentPercent}}%",
-      "hit": "每日上限 {{maxValue}} 吹！  {{collectionRate}}%"
+      "notMet": "每日全额金币上限 {{currentValue}}/{{maxValue}} (还有{{remainingValue}} 到达上限） {{currentPercent}}%",
+      "hit": "每日上限 {{maxValue}} 已达到！  {{collectionRate}}%"
     },
-    "levelDisplay": "甚至 {{currentValue}} ({{remainingValue}} 直到下一次） {{currentPercent}}%"
+    "levelDisplay": "当前等级 {{currentValue}} (还要{{remainingValue}} 到下一级） {{currentPercent}}%"
   },
   "ui.sideButton": {
-    "avatarSwap": "换头像",
+    "avatarSwap": "变身",
     "summonPet": "召唤宠物",
-    "locationButton": "地点",
-    "raffleButton": "赠送",
-    "inventoryButton": "存货",
+    "locationButton": "地图",
+    "raffleButton": "金币抽奖",
+    "inventoryButton": "背包",
     "gameGuide": "游戏说明",
     "reloginButton": "重新登录",
-    "refreshSave": "更新",
+    "refreshSave": "更新/保存",
     "gameTool": "游戏工具",
     "showLvlLeaderBoard": "等级排行",
     "language": "语言"
   },
   "ui.locationButton": {
     "zone": "1区",
-    "tpPoint": "传送点",
+    "tpPoint": "入口",
     "muscleSquare": "肌肉广场",
     "moonSquare": "月亮广场",
     "marsSquare": "火星广场",
-    "heavenSquare": "天空之地",
+    "heavenSquare": "天空广场",
     "rewardCenter": "奖励中心"
   },
   "ui.prompts": {
     "checkingLatestPrices": "查看当前价格...",
-    "stockNotAvailable": "（库存不可用）",
+    "stockNotAvailable": "（暂无库存）",
     "attemptRelogin": "正在尝试重新登录",
     "pickLanuage": "选择语言"
   },
@@ -755,7 +763,7 @@ export const zh = {
   },
   "ui.raffle": {
     "raffleTitle": "玩抽奖",
-    "raffleText": "你觉得幸福吗！？\n",
+    "raffleText": "你觉得开心吗！？\n",
     "rafflePlay": "玩",
     "raffleCancel": "取消",
     "raffleResult": "结果",
@@ -831,7 +839,7 @@ export const ko = {
   },
   "ui.locationButton": {
     "zone": "구역 1",
-    "tpPoint": "텔레포트 포인트",
+    "tpPoint": "입구",
     "muscleSquare": "근육 사각형",
     "moonSquare": "문스퀘어",
     "marsSquare": "화성 제곱",
@@ -938,7 +946,7 @@ export const jp = {
       },
         "ui.locationButton": {
           "zone": "ゾーン1",
-          "tpPoint": "テレポートパンクト",
+          "tpPoint": "入り口",
           "muscleSquare": "マスケルクアドラット",
           "moonSquare": "モンドクワドラット",
           "marsSquare": "マルスプラッツ",
@@ -1045,7 +1053,7 @@ export const br = {
   },
   "ui.locationButton": {
     "zone": "Zona 1",
-    "tpPoint": "ponto de teletransporte",
+    "tpPoint": "Entrada",
     "muscleSquare": "músculo quadrado",
     "moonSquare": "quadrado da lua",
     "marsSquare": "quadrado de marte",
@@ -1152,7 +1160,7 @@ export const ir =  {
   },
   "ui.locationButton": {
     "zone": "منطقه 1",
-    "tpPoint": "نقطه تله پورت",
+    "tpPoint": "ورود",
     "muscleSquare": "مربع عضله",
     "moonSquare": "مربع ماه",
     "marsSquare": "میدان مریخ",

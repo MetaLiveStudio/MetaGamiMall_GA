@@ -1,5 +1,6 @@
-import { GAME_STATE } from "src/state";
+import { GAME_STATE } from "../state";
 import { COIN_MANAGER } from "./coin";
+import { log } from "../back-ports/backPorts";
 import { minableController } from "./mining/minables";
 
 //remove all game elements
@@ -58,6 +59,20 @@ export function decodeConnectionCode(
   }
   return "Unrecognized Code:" + code;
 }
+
+export function isNormalDisconnect(code: number) {
+  log("isNormalDisconnect " , code  )
+  //https://docs.colyseus.io/colyseus/server/room/#table-of-websocket-close-codes
+  switch(code){
+    case 1000:
+    case 1001:
+      log("isNormalDisconnect " , code," return true"  )
+      return true
+      break;
+  }
+  log("isNormalDisconnect " , code," return false"  )
+  return false
+}
 export function isErrorCode(code: number) {
   log("isErrorCode ENTRY", code);
   //https://docs.colyseus.io/colyseus/server/room/#table-of-websocket-close-codes
@@ -81,6 +96,7 @@ export function isErrorCode(code: number) {
     case 1013: //service denied requset temporily
     case 1014: //bad gateway
     case 1015: //tls failure
+    case 4402: //duplicate session detected
     //custom
     case 4401: //unauthorized
       log("isErrorCode EXIT", code,true);

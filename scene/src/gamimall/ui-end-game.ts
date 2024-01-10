@@ -1,21 +1,29 @@
-import * as ui from "@dcl/ui-scene-utils";
-import { CONFIG, initConfig } from "src/config";
+//TODO DELETE THIS FILE all stuff in here should have been migrated to own locations
+
+import * as utils from '@dcl-sdk/utils'
+import * as ui from 'dcl-ui-toolkit'
+import { CONFIG, initConfig } from "../config";
 //import { CustomPrompt } from "src/dcl-scene-ui-workaround/CustomPrompt";
-import resources, { setSection } from "src/dcl-scene-ui-workaround/resources";
-import { logChangeListenerEntry } from "src/logging";
-import { REGISTRY } from "src/registry";
-import { GameEndResultType, GAME_STATE } from "src/state";
-import { endGame } from "./gameplay";
-import { RESOURCES } from "./resources";
-import {
+//import resources, { setSection } from "src/dcl-scene-ui-workaround/resources";
+import { logChangeListenerEntry } from "../logging";
+import { REGISTRY } from "../registry";
+import { GameEndResultType, GAME_STATE } from "../state";
+import { endGame } from "../gameplay";
+import { Color4 } from '@dcl/sdk/math';
+import { CustomOptionsPrompt } from '../ui/modals';
+import { CustomClaimArgs, CustomClaimPrompt } from '../ui/claimModals';
+import { log } from '../back-ports/backPorts';
+import { CustomRewardPrompt } from '../ui/rewardPrompts';
+//import { RESOURCES } from "./resources";
+/*import {
   CustomClaimArgs,
   CustomClaimPrompt,
   CustomOptionsPrompt,
   CustomRewardPrompt,
   InventoryPrompt,
   LevelUpPrompt,
-} from "src/ui/modals";
-
+} from "../ui/modals";
+*/
 /*
 const entity = new Entity()
 entity.addComponent(new GLTFShape('models/Lildoge_NLA.gltf'))
@@ -44,7 +52,7 @@ endGamePrompt.addText("Play",0,180,Color4.White(),20)
 */
 
 //initConfig()
-
+/*
 const SHIFTY = -30;
 const SHIFTY_TEXT = -70;
 
@@ -70,34 +78,6 @@ const BANNER_SOURCE_WIDTH = 1093; //1038
 const BANNER_SOURCE_HEIGHT = 128;
 
 const BANNER_IMAGE_SCALE = 0.3;
-type RowModifierAmountData={
-  bonusPercent:number
-  bonusAmount:number
-  bonusLabel:string
-}
-function makeRowText(val:number,labal:string,modifierAmountData:RowModifierAmountData,minValToShow:number,fallbackText:string){
-  if(val < minValToShow){
-    return fallbackText
-  }else{
-    let valText = 'x' + '' + val
-    if(modifierAmountData !== undefined ){
-      if(modifierAmountData.bonusAmount !== undefined && modifierAmountData.bonusAmount > 0){
-        valText += "+" + modifierAmountData.bonusAmount
-      }
-      let bonusParens = ""
-      if(modifierAmountData.bonusPercent !== undefined){
-        bonusParens += "%"+ (((modifierAmountData.bonusPercent < 1) ? modifierAmountData.bonusPercent : modifierAmountData.bonusPercent-1)*100).toFixed(0)
-      }
-      if(modifierAmountData.bonusLabel !== undefined){
-        bonusParens += " "+modifierAmountData.bonusLabel
-      }
-      if(bonusParens !== undefined && bonusParens.length > 0){
-        valText += "("+bonusParens+")"
-      }
-    }
-    return valText
-  }
-}
 
 export function initUIEndGame() {
   let buttonPosY = BUTTON_POS_Y;
@@ -110,40 +90,24 @@ export function initUIEndGame() {
   const buttonHeight = BUTTON_HEIGHT;
 
   let yCounter = startX;
+  */
   /*
-const gameTutorialImg = 'images/game/gameTutorial-Img1.png'
-const gameTutorialImgTexture = new Texture(gameTutorialImg);
-const gameTutorialImgDesc = "Game Explaination"
-*/
+  const gameTutorialImg = 'images/game/gameTutorial-Img1.png'
+  const gameTutorialImgTexture = new Texture(gameTutorialImg);
+  const gameTutorialImgDesc = "Game Explaination"
+  */
 
-  const endOptions = {
-    width: 420,
-    modalWidth: -200,
-  };
-  const endGameConfirmPrompt20 = new CustomOptionsPrompt(
-    "End Current Game",
-    "End Current Game\n No progress will be saved.",
-    "End Game",
-    "",
-    "Cancel",
-    "",
-    () => {
-      log("end");
-      endGame();
-      hideEndGameConfirmPrompt();
-    },
-    undefined,
-    endOptions
-  );
-
+    /*
+  const endGameOfPrompt20 = new CustomRewardPrompt("End Current Game","End Current Game\n No progress will be saved.","End Game","","Cancel",""
+  ,()=>{
+    log('end')
+    endGame()
+    hideEndGameConfirmPrompt()
+  })
+  */
   /*
-const endGameOfPrompt20 = new CustomRewardPrompt("End Current Game","End Current Game\n No progress will be saved.","End Game","","Cancel",""
-,()=>{
-  log('end')
-  endGame()
-  hideEndGameConfirmPrompt()
-})
-*/
+  //MOVED TO ui/claimModals.tsx
+
   let rewardOpts = { height: 550 };
   const claimRewardPrompt20 = new CustomClaimPrompt({
     imagePath:
@@ -194,17 +158,20 @@ const endGameOfPrompt20 = new CustomRewardPrompt("End Current Game","End Current
     options: rewardOpts,
   });
 
-  //claimRewardPrompt20.show()
-
+  claimRewardPrompt20.show()
+  */
   
-  const levelUpPrompt = new LevelUpPrompt("title","text","OK",()=>{}) 
+  //MOVED TO ui/rewardPrompts
+  /*const levelUpPrompt = new LevelUpPrompt("title","text","OK",()=>{}) 
   levelUpPrompt.updateCoins("2")
   levelUpPrompt.updateDollar("3")
   levelUpPrompt.hide()
-  REGISTRY.ui.levelUpPrompt = levelUpPrompt;
+  REGISTRY.ui.levelUpPrompt = levelUpPrompt;*/
 
   
 
+  /*
+  //MOVED TO ui inventoryModals.tsx
   const inventoryPrompt = new InventoryPrompt("Inventory","inventory text","OK",()=>{
     log("ok clicked")
   })
@@ -229,217 +196,6 @@ const endGameOfPrompt20 = new CustomRewardPrompt("End Current Game","End Current
 
   //inventoryPrompt.show()
   
-  REGISTRY.ui.inventoryPrompt = inventoryPrompt;
-
-  const endGamePrompt20 = new CustomRewardPrompt(
-    "Congratulations",
-    "You have collected",
-    "x111",
-    "x111",
-    "Confirm",
-    "This is enough for me..",
-    "Join Raffle",
-    "Under Development...",
-    () => {},
-    () => {},
-    {
-      height: 430,
-    }
-  );
-  endGamePrompt20.autoCloseEnabled = true
-  endGamePrompt20.autoCloseTimeoutMS = 5000
-  //endGamePrompt20.show()
-  REGISTRY.ui.endGameConfirmPrompt = endGameConfirmPrompt20;
-
-  function openClaimRewardPrompt() {
-    claimRewardPrompt20.show(); 
-  }
-  function hideClaimRewardPrompt() {
-    claimRewardPrompt20.hide();
-  }
-  function updateRewardPrompt(args: CustomClaimArgs) {
-    //endGamePrompt.show();
-    claimRewardPrompt20.updateData(args);
-  }
-
-  function openEndGamePrompt() {
-    //endGamePrompt.show();
-    endGamePrompt20.show();
-    if (GAME_STATE.inVox8Park) {
-      //resultMetaCoinText.text.visible = false;
-      //resultGameCoinEarnedText.text.visible = false;
-      //promptBannerImage.image.source = RESOURCES.textures.voxBanner; //workaround to try to save textures
-      //gameImageDescList = gameImageDescList_VOX_PARK
-      //gameImageList = gameImageList_VOX_PARK
-    } else {
-      //promptBannerImage.image.source = RESOURCES.textures.superDogerioBanner; //workaround to try to save textures
-      //resultMetaCoinText.text.visible = true;
-      //resultGameCoinEarnedText.text.visible = true;
-      //gameImageDescList = gameImageDescList_SUPER_DOGERIO
-      //gameImageList = gameImageList_SUPER_DOGERIO
-    }
-  }
-
-  function hideEndGamePrompt() {
-    //endGamePrompt.hide();
-    endGamePrompt20.hide();
-  }
-
-  function openEndGameConfirmPrompt() {
-    //endGameConfirmPrompt.show();
-    endGameConfirmPrompt20.show();
-  }
-  function hideEndGameConfirmPrompt() {
-    //endGameConfirmPrompt.hide();
-    endGameConfirmPrompt20.hide();
-  }
-  REGISTRY.ui.hideEndGamePrompt = hideEndGamePrompt;
-  REGISTRY.ui.openEndGameConfirmPrompt = openEndGameConfirmPrompt;
-  REGISTRY.ui.hideEndGameConfirmPrompt = hideEndGameConfirmPrompt;
-  REGISTRY.ui.openEndGamePrompt = openEndGamePrompt;
-
-  REGISTRY.ui.openClaimRewardPrompt = openClaimRewardPrompt;
-  REGISTRY.ui.hideClaimRewardPrompt = hideClaimRewardPrompt;
-  REGISTRY.ui.updateRewardPrompt = updateRewardPrompt;
-
-  GAME_STATE.addChangeListener((key: string, newVal: any, oldVal: any) => {
-    logChangeListenerEntry(
-      "listener.game.ui-end-game.ts ",
-      key,
-      newVal,
-      oldVal
-    );
-
-    switch (key) {
-      //common ones on top
-      case "gameEndResult":
-        const endGameResult = newVal as GameEndResultType;
-
-        if (
-          GAME_STATE.inVox8Park ||
-          (GAME_STATE.gameRoom && GAME_STATE.gameRoom.name == "vox_board_park")
-        ) {
-          const txt =
-            endGameResult.guestCoinCollected +
-            " " +
-            endGameResult.guestCoinName;
-          endGamePrompt20.updateSubGameDollars(txt);
-          //resultGameCoinStartText.text.value = strPad("Game Coins Started With",".",textColLen+col2Len," " + endGameResult.gcStarted) // + " --> " + endGameResult.gcCollectedToMC + " MC"
-          //resultGameCoinFoundText.text.value = txt; // + " --> " + endGameResult.gcCollectedToMC + " MC"
-          //resultGameCoinText.text.value = strPad("New Game Coin Total ",".",textColLen," " + endGameResult.gcTotal )  + " --> " + endGameResult.gcCollectedToMC + " MC"
-          //resultMetaCoinText.text.value = endGameResult.mcCollected + " MetaCash"
-          //resultMetaCoinText.text.visible = false;
-          //resultGameCoinEarnedText.text.visible = false;
-        } else {
-          log("listener.gameEndResult", endGameResult);
-          
-          const minValToShow = 1
-          const textWhenBelowMin = ""
-          let m1 = makeRowText(endGameResult.material1Collected,CONFIG.GAME_COIN_TYPE_MATERIAL_1,undefined,minValToShow,textWhenBelowMin)
-          let m2 = makeRowText(endGameResult.material2Collected,CONFIG.GAME_COIN_TYPE_MATERIAL_1,undefined,minValToShow,textWhenBelowMin)
-          let m3 = makeRowText(endGameResult.material3Collected,CONFIG.GAME_COIN_TYPE_MATERIAL_1,undefined,minValToShow,textWhenBelowMin)
-
-          let rock1 = makeRowText(endGameResult.rock1Collected,CONFIG.GAME_COIN_TYPE_R1,undefined,minValToShow,textWhenBelowMin)
-          let rock2 = makeRowText(endGameResult.rock2Collected,CONFIG.GAME_COIN_TYPE_R2,undefined,minValToShow,textWhenBelowMin)
-          let rock3 = makeRowText(endGameResult.rock3Collected,CONFIG.GAME_COIN_TYPE_R3,undefined,minValToShow,textWhenBelowMin)
-          
-          let bronze = makeRowText(endGameResult.bronzeCollected,CONFIG.GAME_COIN_TYPE_BZ,undefined,minValToShow,textWhenBelowMin)
-
-          let bronzeShoe = makeRowText(endGameResult.bronzeShoeCollected,CONFIG.GAME_COIN_TYPE_BRONZE_SHOE_1,undefined,minValToShow,textWhenBelowMin)
-
-          let nitro = makeRowText(endGameResult.nitroCollected,CONFIG.GAME_COIN_TYPE_NI,undefined,minValToShow,textWhenBelowMin)
-          let petrol = makeRowText(endGameResult.petroCollected,CONFIG.GAME_COIN_TYPE_BP,undefined,minValToShow,textWhenBelowMin)
-          
-
-
-          let txtD = makeRowText(endGameResult.mcCollected , " MetaCash",undefined,minValToShow,textWhenBelowMin);
-          //todo add gcBonusEarned to it???
-          let txtC = makeRowText(
-              endGameResult.gcCollected , " LilCoin"
-              ,undefined//{bonusAmount:endGameResult.gcBonusEarned,bonusLabel:"Bonus",bonusPercent:endGameResult.coinMultiplier}
-              ,minValToShow,textWhenBelowMin);
-          
-          let txtEarned =
-            makeRowText(
-              endGameResult.gcBonusEarned , " LilCoin"
-              ,{bonusAmount:-1,bonusLabel:"Bonus",bonusPercent:endGameResult.coinMultiplier}
-              ,minValToShow,textWhenBelowMin);
-          //resultMetaCoinText.text.visible = true;
-          //resultGameCoinStartText.text.value = strPad("Game Coins Started With",".",textColLen+col2Len," " + endGameResult.gcStarted) // + " --> " + endGameResult.gcCollectedToMC + " MC"
-
-          //resultGameCoinFoundText.text.value = txtC; // + " --> " + endGameResult.gcCollectedToMC + " MC"
-          if (endGameResult.gcBonusEarned && endGameResult.coinMultiplier) {
-            //resultGameCoinEarnedText.text.visible = true;
-            //resultGameCoinEarnedText.text.value = txtEarned;
-          } else {
-            //txtEarned = "+" + 0 + " LilCoin Bonus";
-            //resultGameCoinEarnedText.text.value = txtEarned;
-          }
-
-          endGamePrompt20.autoCloseEnabled = endGameResult.autoCloseEnabled;
-          endGamePrompt20.autoCloseTimeoutMS = endGameResult.autoCloseTimeoutMS;
-
-          endGamePrompt20.updateCoinsEarned(txtEarned);
-          endGamePrompt20.updateCoins(txtC);
-          endGamePrompt20.updateDollar(txtD);
-
-          endGamePrompt20.updateRock1(rock1);
-          endGamePrompt20.updateRock2(rock2);
-          endGamePrompt20.updateRock3(rock3);
-
-          
-          endGamePrompt20.updateBronze(bronze);
-          endGamePrompt20.updateBronzeShoe(bronzeShoe);
-
-          endGamePrompt20.updateNitro(nitro);
-          endGamePrompt20.updatePetro(petrol);
-
-          endGamePrompt20.updateMaterial1(m1);
-          endGamePrompt20.updateMaterial2(m2);
-          endGamePrompt20.updateMaterial3(m3);
-
-          //resultGameCoinText.text.value = strPad("New Game Coin Total ",".",textColLen," " + endGameResult.gcTotal )  + " --> " + endGameResult.gcCollectedToMC + " MC"
-          //resultMetaCoinText.text.value = txtD;
-        }
-
-        break;
-    }
-  });
-  //todo: test it
-  //start off value
-  GAME_STATE.setGameEndResult({
-    gcStarted: 100,
-    gcCollected: 111,
-    gcTotal: 211,
-    gcEnded: 11,
-    gcCollectedToMC: 2,
-    gameTimeTaken: 123,
-    mcCollected: 5,
-    mcAdjustAmount: -3,
-    mcCollectedAdjusted: 2,
-    mcTotalEarnedToday: 3,
-    walletTotal: 1234,
-    guestCoinCollected: 999,
-    coinMultiplier: 1,
-    gcBonusEarned: 0,
-    guestCoinName: "",
-    rock1Collected: 11,
-    rock2Collected: 12,
-    rock3Collected: 13,
-    petroCollected: 14,
-    nitroCollected: 15,
-    bronzeCollected: 14.4,
-    bronzeShoeCollected: 14.6,
-    material1Collected: 4,
-    material2Collected: 5,
-    material3Collected: 6,
-    autoCloseEnabled: true,
-    autoCloseTimeoutMS: 5000,
-    raffleResult: {
-      cost: 0,
-      amountWon: 0,
-      multiplier: 0,
-      hasEnoughToPlay: false,
-    },
-  });
-}
+  REGISTRY.ui.inventoryPrompt = inventoryPrompt;*/
+  
+//}//end initUIEndGame

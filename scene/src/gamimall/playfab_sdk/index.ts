@@ -3,6 +3,7 @@
 This wraps playfab api into promises for easier callback usage
 
 */
+import { log } from "../../back-ports/backPorts";
 import {
   GetCatalogItemsRequest,
   GetCatalogItemsResult,

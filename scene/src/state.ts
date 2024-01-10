@@ -1,5 +1,5 @@
-import { Realm } from "@decentraland/EnvironmentAPI";
-import { UserData } from "@decentraland/Identity";
+//import { Realm } from "@decentraland/EnvironmentAPI";
+//import { UserData } from "@decentraland/Identity";
 import { Room } from "colyseus.js";
 import { CONFIG } from "./config";
 import {
@@ -10,10 +10,15 @@ import {
 import { GameLevelData as GameRoomData } from "./gamimall/resources";
 //import { TESTDATA_USE_SIGNED_FETCH } from './config'
 
-import * as clientSpec from 'src/meta-decentrally/modules/connection/state/client-state-spec'
-import { RaceData } from 'src/meta-decentrally/modules/race'
-import { TrackData } from 'src/meta-decentrally/modules/trackPlacement'
+
+//import { RaceData } from 'src/meta-decentrally/modules/race'
+//import { TrackData } from 'src/meta-decentrally/modules/trackPlacement'
 import { GetPlayerCombinedInfoResultHelper } from "./gamimall/playfab-utils/playfabGetPlayerCombinedInfoResultHelper";
+import { UserData } from "~system/Players";
+import { RealmInfo } from "~system/Runtime";
+import { ObservableComponentSubscription, log } from "./back-ports/backPorts";
+import { onIdleStateChangedObservable } from "./back-ports/onIdleStateChangedObservable";
+import { EnvironmentRealm } from "~system/EnvironmentApi";
 
  
 
@@ -24,7 +29,7 @@ export class PlayerState {
   playerPlayFabId: string = "not-set"; //player playfab address
   dclUserData: UserData | null = null;
   //let userData: UserData
-  dclUserRealm: Realm | null = null;
+  dclUserRealm: RealmInfo | null = null;
   playFabLoginResult: LoginResult | null = null;
   playFabUserInfo: GetPlayerCombinedInfoResultPayload | undefined | null;
   playFabUserInfoHelper: GetPlayerCombinedInfoResultHelper
@@ -73,7 +78,7 @@ export class PlayerState {
     this.playerDclId = val.userId; //sideaffect
     this.notifyOnChange("dclUserData", val, oldVal);
   }
-  setDclUserRealm(val: Realm) {
+  setDclUserRealm(val: RealmInfo) {
     const oldVal = this.dclUserRealm;
     this.dclUserRealm = val;
     this.notifyOnChange("dclUserRealm", val, oldVal);
@@ -102,30 +107,30 @@ export class PlayerState {
 class LeaderboardState {
   leaderBoardStateListeners: ObservableComponentSubscription[] = [];
 
-  levelEpochLeaderboard?: PlayFabServerModels.GetLeaderboardResult;
-  weeklyLeaderboard?: PlayFabServerModels.GetLeaderboardResult;
-  dailyLeaderboard?: PlayFabServerModels.GetLeaderboardResult;
-  hourlyLeaderboard?: PlayFabServerModels.GetLeaderboardResult;
+  levelEpochLeaderboard?: PlayFabClientModels.GetLeaderboardResult;
+  weeklyLeaderboard?: PlayFabClientModels.GetLeaderboardResult;
+  dailyLeaderboard?: PlayFabClientModels.GetLeaderboardResult;
+  hourlyLeaderboard?: PlayFabClientModels.GetLeaderboardResult;
 
   levelEpochLeaderboardRecord: Record<
     string,
-    PlayFabServerModels.GetLeaderboardResult
+    PlayFabClientModels.GetLeaderboardResult
   > = {};
   weeklyLeaderboardRecord: Record<
     string,
-    PlayFabServerModels.GetLeaderboardResult
+    PlayFabClientModels.GetLeaderboardResult
   > = {};
   dailyLeaderboardRecord: Record<
     string,
-    PlayFabServerModels.GetLeaderboardResult
+    PlayFabClientModels.GetLeaderboardResult
   > = {};
   hourlyLeaderboardRecord: Record<
     string,
-    PlayFabServerModels.GetLeaderboardResult
+    PlayFabClientModels.GetLeaderboardResult
   > = {};
 
   setHourlyLeaderBoard(
-    val: PlayFabServerModels.GetLeaderboardResult,
+    val: PlayFabClientModels.GetLeaderboardResult,
     prefix: string = ""
   ) {
     const oldVal = this.hourlyLeaderboard;
@@ -139,7 +144,7 @@ class LeaderboardState {
   }
   
   setLevelEpocLeaderBoard(
-    val: PlayFabServerModels.GetLeaderboardResult,
+    val: PlayFabClientModels.GetLeaderboardResult,
     prefix: string = ""
   ) {
     const oldVal = this.levelEpochLeaderboard;
@@ -151,7 +156,7 @@ class LeaderboardState {
     this.notifyOnChange(prefix + "levelEpochLeaderboard", val, oldVal);
   }
   setWeeklyLeaderBoard(
-    val: PlayFabServerModels.GetLeaderboardResult,
+    val: PlayFabClientModels.GetLeaderboardResult,
     prefix: string = ""
   ) {
     const oldVal = this.weeklyLeaderboard;
@@ -163,7 +168,7 @@ class LeaderboardState {
     this.notifyOnChange(prefix + "weeklyLeaderboard", val, oldVal);
   }
   setDailyLeaderBoard(
-    val: PlayFabServerModels.GetLeaderboardResult,
+    val: PlayFabClientModels.GetLeaderboardResult,
     prefix: string = ""
   ) {
     const oldVal = this.dailyLeaderboard;
@@ -241,6 +246,10 @@ export type GameEndResultType = {
   material2Collected: number;
   material3Collected: number;
 
+  statRaffleCoinBag: number
+  ticketRaffleCoinBag: number
+  redeemRaffleCoinBag: number
+
   autoCloseEnabled: boolean;
   autoCloseTimeoutMS: number
 
@@ -275,8 +284,8 @@ export class GameState {
   screenBlockLoading: boolean = false;
 
   //start src/meta-decentrally
-  raceData:RaceData
-  trackData:TrackData
+  //raceData:RaceData
+  //trackData:TrackData
   //end src/meta-decentrally
 
   playerState: PlayerState = new PlayerState();
@@ -297,6 +306,11 @@ export class GameState {
   gameCoinGCValue: number = 0;
   gameCoinMCValue: number = 0;
 
+  gameCoinVBValue: number = 0;
+  gameCoinACValue: number = 0;
+  gameCoinZCValue: number = 0;
+  gameCoinRCValue: number = 0;
+
   gameCoinBPValue: number = 0;
   gameCoinNIValue: number = 0;
   gameCoinBZValue: number = 0;
@@ -307,6 +321,12 @@ export class GameState {
 
   gameCoinRewardGCValue: number = 0;
   gameCoinRewardMCValue: number = 0;
+
+  gameCoinRewardVBValue: number = 0;
+  gameCoinRewardACValue: number = 0;
+  gameCoinRewardZCValue: number = 0;
+  gameCoinRewardRCValue: number = 0;
+  
 
   gameCoinRewardNIValue: number = 0;
   gameCoinRewardBPValue: number = 0;
@@ -325,6 +345,12 @@ export class GameState {
 
   gameItemBronzeShoeValue: number = 0;
   gameItemRewardBronzeShoeValue: number = 0;
+
+  statRaffleCoinBag: number = 0;
+  ticketRaffleCoinBag: number = 0;
+
+  statRewardRaffleCoinBag: number = 0;
+  ticketRewardRaffleCoinBag: number = 0;
 
   //TODO make more generic
   inVox8Park: boolean = false;
@@ -347,15 +373,6 @@ export class GameState {
     this.playerState.setLoginSuccess(val);
   }
 
-  //store full game object results here, using flags above to track changing them
-  //wrap this in an additional observer pattern
-  //playerCombinedInfoResult:GetPlayerCombinedInfoResult
-  getRaceRoom():Room<clientSpec.RaceRoomState>{
-    if(this.gameRoom && this.gameRoom.name == CONFIG.GAME_RACE_ROOM_NAME){
-      return this.gameRoom as Room<clientSpec.RaceRoomState>
-    }
-    return undefined
-  }
 
   setNftDogeHelmetBalance(val: number) {
     this.playerState.setNftDogeHelmetBalance(val);
@@ -422,6 +439,27 @@ export class GameState {
   }
 
 
+  setGameCoinRewardVBValue(val: number) {
+    const oldVal = this.gameCoinRewardVBValue;
+    this.gameCoinRewardVBValue = val;
+    this.notifyOnChange("gameCoinRewardVBValue", val, oldVal);
+  }
+  setGameCoinRewardACValue(val: number) {
+    const oldVal = this.gameCoinRewardACValue;
+    this.gameCoinRewardACValue = val;
+    this.notifyOnChange("gameCoinRewardACValue", val, oldVal);
+  }
+  setGameCoinRewardZCValue(val: number) {
+    const oldVal = this.gameCoinRewardZCValue;
+    this.gameCoinRewardZCValue = val;
+    this.notifyOnChange("gameCoinRewardZCValue", val, oldVal);
+  }
+  setGameCoinRewardRCValue(val: number) {
+    const oldVal = this.gameCoinRewardRCValue;
+    this.gameCoinRewardRCValue = val;
+    this.notifyOnChange("gameCoinRewardRCValue", val, oldVal);
+  }
+
   setGameCoinRewardBPValue(val: number) {
     const oldVal = this.gameCoinRewardBPValue;
     this.gameCoinRewardBPValue = val;
@@ -457,6 +495,18 @@ export class GameState {
     this.gameItemRewardBronzeShoeValue = val;
     this.notifyOnChange("gameItemRewardBronzeShoeValue", val, oldVal);
   }
+
+  setGameItemRewardStatRaffleCoinBag(val: number) {
+    const oldVal = this.statRewardRaffleCoinBag;
+    this.statRewardRaffleCoinBag = val;
+    this.notifyOnChange("statRewardRaffleCoinBag", val, oldVal);
+  }
+  setGameItemRewardTicketRaffleCoinBag(val: number) {
+    const oldVal = this.ticketRewardRaffleCoinBag;
+    this.ticketRewardRaffleCoinBag = val;
+    this.notifyOnChange("ticketRewardRaffleCoinBag", val, oldVal);
+  }
+
    
   setGameCoinGCValue(val: number) {
     const oldVal = this.gameCoinGCValue;
@@ -506,7 +556,17 @@ export class GameState {
     this.gameCoinR3Value = val;
     this.notifyOnChange("gameCoinR3Value", val, oldVal);
   }
-  
+  setGameItemStatRaffleCoinBag(val: number) {
+    const oldVal = this.statRaffleCoinBag;
+    this.statRaffleCoinBag = val;
+    this.notifyOnChange("statRaffleCoinBag", val, oldVal);
+  }
+  setGameItemTicketRaffleCoinBag(val: number) {
+    const oldVal = this.ticketRaffleCoinBag;
+    this.ticketRaffleCoinBag = val;
+    this.notifyOnChange("ticketRaffleCoinBag", val, oldVal);
+  }
+
   setGameItemBronzeShoeValue(val: number) {
     const oldVal = this.gameItemBronzeShoeValue;
     this.gameItemBronzeShoeValue = val;
@@ -545,6 +605,28 @@ export class GameState {
     this.gameCoinMCValue = val;
     this.notifyOnChange("gameCoinMCValue", val, oldVal);
   }
+
+  setGameCoinVBValue(val: number) {
+    const oldVal = this.gameCoinVBValue;
+    this.gameCoinVBValue = val;
+    this.notifyOnChange("gameCoinVBValue", val, oldVal);
+  }
+  setGameCoinACValue(val: number) {
+    const oldVal = this.gameCoinACValue;
+    this.gameCoinACValue = val;
+    this.notifyOnChange("gameCoinACValue", val, oldVal);
+  }
+  setGameCoinZCValue(val: number) {
+    const oldVal = this.gameCoinZCValue;
+    this.gameCoinZCValue = val;
+    this.notifyOnChange("gameCoinZCValue", val, oldVal);
+  }
+  setGameCoinRCValue(val: number) {
+    const oldVal = this.gameCoinRCValue;
+    this.gameCoinRCValue = val;
+    this.notifyOnChange("gameCoinRCValue", val, oldVal);
+  }
+  
 
   setGameCoinGuestValue(val: number) {
     const oldVal = -1; //this.gameCoinMCValue
@@ -620,6 +702,12 @@ export function initGameState() {
   log("initGameState called");
   if (GAME_STATE === undefined) {
     GAME_STATE = new GameState();
+
+
+    onIdleStateChangedObservable.add((isIdle: boolean) => {
+      log("Idle State change: ", isIdle)
+      GAME_STATE.isIdle = isIdle
+    })
   }
 }
 
@@ -654,6 +742,10 @@ export function resetAllGameStateGameCoin(){
   GAME_STATE.setGameCoinNIValue(0)
   GAME_STATE.setGameItemBronzeShoeValue(0)
 
+
+  GAME_STATE.setGameItemStatRaffleCoinBag(0)
+  GAME_STATE.setGameItemTicketRaffleCoinBag(0)
+
 }
 export function resetAllGameStateGameCoinRewards(){
   GAME_STATE.setGameCoinRewardGCValue(0)
@@ -667,9 +759,9 @@ export function resetAllGameStateGameCoinRewards(){
   GAME_STATE.setGameCoinRewardBPValue(0)
   GAME_STATE.setGameCoinRewardNIValue(0)
   GAME_STATE.setGameItemRewardBronzeShoeValue(0)
-}
 
-onIdleStateChangedObservable.add(({ isIdle }) => {
-  log("Idle State change: ", isIdle)
-  GAME_STATE.isIdle = isIdle
-})
+
+  GAME_STATE.setGameItemRewardStatRaffleCoinBag(0)
+  GAME_STATE.setGameItemRewardTicketRaffleCoinBag(0)
+  
+}

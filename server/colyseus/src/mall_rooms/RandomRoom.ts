@@ -3,7 +3,7 @@ import { BaseCoinRoom } from "./BaseCoinRoom";
 import { CONFIG } from "./config";
 import { BlockType } from "./MyRoomState";
 import { GameEndType, PlayerData } from "./types";
-
+import * as serverStateSpec from "./MyRoomStateSpec";
 
 
 //var PlayFab: PlayFab ;//= require("PlayFab-sdk/Scripts/PlayFab/PlayFab");
@@ -14,10 +14,11 @@ import { GameEndType, PlayerData } from "./types";
 const maxFloorHeight = 6
 const defaultPlayerHeight = 1.724029541015625
 
+//NOT USED
 export class RandomPlacementRoom extends BaseCoinRoom {
   
-  onCreate (options: any) {
-    super.onCreate(options)
+  async onCreate (options: any) {
+    return super.onCreate(options)
   }
 
   gameEndedNotify(data:GameEndType){
@@ -26,9 +27,6 @@ export class RandomPlacementRoom extends BaseCoinRoom {
 
 
 
-  setUp() {
-    super.setUp()
-  }
 
   //clock loop update, 1 second
   clockIntervalUpdate(elapsedTime:number,dt:number){

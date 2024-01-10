@@ -1,5 +1,9 @@
 //TODO move to common location
-import { MovesWithWorld } from "src/meta-decentrally/components/moveWithWorld"
+//import { MovesWithWorld } from "src/meta-decentrally/components/moveWithWorld"
+
+import { Entity } from "@dcl/sdk/ecs"
+import { Vector3 } from "@dcl/sdk/math"
+import { log } from "../../back-ports/backPorts"
 
 
 export function distance(pos1: Vector3, pos2: Vector3): number {
@@ -29,7 +33,7 @@ export function ToRadian(degrees:number)
     return degrees * (pi/180);
 }
 
-
+/*
 export function drawLineBetween(A:Vector3, B:Vector3, _offsetZ?:number):Entity{
     let offset =  0.05
     if(_offsetZ){
@@ -112,7 +116,7 @@ export function notNull(obj:any):boolean{
 export function isNull(obj:any):boolean{
     return obj === null || obj === undefined
 }
-
+*/
 
 /**
  * FIXME make synchronize https://spin.atomicobject.com/2018/09/10/javascript-concurrency/

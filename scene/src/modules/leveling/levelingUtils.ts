@@ -1,3 +1,4 @@
+import { log } from "../../back-ports/backPorts";
 import { LevelingFormulaConfig } from "./levelingTypes"
 
 //so code can run client and colyseus, comment out colysesus side
@@ -11,12 +12,6 @@ import { LevelingFormulaConfig } from "./levelingTypes"
 https://gist.github.com/Jikoo/30ec040443a4701b8980
 http://howtomakeanrpg.com/a/how-to-make-an-rpg-levels.html
 https://onlyagame.typepad.com/only_a_game/2006/08/mathematics_of_.html
-
-//coin cap forumula
-//https://docs.google.com/spreadsheets/d/1BZGRdUw1nKcIcE2pB1XPiG6ECa9AhL-LAXZuaQF5zoA/edit#gid=1696823418
-
-//leveling formula
-https://docs.google.com/spreadsheets/d/1IKFq_K0OkTRt7RL0l_MyzyJdgcT8Zs5gw505lRpcEVQ/edit#gid=0
 */
 
 export function getCoinCap(lvl:number,levelingConfig:LevelingFormulaConfig):number{

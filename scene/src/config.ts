@@ -1,8 +1,16 @@
-import { isPreviewMode } from "@decentraland/EnvironmentAPI";
+import { Vector3 } from '@dcl/sdk/math';
+import { isPreviewMode } from '~system/EnvironmentApi'
 import { GameLevelData } from "./gamimall/resources";
 import { Logger } from "./logging";
 import { LevelingFormulaConfig } from "./modules/leveling/levelingTypes";
-import { getEntityByName, isNull, notNull } from "./utils";
+import { notNull } from "./utils";
+import { getRealm } from '~system/Runtime';
+  
+export const SCENE_TYPE_GAMIMALL = "gamimall"
+export const SCENE_TYPE_UNIFIED_SCENE = "unified-scene"
+
+type SceneType = 'gamimall'|'unified-scene'|'px'
+let SCENE_TYPE:SceneType = SCENE_TYPE_GAMIMALL//SCENE_TYPE_UNIFIED_SCENE//SCENE_TYPE_GAMIMALL
 
 export enum WearableEnum {
   DOGE_HEAD = "urn:decentraland:matic:collections-v2:0x47f8b9b9ec0f676b45513c21db7777ad7bfedb35:0", //'urn:decentraland:matic:collections-v2:0x7e553ede9b6ad437262d28d4fe9ab77e63089b8a:1' //text: "Festival Glasses" //doge head
@@ -17,9 +25,6 @@ export enum WearableEnum {
 
 export const AVATAR_SWAP_WEARABLES = [WearableEnum.DOGE_HEAD];
 export const VIP_NFT_AREA = [WearableEnum.DOGE_HEAD, WearableEnum.CYBER_TEE, WearableEnum.CYBER_WINGS, WearableEnum.CYBER_TROUSER, WearableEnum.CYBER_MASK, WearableEnum.CYBER_HELMET, WearableEnum.COCACOLA_JUMPER]
-
-const ParcelCountX:number = 4
-const ParcelCountZ:number = 5
 
 //MOVED TO GAME_STATE
 //PLAYER_AVATAR_SWAP_ENABLED = false //starts off disabled, only changes when has wearable on
@@ -57,7 +62,7 @@ export const GAME_MINABLES_ENABLED_VALS: Record<string, boolean> = {
   local: true,
   dev: false,
   stg: true,
-  prd: true
+  prd: true 
 };
 export const GAME_BUYABLES_ENABLED_VALS: Record<string, boolean> = {
   local: true,
@@ -90,6 +95,7 @@ export const GAME_LEVELING_FORMULA_CONST_VALS: Record<string, LevelingFormulaCon
 };*/
  
 export class Config {
+  SCENE_TYPE:SceneType = SCENE_TYPE
   IN_PREVIEW = false; // can be used for more debugging of things, not meant to be enabled in prod
   ENABLE_PIANO_KEYS = true;
   ENABLE_CLICKABLE_PIANO_KEYS = false;
@@ -116,8 +122,14 @@ export class Config {
   SHOW_CONNECTION_DEBUG_INFO = false;
   SHOW_PLAYER_DEBUG_INFO = false;
   SHOW_GAME_DEBUG_INFO = false; 
-
-  COLYSEUS_ENDPOINT_LOCAL = "see #initForEnv"
+  DEBUG_ENABLE_TRIGGER_VISIBLE = true
+  // const ENDPOINT = "wss://hept-j.colyseus.dev";
+  //d-awgl.us-east-vin.colyseus.net/  
+  //new dev: wss://wnc9pc.colyseus.dev
+  //new prod: wss://z34-ff.colyseus.dev
+  COLYSEUS_ENDPOINT_LOCAL = "see #initForEnv"//"wss://bnvdlg.us-east-vin.colyseus.net"; //"ws://127.0.0.1:2567"; // local environment
+  //COLYSEUS_ENDPOINT_NON_LOCAL = "wss://d-awgl.us-east-vin.colyseus.net"; // dev environment
+  COLYSEUS_ENDPOINT_NON_LOCAL_HTTP = "see #initForEnv"
   COLYSEUS_ENDPOINT_NON_LOCAL = "see #initForEnv"; // prod environment
   //COLYSEUS_ENDPOINT = "wss://TODO"; // production environment
   
@@ -152,6 +164,7 @@ export class Config {
   CHECK_MULTIPLIER_URL_OWNER_FIELD = "&address=";
   CHECK_MULTIPLIER_URL_USERDATA_FIELD = "&userData=";
   CHECK_MULTIPLIER_URL_BRONZE_SHOE_FIELD = "&bronzeShoeQty=";
+  CHECK_MULTIPLIER_API_CALL_REALM_BASE_URL_FIELD = "&realmBaseUrl="
 
   //in milliseconds
   DELAY_LOAD_UI_BARS = -1;
@@ -190,7 +203,7 @@ export class Config {
   GAME_UI_RACE_PANEL_ENABLED = false // top center gives stats of current coin collecting in lobby ui_background.ts RacePanel
   
   GAME_COIN_AUTO_START = true//if true will auto connect to coin collecting
-  GAME_COIN_VAULT_POSITION = new Vector3(
+  GAME_COIN_VAULT_POSITION = Vector3.create(
     40.1077880859375,
     2.2049999237060547,
     43.80853271484375
@@ -198,10 +211,18 @@ export class Config {
 
   //max auto connect retries, prevent error always visible
   GAME_CONNECT_RETRY_MAX=3
+  //after this time period restart the retry again
+  GAME_CONNECT_RESTART_RETRY_INTERVAL=30*60*1000//30 min
+
+  SEND_RACE_DATA_FREQ_MILLIS = 1000 / 10 // doing 13 times a second or 76ms (100 or less is considered acceptable for gaming). best i could get locally was ~60ms
 
   GAME_COIN_TYPE_GC = "GC";
   GAME_COIN_TYPE_MC = "MC";
   GAME_COIN_TYPE_VB = "VB";
+  //place holders incase we want to add more
+  GAME_COIN_TYPE_AC = "AC";
+  GAME_COIN_TYPE_ZC = "ZC";
+  GAME_COIN_TYPE_RC = "RC";//reward coin?
 
   GAME_COIN_TYPE_R1 = "R1";
   GAME_COIN_TYPE_R2 = "R2";
@@ -220,6 +241,10 @@ export class Config {
   GAME_COIN_TYPE_MATERIAL_1_ID="Material.1" 
   GAME_COIN_TYPE_MATERIAL_2_ID="Material.2"
   GAME_COIN_TYPE_MATERIAL_3_ID="Material.3"
+  
+  GAME_COIN_TYPE_STAT_RAFFLE_COIN_BAG_3_ID="item.stat.raffle_coin_bag"
+  GAME_COIN_TYPE_TICKET_RAFFLE_COIN_BAG_ID="item.ticket.raffle_coin_bag"
+  GAME_COIN_TYPE_REDEEM_RAFFLE_COIN_BAG_ID="item.redeem.raffle_coin_bag"
  
   //https://blog.jakelee.co.uk/converting-levels-into-xp-vice-versa/
   //https://docs.google.com/spreadsheets/d/1IKFq_K0OkTRt7RL0l_MyzyJdgcT8Zs5gw505lRpcEVQ/edit#gid=0
@@ -235,19 +260,9 @@ export class Config {
   GAME_LEADEBOARD_2DUI_MAX_RESULTS = 14;
   GAME_LEADEBOARD_MAX_RESULTS = 16;
   GAME_LEADEBOARD_LVL_MAX_RESULTS = 100;
+  GAME_LEADEBOARD_RAFFLE_MAX_RESULTS = 20;
   GAME_ROOM_DATA: GameLevelData[] = [
-    //{ id: "level_pad_surfer", loadingHint: "Collect coins along the road" },
-    { id: "level_pad_surfer_infin", loadingHint: "Collect coins along the road. No time limit" },
-    /*
-    {
-      id: "level_random_ground_float",
-      loadingHint: "Coins are scattered on the ground floor",
-    },
-    {
-      id: "level_random_ground_float_few",
-      loadingHint:
-        "There are a limited number of coins scattered on the ground floor.  Can you find them?",
-    },*/
+    //see #initForEnv() below
   ];
 
   GAME_OTHER_ROOM_DISCONNECT_TIMER_WAIT_TIME = 5000//in milliseconds. how long to wait for other room disconnect to finalize
@@ -297,9 +312,10 @@ export class Config {
 
   initForEnv(){
     const env = DEFAULT_ENV
-
+    
     this.COLYSEUS_ENDPOINT_LOCAL = COLYSEUS_ENDPOINT_URL[env]
     this.COLYSEUS_ENDPOINT_NON_LOCAL = COLYSEUS_ENDPOINT_URL[env]; 
+    this.COLYSEUS_ENDPOINT_NON_LOCAL_HTTP = COLYSEUS_ENDPOINT_URL[env].replace("wss://","https://").replace("ws://","http://")
     this.GAME_MINABLES_ENABLED = GAME_MINABLES_ENABLED_VALS[env]; 
     this.GAME_BUYABLES_ENABLED = GAME_BUYABLES_ENABLED_VALS[env]; 
     
@@ -307,17 +323,46 @@ export class Config {
     //this.PLAYFAB_ENABLED = PLAYFAB_ENABLED
     this.PLAYFAB_TITLEID = PLAYFAB_TITLE_ID[env]
     //this.LOGIN_ENDPOINT = AUTH_URL[env] + '/player/auth'
+
+    switch(SCENE_TYPE){
+      //case "px":
+        //this.GAME_ROOM_DATA.push( { id: "unified_scene", loadingHint: "Collect coins. No time limit" } )
+        //break;
+      case "unified-scene":
+        this.GAME_ROOM_DATA.push( { id: "unified_scene", loadingHint: "Collect coins. No time limit" } )
+        break;
+      default:
+        //{ id: "level_pad_surfer", loadingHint: "Collect coins along the road" },
+        //{ id: "level_pad_surfer_infin", loadingHint: "Collect coins along the road. No time limit" },
+        //{ id: "px_random_spawn", loadingHint: "Collect coins. No time limit" },  
+        /*
+        {
+          id: "level_random_ground_float",
+          loadingHint: "Coins are scattered on the ground floor",
+        },
+        {
+          id: "level_random_ground_float_few",
+          loadingHint:
+            "There are a limited number of coins scattered on the ground floor.  Can you find them?",
+        },*/
+        this.GAME_ROOM_DATA.push({ id: "level_pad_surfer_infin", loadingHint: "Collect coins along the road. No time limit" })
+    }
+    
+
+    const ParcelCountX:number = this.SCENE_TYPE === SCENE_TYPE_GAMIMALL ? 4 : 1
+    const ParcelCountZ:number = this.SCENE_TYPE === SCENE_TYPE_GAMIMALL ? 5 : 1
+
     
     this.sizeX = ParcelCountX*16
     this.sizeZ = ParcelCountZ*16 
     this.sizeY = (Math.log((ParcelCountX*ParcelCountZ) + 1) * Math.LOG2E) * 20// log2(n+1) x 20 //Math.log2( ParcelScale + 1 ) * 20
-    this.size = new Vector3(this.sizeX,this.sizeY,this.sizeZ)
-    this.center = new Vector3(this.sizeX/2,this.sizeY/2,this.sizeZ/2)
-    this.centerGround = new Vector3(this.sizeX/2,0,this.sizeZ/2)
+    this.size = Vector3.create(this.sizeX,this.sizeY,this.sizeZ)
+    this.center = Vector3.create(this.sizeX/2,this.sizeY/2,this.sizeZ/2)
+    this.centerGround = Vector3.create(this.sizeX/2,0,this.sizeZ/2)
   }
 
 }
-
+     
 export let CONFIG: Config; // = new Config()//FIXME HACK DOUBLE INITTING
 
 export async function initConfig() {
@@ -326,63 +371,18 @@ export async function initConfig() {
     CONFIG.initForEnv()
     
     //set in preview mode from env, local == preview
-    await isPreviewMode().then(function (val: boolean) {
-      setInPreview(val);
-    });
+    //isPreviewMode is deprecated
+    //or is this the more correct way?
+    await getRealm({}).then((val: any) => {
+      setInPreview(val.realmInfo?.isPreview)
+    })
   }
 }
 
 export function setInPreview(val: boolean) {
-  log("setInPreview " + val);
+  console.log("setInPreview " + val);
   CONFIG.IN_PREVIEW = val;
 
   //var console: any
 
-  if (val) {
-    Input.instance.subscribe("BUTTON_DOWN", ActionButton.PRIMARY, true, (e) => {
-      if (e.hit) {
-        //ROLL UP CHAIN FOR FULLY QUALIFIED NAME
-        let hitName = "";
-        let hitTransform = null;
-
-        if (notNull(engine.entities[e.hit.entityId])) {
-          hitName = (engine.entities[e.hit.entityId] as Entity).name!;
-
-          if (engine.entities[e.hit.entityId].hasComponent(Transform)) {
-            hitTransform =
-              engine.entities[e.hit.entityId].getComponent(Transform);
-          }
-        }
-        log(
-          `{ position: new Vector3(`,
-          Camera.instance.position.x,
-          ",",
-          Camera.instance.position.y,
-          ",",
-          Camera.instance.position.z,
-          `) },` + "HIT ENTITY: ",
-          hitName +
-            "(" +
-            e.hit.entityId +
-            "," + 
-            e.hit.meshName +
-            ","+
-            e.hit.hitPoint.subtract(Camera.instance.position) +
-            ")" +
-            " POS: ",
-          hitTransform
-        );
-      } else {
-        log(
-          `{ position: new Vector3(`,
-          Camera.instance.position.x,
-          ",",
-          Camera.instance.position.y,
-          ",",
-          Camera.instance.position.z,
-          `) },`
-        );
-      }
-    });
-  }
 }

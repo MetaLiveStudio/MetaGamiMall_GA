@@ -1,11 +1,32 @@
 import { LevelingFormulaConfig } from "./levelingTypes"
 
+//so code can run client and colyseus, comment out colysesus side
+function log(...args: any[]) {
+    console.log(...args);
+}
+
 /*
 //worth a read
 https://gist.github.com/Jikoo/30ec040443a4701b8980
 http://howtomakeanrpg.com/a/how-to-make-an-rpg-levels.html
 https://onlyagame.typepad.com/only_a_game/2006/08/mathematics_of_.html
 */
+
+export function getCoinCap(lvl:number,levelingConfig:LevelingFormulaConfig):number{
+  //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/log
+  //log[base9](lvl)
+
+  //offset to move to correct starting point (dont want to drop below min)
+  const lvloffset=levelingConfig.levelOffset ? levelingConfig.levelOffset : 0
+  let level = ( Math.log(lvl+lvloffset) / Math.log(levelingConfig.y)) * levelingConfig.x;
+  if(level > levelingConfig.max ){
+    level = levelingConfig.max
+  }
+  if(level < levelingConfig.min ){ 
+    level = levelingConfig.min
+  }
+  return level
+}
 
 export function getLevelFromXp(xp:number,levelingConfig:LevelingFormulaConfig):number{
   
@@ -30,7 +51,7 @@ export function getXPDiffBetweenLevels(level1:number,level2:number,levelingConfi
 
   const diff = xp2 - xp1
 
-  console.log("getXPDiffBetweenLevels",levelingConfig,"level1",level1,"level2",level2,"xp1",xp1,"xp2",xp2,"diff",diff)
+  log("getXPDiffBetweenLevels",levelingConfig,"level1",level1,"level2",level2,"xp1",xp1,"xp2",xp2,"diff",diff)
 
   return diff
 }
@@ -41,7 +62,7 @@ export function getLevelPercentFromXp(xp:number,levelingConfig:LevelingFormulaCo
   const valDiff = xp-thisLevelBaseXp
   const levelDiff = nextLevelXP-thisLevelBaseXp
   const percent = levelDiff > 0 ? (( valDiff/(levelDiff) )*100) : 0
-  console.log("getLevelPercentFromXp",levelingConfig,"xp",xp,"level",level,"thisLevelBaseXp",thisLevelBaseXp,"nextLevelXP",nextLevelXP,valDiff,levelDiff,"percent",percent)
+  log("getLevelPercentFromXp",levelingConfig,"xp",xp,"level",level,"thisLevelBaseXp",thisLevelBaseXp,"nextLevelXP",nextLevelXP,valDiff,levelDiff,"percent",percent)
 
   return percent
 }

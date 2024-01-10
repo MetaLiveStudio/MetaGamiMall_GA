@@ -1,15 +1,21 @@
 //import { _scene } from "src/game"
-import { REGISTRY } from "src/registry";
+import { Quaternion, Vector3 } from "@dcl/sdk/math";
+import { REGISTRY } from "../registry";
 import { WearableBoothArgs } from "./types";
+import { Entity } from "@dcl/sdk/ecs";
+import { log } from "../back-ports/backPorts";
+import { CONFIG, SCENE_TYPE_GAMIMALL } from "../config";
 
-export const CARD_OFFSET_SOUTH = new Vector3(0, 0.5, -1);
-export const CARD_OFFSET_NORTH = new Vector3(0, 0.5, 1);
-export const CARD_OFFSET_WEST = new Vector3(-1.5, 0.5, 0);
-export const CARD_OFFSET_EAST = new Vector3(1, 0.5, 0);
+const CLASSNAME = "resources-dropins.ts"
 
-const ROTATE_VELOCITY = Quaternion.Euler(0, 10, 0);
-const ROTATE_VELOCITY_OFF:Quaternion = undefined; //Quaternion.Euler(0, 0, 0)
-const MOVE_VELOCITY = new Vector3(0, 0.05, 0);
+export const CARD_OFFSET_SOUTH = Vector3.create(0, 0.5, -1);
+export const CARD_OFFSET_NORTH = Vector3.create(0, 0.5, 1);
+export const CARD_OFFSET_WEST = Vector3.create(-1.5, 0.5, 0);
+export const CARD_OFFSET_EAST = Vector3.create(1, 0.5, 0);
+
+const ROTATE_VELOCITY = Quaternion.fromEulerDegrees(0, 10, 0);
+const ROTATE_VELOCITY_OFF:Quaternion|undefined = undefined; //Quaternion.Euler(0, 0, 0)
+const MOVE_VELOCITY = Vector3.create(0, 0.05, 0);
 const MOVE_INTERVAL = 2;
 
 //export const MODEL_BASE_DIR = "store-assets/"
@@ -20,38 +26,44 @@ const wearableArr: WearableBoothArgs[] = [
   //"cube-invisible"  
   {sceneId:"gamimall",contract: "0x47f8b9b9ec0f676b45513c21db7777ad7bfedb35", itemId:"0"
     ,options:{type:"card"
-      ,featuredEntityData: {entityName:"ent1",shapeName:"cube",hoverText: "Preview FRONT NO ROTATE", transform:{position: new Vector3(23.68,1,11.47), rotation: Quaternion.Euler(0,0,0), scale: new Vector3(1,1,1)}}
+      ,featuredEntityData: {entityName:"ent1",shapeName:"cube",hoverText: "Preview FRONT NO ROTATE", transform:{position: Vector3.create(23.68,1,11.47), rotation: Quaternion.Euler(0,0,0), scale: Vector3.create(1,1,1)}}
       ,cardData:{ autoSelected:false, cardOffset:CARD_OFFSET_SOUTH, buttonData:{text:"GET",hoverTextBuyable:"GET WEARABLE"} }
     }}
   ,{sceneId:"gamimall",contract: "0x55e59c43f0b2eea14d5126fc8d531476fbd69529", itemId:"0"
     ,options:{type:"card"
-      ,featuredEntityData: {entityName:"ent2",shapeName:"cube",hoverText: "Preview LEFT ROTATE",transform:{position: new Vector3(21.4,1.1,8.68), rotation: Quaternion.Euler(0,0,0), scale: new Vector3(1,1,1)},motionData:{rotationVelocity: ROTATE_VELOCITY,moveVelocity: MOVE_VELOCITY, moveInterval:MOVE_INTERVAL}}
+      ,featuredEntityData: {entityName:"ent2",shapeName:"cube",hoverText: "Preview LEFT ROTATE",transform:{position: Vector3.create(21.4,1.1,8.68), rotation: Quaternion.Euler(0,0,0), scale: Vector3.create(1,1,1)},motionData:{rotationVelocity: ROTATE_VELOCITY,moveVelocity: MOVE_VELOCITY, moveInterval:MOVE_INTERVAL}}
       ,cardData:{  cardOffset:CARD_OFFSET_WEST,autoSelected:false, buttonData:{text:"GET",hoverTextBuyable:"GET WEARABLE"} }
     }}
   ,{sceneId:"gamimall",contract: "0x55e59c43f0b2eea14d5126fc8d531476fbd69529", itemId:"0"  
     ,options:{type:"card"
-      ,featuredEntityData: {entityName:"ent3",shapeName:"cube",hoverText: "Preview XX",transform:{position: new Vector3(21.4,3,8.68), rotation: Quaternion.Euler(0,0,0), scale: new Vector3(1,1,1)} }
+      ,featuredEntityData: {entityName:"ent3",shapeName:"cube",hoverText: "Preview XX",transform:{position: Vector3.create(21.4,3,8.68), rotation: Quaternion.Euler(0,0,0), scale: Vector3.create(1,1,1)} }
       ,cardData:{cardOffset:CARD_OFFSET_WEST,autoSelected:false, buttonData:{text:"GET",hoverTextBuyable:"GET WEARABLE"} }
     }}
   ,{sceneId:"gamimall",contract: "0x55e59c43f0b2eea14d5126fc8d531476fbd69529", itemId:"0"
     ,options:{type:"2D-UI"
-      ,featuredEntityData: {entityName:"ent4",shapeName:"cube",hoverText: "Preview 2d info panel",transform:{position: new Vector3(25.4,1,8.68), rotation: Quaternion.Euler(0,0,0), scale: new Vector3(1,1,1)},motionData:{rotationVelocity: ROTATE_VELOCITY,moveVelocity: MOVE_VELOCITY, moveInterval:MOVE_INTERVAL}}
+      ,featuredEntityData: {entityName:"ent4",shapeName:"cube",hoverText: "Preview 2d info panel",transform:{position: Vector3.create(25.4,1,8.68), rotation: Quaternion.Euler(0,0,0), scale: Vector3.create(1,1,1)},motionData:{rotationVelocity: ROTATE_VELOCITY,moveVelocity: MOVE_VELOCITY, moveInterval:MOVE_INTERVAL}}
       ,nftUIData:{ style:"infoPanel", type:"MetaDoge",image:BASE_DIR+"images/makersPlaceAliceInWater.png",detailsFontSize:12,detailsInfo:"info",directLink:"https://market.decentraland.org/",directLinkFontSize:10,title:"title" }
     }}
   ,{sceneId:"gamimall",contract: "0x55e59c43f0b2eea14d5126fc8d531476fbd69529", itemId:"0"
     ,options:{type:"2D-UI"
-      ,featuredEntityData: {entityName:"ent4",shapeName:"cube",hoverText: "Preview 2d-cust-cust-ui",transform:{position: new Vector3(25.4,3,8.68), rotation: Quaternion.Euler(0,0,0), scale: new Vector3(1,1,1)},motionData:{rotationVelocity: ROTATE_VELOCITY,moveVelocity: MOVE_VELOCITY, moveInterval:MOVE_INTERVAL}}
+      ,featuredEntityData: {entityName:"ent4",shapeName:"cube",hoverText: "Preview 2d-cust-cust-ui",transform:{position: Vector3.create(25.4,3,8.68), rotation: Quaternion.Euler(0,0,0), scale: Vector3.create(1,1,1)},motionData:{rotationVelocity: ROTATE_VELOCITY,moveVelocity: MOVE_VELOCITY, moveInterval:MOVE_INTERVAL}}
       ,nftUIData:{ style:"customNftDialog", type:"MetaDoge",image:BASE_DIR+"images/makersPlaceAliceInWater.png",detailsFontSize:12,detailsInfo:"info",directLink:"https://market.decentraland.org/",directLinkFontSize:10,title:"title", price:20, currency:"Meta Cash" }
     }}*/
 ];
 
-export function initResourceDropIns() {
+export function initResourceDropIns(_scene:Entity) {
+  const METHOD_NAME = "initResourceDropIns()"
+  log(CLASSNAME,METHOD_NAME,"ENTRY");
+  if(CONFIG.SCENE_TYPE !== SCENE_TYPE_GAMIMALL){
+    log(CLASSNAME,METHOD_NAME,"DISABLED FOR SCENE TYPE",CONFIG.SCENE_TYPE)
+    return
+  }
   //const keepRotatingComp = new utils.KeepRotatingComponent(Quaternion.Euler(0,15,0))
   let counter = 0; //  disabled for now 10
   let row = 0;
   let col = 0;
 
-  const _scene = REGISTRY.sceneMgr.rootScene.rootEntity;
+  //const _scene = //REGISTRY.sceneMgr.rootScene.rootEntity;
 
   //START MAKING REWARD L1
   if (true) {
@@ -59,23 +71,23 @@ export function initResourceDropIns() {
     const transformArgs =
       //new Transform(
       {
-        position: new Vector3(48, 0, 40),
-        rotation: new Quaternion(0, 0, 0, 1),
-        scale: new Vector3(1, 1, 1),
+        position: Vector3.create(48, 0, 40),
+        rotation: Quaternion.create(0, 0, 0, 1),
+        scale: Vector3.create(1, 1, 1),
       };
     //)
 
     wearableArr.push({
       sceneId: "gamimall",
-      contract: "0x8215dea718a90e541e14f9b29c413f1784538019",
+      contract: "0x1e5c7f7bd7bc0cf32f9739a31e6930ae09f02b59",
       itemId: "0",
       options: {
         type: "2D-UI",
         featuredEntityData: {
           parent: _scene,
           entityName: "entL1",
-          shapeName: "models/Rewards",
-          hoverText: "Claim a Meama ARCH CityBack",
+          shapeName: "models/Rewards/rewardL1.glb",
+          hoverText: "Claim a SX Bet Wearable",
           transform: transformArgs,
           motionData: {
             rotationVelocity: ROTATE_VELOCITY_OFF,
@@ -86,17 +98,17 @@ export function initResourceDropIns() {
         nftUIData: {
           style: "version20Modal",
           type: "MetaDoge",
-          image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x8215dea718a90e541e14f9b29c413f1784538019:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+          image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x1e5c7f7bd7bc0cf32f9739a31e6930ae09f02b59:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
           //imageSection: {  },
           imageWidth: 1024,
           imageHeight: 1024,
           detailsFontSize: 12, 
           
-          detailsInfo: "8% GamiMall Coin bonus, Holders will \n receive a Meama coffee cup",
+          detailsInfo: "4% GamiMall Coin bonus, 35 USD  \n free credits in SX Bet",
           directLink: "https://market.decentraland.org/",
           directLinkFontSize: 10,
-          title: "ARCH CityBack",
-          detailsTitle: "HIGH LIGHTS!",
+          title: "DAOAlchemist JetPack",
+          detailsTitle: "HIGHLIGHTS!",
           cost: [
             {
               price: 9999999, 
@@ -113,9 +125,10 @@ export function initResourceDropIns() {
           ],
           showStockQty:true,//defaults to true
           qtyCurrent: -2,
-          qtyTotal:3,
+          qtyTotal:100,
           claimWindowEnabled:true,//defaults to true
-          claimStartMS: Date.UTC(2023,3,7,14,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+          checkLatestMarketPrices: true,
+          claimStartMS: Date.UTC(2023,8,15,15,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
           claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
         },
       },
@@ -128,15 +141,15 @@ export function initResourceDropIns() {
       const transformArgs =
         //new Transform(
         {
-          position: new Vector3(48, 0, 40),
-          rotation: new Quaternion(0, 0, 0, 1),
-          scale: new Vector3(1, 1, 1),
+          position: Vector3.create(48, 0, 40),
+          rotation: Quaternion.create(0, 0, 0, 1),
+          scale: Vector3.create(1, 1, 1),
         };
       //)
   
       wearableArr.push({
         sceneId: "gamimall",
-        contract: "0xc8d0f351ff0a03c9fc1aaf97bbbeb5af68ef97a8",
+        contract: "0xe8420d97a71f29a682fb573bc4ee82a152ec93cf",
         itemId: "0",
         options: {
           type: "2D-UI",
@@ -144,7 +157,7 @@ export function initResourceDropIns() {
             parent: _scene,
             entityName: "entL2",
             shapeName: "models/Rewards/rewardL2.glb",
-            hoverText: "Claim a Sensorium ARCH Cloth",
+            hoverText: "Claim a MetaViu Wearable",
             transform: transformArgs,
             motionData: {
               rotationVelocity: ROTATE_VELOCITY_OFF,
@@ -155,17 +168,17 @@ export function initResourceDropIns() {
           nftUIData: {
             style: "version20Modal",
             type: "MetaDoge",
-            image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0xc8d0f351ff0a03c9fc1aaf97bbbeb5af68ef97a8:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+            image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0xe8420d97a71f29a682fb573bc4ee82a152ec93cf:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
             //imageSection: {  },
             imageWidth: 1024,
             imageHeight: 1024,
             detailsFontSize: 12, 
             
-            detailsInfo: "8% GamiMall Coin bonus, holders can \n have 1 free Sensorium avatar",
+            detailsInfo: "4% GamiMall Coin bonus, a total  \n  500 USD raffle for 10 people",
             directLink: "https://market.decentraland.org/",
             directLinkFontSize: 10,
-            title: "Sensorium ARCH Cloth",
-            detailsTitle: "HIGH LIGHTS!",
+            title: "DAOAlchemist Trouser",
+            detailsTitle: "HIGHLIGHTS!",
             cost: [
               {
                 price: 9999999, 
@@ -182,9 +195,10 @@ export function initResourceDropIns() {
             ],
             showStockQty:true,//defaults to true
             qtyCurrent: -2,
-            qtyTotal:3,
+            qtyTotal:90,
             claimWindowEnabled:true,//defaults to true
-            claimStartMS:  Date.UTC(2023,3,7,14,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+            checkLatestMarketPrices: true,
+            claimStartMS:  Date.UTC(2023,8,15,15,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
             claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
           },
         },
@@ -197,15 +211,15 @@ if (true) {
   const transformArgs =
     //new Transform(
     {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
     };
   //)
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0xaecc75052227ae7156a2d4a0531530683ed36cf6",
+    contract: "0x83d431a9a5084bf26ef4e1081e26fbe90798aa3a",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -213,7 +227,7 @@ if (true) {
         parent: _scene,
         entityName: "entL3",
         shapeName: "models/Rewards/rewardL3.glb",
-        hoverText: "Claim a Soul Magic Pickaxe",
+        hoverText: "Claim a Soul Magic Wearable",
         transform: transformArgs,
 
         lazyLoading:{
@@ -223,13 +237,13 @@ if (true) {
             enabled:true,
             shapeName:"models/Rewards/UniversalGIft.glb",  
             positionType: 'absolute', 
-            position: new Vector3(34.7,0.8,30.7)
+            position: Vector3.create(34.7,0.8,30.7)
           }, 
           trigger: { 
             debugEnabled:false,
             positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(8,1,8),
-            position: new Vector3(40,4,35)//where to put the trigger, triggerPositionType affects its relative offset
+            size: Vector3.create(8,1,8),
+            position: Vector3.create(40,4,35)//where to put the trigger, triggerPositionType affects its relative offset
           } 
         },
         motionData: {
@@ -241,17 +255,17 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0xaecc75052227ae7156a2d4a0531530683ed36cf6:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x83d431a9a5084bf26ef4e1081e26fbe90798aa3a:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
         imageWidth: 1024,
         imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "3% GamiMall Coin bonus \n improve 2% Soul Magic mining chance",
+        detailsInfo: "2% GamiMall Coin bonus \n Critical material in Soul Magic",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "Soul Magic Pickaxe",
-        detailsTitle: "HIGH LIGHTS!",
+        title: "Soul Magic StarDust",
+        detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
             price: 9999999, 
@@ -266,11 +280,12 @@ if (true) {
             label: "Coins"
           }
         ],
+        checkLatestMarketPrices:true,
         showStockQty:true,//defaults to true
         qtyCurrent: -2,
         qtyTotal: 60,
         claimWindowEnabled:true,//defaults to true
-        claimStartMS:  Date.UTC(2023,3,7,13,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        claimStartMS:  Date.UTC(2023,8,15,14,30,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
@@ -283,15 +298,15 @@ if (true) {
   const transformArgs =
     //new Transform(
     {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
     };
   //)
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0x2f67ab53c91d73ef16718a96286cec18ed2b8a1d",
+    contract: "0xf3f331927ce45cb51b1b73b40b3bbda1e186bf87",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -299,7 +314,7 @@ if (true) {
         parent: _scene,
         entityName: "entL4",
         shapeName: "models/Rewards/rewardL4.glb",
-        hoverText: "Claim a BPF gloves ",
+        hoverText: "Claim a VIPE wearable",
         transform: transformArgs,
         lazyLoading:{
           enabled: true,
@@ -308,13 +323,13 @@ if (true) {
             enabled:true,
             shapeName:"models/Rewards/UniversalGIft.glb",  
             positionType: 'absolute', 
-            position: new Vector3(34.7,0.8,30.7+3.85)
+            position: Vector3.create(34.7,0.8,30.7+3.85)
           }, 
           trigger: { 
             debugEnabled:false,
             positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(8,1,8),
-            position: new Vector3(40,4,35)//where to put the trigger, triggerPositionType affects its relative offset
+            size: Vector3.create(8,1,8),
+            position: Vector3.create(40,4,35)//where to put the trigger, triggerPositionType affects its relative offset
           } 
         },
         motionData: {
@@ -326,16 +341,16 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x2f67ab53c91d73ef16718a96286cec18ed2b8a1d:0/thumbnail",//"https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x9B0A93EA49955a5ef1878c1a1e8f8645d049e597:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0xf3f331927ce45cb51b1b73b40b3bbda1e186bf87:0/thumbnail",//"https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x9B0A93EA49955a5ef1878c1a1e8f8645d049e597:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
         imageWidth: 1024,
         imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "3% GamiMall Coin bonus \n Add 2s vehicle time in BP Farm",
+        detailsInfo: "2% GamiMall Coin bonus \n Raffle tickets for 10 VIPE heros",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "BPF gloves",
+        title: "VIPE Jacket",
         detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
@@ -351,11 +366,13 @@ if (true) {
             label: "Coins"
           }
         ],
+        //checkLatestMarketPrices:true,
         showStockQty:true,//defaults to true
         qtyCurrent: -2,
-        qtyTotal: 60,
+        qtyTotal: 100,
         claimWindowEnabled:true,//defaults to true
-        claimStartMS:  Date.UTC(2023,3,7,13,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        checkLatestMarketPrices: true,
+        claimStartMS:  Date.UTC(2023,8,15,14,30,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
@@ -368,15 +385,15 @@ if (true) {
   const transformArgs =
     //new Transform(
     {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
     };
   //)
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0x828f5e02a1b26c5736bcf6303caecbafec3c3a7c",
+    contract: "0x43dd2ba27cc0ff7b7fe014b0f2c2147ba7b72e9d",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -384,7 +401,7 @@ if (true) {
         parent: _scene,
         entityName: "entL5",
         shapeName: "models/Rewards/rewardL5.glb",
-        hoverText: "Claim a MUA Recurve",
+        hoverText: "Claim a MUA Wearable",
         transform: transformArgs,
         lazyLoading:{
           enabled: true,
@@ -393,13 +410,13 @@ if (true) {
             enabled:true,
             shapeName:"models/Rewards/UniversalGIft.glb",  
             positionType: 'absolute', 
-            position: new Vector3(34.7,0.8,30.7+3.85+3.85)
+            position: Vector3.create(34.7,0.8,30.7+3.85+3.85)
           }, 
           trigger: { 
             debugEnabled:false,
             positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(8,1,8),
-            position: new Vector3(40,4,35)//where to put the trigger, triggerPositionType affects its relative offset
+            size: Vector3.create(8,1,8),
+            position: Vector3.create(40,4,35)//where to put the trigger, triggerPositionType affects its relative offset
           } 
         },
         motionData: {
@@ -411,17 +428,17 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x828f5e02a1b26c5736bcf6303caecbafec3c3a7c:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x43dd2ba27cc0ff7b7fe014b0f2c2147ba7b72e9d:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
-        imageWidth: 750,
-        imageHeight: 750,
+        imageWidth: 1024,
+        imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "3% GamiMall Coin bonus \n 100 USDT raffle ticket",
+        detailsInfo: "3% GamiMall Coin bonus \n total 50 USD raffle",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "MUA Recurve ",
-        detailsTitle: "HIGH LIGHTS!",
+        title: "Cyber Tiara",
+        detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
             price: 9999999, 
@@ -436,11 +453,12 @@ if (true) {
             label: "Coins"
           }
         ],
+        checkLatestMarketPrices:true,
         showStockQty:true,//defaults to true
         qtyCurrent: -2,
-        qtyTotal: 80,
+        qtyTotal: 50,
         claimWindowEnabled:true,//defaults to true
-        claimStartMS:  Date.UTC(2023,3,7,13,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        claimStartMS:  Date.UTC(2023,8,15,14,30,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
@@ -453,15 +471,15 @@ if (true) {
   const transformArgs =
     //new Transform(
     {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
     };
   //)
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0x9d82a09b425e90e0b6dc7cdf34d5bf6db37362c4",
+    contract: "0x89182938e2051d0e4d03603fdbc5deb2ebefa814",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -469,7 +487,7 @@ if (true) {
         parent: _scene,
         entityName: "entL6",
         shapeName: "models/Rewards/rewardL6.glb",
-        hoverText: "Claim a Vroomway Aura",
+        hoverText: "Claim a MRDingia Builds Wearable",
         transform: transformArgs,
         lazyLoading:{
           enabled: true,
@@ -478,13 +496,13 @@ if (true) {
             enabled:true,
             shapeName:"models/Rewards/UniversalGIft.glb",  
             positionType: 'absolute', 
-            position: new Vector3(34.7,0.8,30.7+3.85+3.85+3.85)
+            position: Vector3.create(34.7,0.8,30.7+3.85+3.85+3.85)
           }, 
           trigger: { 
             debugEnabled:false,
             positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(8,1,8),
-            position: new Vector3(40,4,35)//where to put the trigger, triggerPositionType affects its relative offset
+            size: Vector3.create(8,1,8),
+            position: Vector3.create(40,4,35)//where to put the trigger, triggerPositionType affects its relative offset
           } 
         },
         motionData: {
@@ -496,17 +514,17 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x9d82a09b425e90e0b6dc7cdf34d5bf6db37362c4:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x89182938e2051d0e4d03603fdbc5deb2ebefa814:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
         imageWidth: 1024,
         imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "1% GamiMall Coin Bonus \n 2% Vroomway Ex bonus",
+        detailsInfo: "3% GamiMall Coin Bonus \n total 50 USD raffle",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "Vroomway Aura",
-        detailsTitle: "HIGH LIGHTS!",
+        title: "Dhingia Bot Buddy",
+        detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
             price: 9999999, 
@@ -523,9 +541,10 @@ if (true) {
         ],
         showStockQty:true,//defaults to true
         qtyCurrent: -2,
-        qtyTotal: 100,
+        qtyTotal: 70,
         claimWindowEnabled:true,//defaults to true
-        claimStartMS:  Date.UTC(2023,3,7,13,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        checkLatestMarketPrices: true,
+        claimStartMS:  Date.UTC(2023,8,15,14,30,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
@@ -538,23 +557,23 @@ if (true) {
   const transformArgs =
     //new Transform(
     {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
     };
   //)
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0xd6114ec98774a5544cf2480171ac0720a327f88d",
+    contract: "0x498857ed6659791c204b07fc4c3527692f92e119",
     itemId: "0",
     options: {
       type: "2D-UI",
       featuredEntityData: {
         parent: _scene,
         entityName: "entR1",
-        shapeName: "models/Rewards",
-        hoverText: "Claim a WonderMine Wearable ",
+        shapeName: "models/Rewards/rewardR1.glb",
+        hoverText: "Claim a Decentral Games Wearable ",
         transform: transformArgs,
         motionData: {
           rotationVelocity: ROTATE_VELOCITY_OFF,
@@ -565,341 +584,17 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "images/wearables/DG.png",//"https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0xb048b4f6ddca77d37534242f4856eb54b0934aac:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x498857ed6659791c204b07fc4c3527692f92e119:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
         imageWidth: 1024,
         imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "8% GamiMall Coin bonus \n enjoy DG discord unique role",
+        detailsInfo: "4% GamiMall Coin bonus \n SNG wearbale with 15 shines",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "DG ARCH Dress",
-        detailsTitle: "HIGH LIGHTS!",
-        cost: [
-          {
-            price: 9999999, 
-            type: "VirtualCurrency",
-            id: "GC",
-            label: "Coins",
-          },
-          {
-            price: 9999999, 
-            type: "VirtualCurrency",
-            id: "MC",
-            label: "Coins"
-          }
-        ],
-        showStockQty:true,//defaults to true
-        qtyCurrent: -2,
-        qtyTotal: 3,
-        claimWindowEnabled:true,//defaults to true
-        claimStartMS: Date.UTC(2023,3,7,14,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
-        claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
-      },
-    },
-  });
-}
-
-//START MAKING REWARD R2
-if (true) {
-  //block scope
-  const transformArgs =
-    //new Transform(
-    {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
-    };
-  //)
-
-  wearableArr.push({
-    sceneId: "gamimall",
-    contract: "0xb048b4f6ddca77d37534242f4856eb54b0934aac",
-    itemId: "0",
-    options: {
-      type: "2D-UI",
-      featuredEntityData: {
-        parent: _scene,
-        entityName: "entR2",
-        shapeName: "models/Rewards/rewardR2.glb",
-        hoverText: "Claim a MetaViu ARCH Hat",
-        transform: transformArgs,
-        motionData: {
-          rotationVelocity: ROTATE_VELOCITY_OFF,
-          moveVelocity: MOVE_VELOCITY,
-          moveInterval: MOVE_INTERVAL,
-        },
-      },
-      nftUIData: {
-        style: "version20Modal",
-        type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0xb048b4f6ddca77d37534242f4856eb54b0934aac:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
-        //imageSection: {  },
-        imageWidth: 1024,
-        imageHeight: 1024,
-        detailsFontSize: 12, 
-        
-        detailsInfo: "8% GamiMall Coin bonus \n MetaViu future wearable airdrop",
-        directLink: "https://market.decentraland.org/",
-        directLinkFontSize: 10,
-        title: "MetaViu ARCH Hat",
-        detailsTitle: "HIGH LIGHTS!",
-        cost: [
-          {
-            price: 9999999, 
-            type: "VirtualCurrency",
-            id: "GC",
-            label: "Coins",
-          },
-          {
-            price: 9999999, 
-            type: "VirtualCurrency",
-            id: "MC",
-            label: "Coins"
-          }
-        ],
-        showStockQty:true,//defaults to true
-        qtyCurrent: -2,
-        qtyTotal: 3,
-        claimWindowEnabled:true,//defaults to true
-        claimStartMS: Date.UTC(2023,3,7,14,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
-        claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
-      },
-    },
-  });
-}
-
-//START MAKING REWARD R3
-if (true) {
-  //block scope
-  const transformArgs =
-    //new Transform(
-    {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
-    };
-  //)
-
-  wearableArr.push({
-    sceneId: "gamimall",
-    contract: "0x8f69e4a278e3451b8a93b52cca27b25798658fc0",
-    itemId: "0",
-    options: {
-      type: "2D-UI",
-      featuredEntityData: {
-        parent: _scene,
-        entityName: "entR3",
-        shapeName: "models/Rewards/rewardR3.glb",
-        hoverText: "Claim a KOA Coin Couture ",
-        transform: transformArgs,
-        lazyLoading:{
-          enabled: true,
-          debugEnabled:false, 
-          placeHolder:{
-            enabled:true,
-            shapeName:"models/Rewards/UniversalGIft.glb",  
-            positionType: 'absolute', 
-            position: new Vector3(34.7+10.75,0.8,30.7)
-          }, 
-          trigger: { 
-            debugEnabled:false,
-            positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(8,1,8),
-            position: new Vector3(40,4,35)//where to put the trigger, triggerPositionType affects its relative offset
-          } 
-        },
-        motionData: {
-          rotationVelocity: ROTATE_VELOCITY_OFF,
-          moveVelocity: MOVE_VELOCITY,
-          moveInterval: MOVE_INTERVAL,
-        },
-      },
-      nftUIData: {
-        style: "version20Modal",
-        type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x8f69e4a278e3451b8a93b52cca27b25798658fc0:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
-        //imageSection: {  },
-        imageWidth: 1024,
-        imageHeight: 1024,
-        detailsFontSize: 12, 
-        
-        detailsInfo: "3% GamiMall Coin bonus \n 3 coins/15 minutes On KOA",
-        directLink: "https://market.decentraland.org/",
-        directLinkFontSize: 10,
-        title: "KOA Coin Couture",
-        detailsTitle: "HIGH LIGHTS!",
-        cost: [
-          {
-            price: 9999999, 
-            type: "VirtualCurrency",
-            id: "GC",
-            label: "Coins",
-          },
-          {
-            price: 9999999, 
-            type: "VirtualCurrency",
-            id: "MC",
-            label: "Coins"
-          }
-        ],
-        showStockQty:true,//defaults to true
-        qtyCurrent: -2,
-        qtyTotal: 60,
-        claimWindowEnabled:true,//defaults to true
-        claimStartMS: Date.UTC(2023,3,7,13,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
-        claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
-      },
-    },
-  });
-}
-
-//START MAKING REWARD R4
-if (true) {
-  //block scope
-  const transformArgs =
-    //new Transform(
-    {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
-    };
-  //)
-
-  wearableArr.push({
-    sceneId: "gamimall",
-    contract: "0x89b18692a789c4e23d780a399497cc02c62ae4c2",
-    itemId: "0",
-    options: {
-      type: "2D-UI",
-      featuredEntityData: {
-        parent: _scene,
-        entityName: "entR4",
-        shapeName: "models/Rewards/rewardR4.glb",
-        hoverText: "Claim a Mini Doge VoxBoarder ",
-        transform: transformArgs,
-        lazyLoading:{
-          enabled: true,
-          debugEnabled:false, 
-          placeHolder:{
-            enabled:true,
-            shapeName:"models/Rewards/UniversalGIft.glb",  
-            positionType: 'absolute', 
-            position: new Vector3(34.7+10.75,0.8,30.7+3.85)
-          }, 
-          trigger: { 
-            debugEnabled:false,
-            positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(8,1,8),
-            position: new Vector3(40,4,35)//where to put the trigger, triggerPositionType affects its relative offset
-          } 
-        },
-        motionData: {
-          rotationVelocity: ROTATE_VELOCITY_OFF,
-          moveVelocity: MOVE_VELOCITY,
-          moveInterval: MOVE_INTERVAL,
-        },
-      },
-      nftUIData: {
-        style: "version20Modal",
-        type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x89b18692a789c4e23d780a399497cc02c62ae4c2:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
-        //imageSection: {  },
-        imageWidth: 1024,
-        imageHeight: 1024,
-        detailsFontSize: 12, 
-        
-        detailsInfo: "3% GamiMall coin bonus \n 3% Voxboard coin bonus",
-        directLink: "https://market.decentraland.org/",
-        directLinkFontSize: 10,
-        title: "Mini Doge VoxBoarder",
-        detailsTitle: "HIGH LIGHTS!",
-        cost: [
-          {
-            price: 9999999, 
-            type: "VirtualCurrency",
-            id: "GC",
-            label: "Coins",
-          },
-          {
-            price: 9999999, 
-            type: "VirtualCurrency",
-            id: "MC",
-            label: "Coins"
-          }
-        ],
-        showStockQty:true,//defaults to true
-        qtyCurrent: -2,
-        qtyTotal: 60,
-        claimWindowEnabled:true,//defaults to true
-        claimStartMS: Date.UTC(2023,3,7,13,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
-        claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
-      },
-    },
-  });
-}
-
-//START MAKING REWARD R5
-if (true) {
-  //block scope
-  const transformArgs =
-    //new Transform(
-    {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
-    };
-  //)
-
-  wearableArr.push({
-    sceneId: "gamimall",
-    contract: "0x5a1556c3ca8251c898a336f386900df689926888",
-    itemId: "0",
-    options: {
-      type: "2D-UI",
-      featuredEntityData: {
-        parent: _scene,
-        entityName: "entR5",
-        shapeName: "models/Rewards/rewardR5.glb",
-        hoverText: "Claim a CD Raffle Hat",
-        transform: transformArgs,
-        lazyLoading:{
-          enabled: true,
-          debugEnabled:false, 
-          placeHolder:{
-            enabled:true,
-            shapeName:"models/Rewards/UniversalGIft.glb",  
-            positionType: 'absolute', 
-            position: new Vector3(34.7+10.75,0.8,30.7+3.85+3.85)
-          }, 
-          trigger: { 
-            debugEnabled:false,
-            positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(8,1,8),
-            position: new Vector3(40,4,35)//where to put the trigger, triggerPositionType affects its relative offset
-          } 
-        },
-        motionData: {
-          rotationVelocity: ROTATE_VELOCITY_OFF,
-          moveVelocity: MOVE_VELOCITY,
-          moveInterval: MOVE_INTERVAL,
-        },
-      },
-      nftUIData: {
-        style: "version20Modal",
-        type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x5a1556c3ca8251c898a336f386900df689926888:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
-        //imageSection: {  },
-        imageWidth: 1024,
-        imageHeight: 1024,
-        detailsFontSize: 12, 
-        
-        detailsInfo: "3% GamiMall Coin bonus \n 100 USDT raffle ticket",
-        directLink: "https://market.decentraland.org/",
-        directLinkFontSize: 10,
-        title: "CD Raffle Hat",
-        detailsTitle: "HIGH LIGHTS!",
+        title: "DAOAlchemist Helmet",
+        detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
             price: 9999999, 
@@ -918,53 +613,38 @@ if (true) {
         qtyCurrent: -2,
         qtyTotal: 100,
         claimWindowEnabled:true,//defaults to true
-        claimStartMS: Date.UTC(2023,3,7,13,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        checkLatestMarketPrices: true,
+        claimStartMS: Date.UTC(2023,8,15,15,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
   });
 }
 
-//START MAKING REWARD R6
+//START MAKING REWARD R2
 if (true) {
   //block scope
   const transformArgs =
     //new Transform(
     {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
     };
   //)
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0x8755e5bc8dc1458285161f4f4c3562535aa37610",
+    contract: "0xe0dfb4793f82b5c2b619fa4305a308e5880c2537",
     itemId: "0",
     options: {
       type: "2D-UI",
       featuredEntityData: {
         parent: _scene,
-        entityName: "entR6",
-        shapeName: "models/Rewards/rewardR6.glb",
-        hoverText: "Claim a Polygonal Mind Mega Vision",
+        entityName: "entR2",
+        shapeName: "models/Rewards/rewardR2.glb",
+        hoverText: "Claim a WonderZone Wearable",
         transform: transformArgs,
-        lazyLoading:{
-          enabled: true,
-          debugEnabled:false, 
-          placeHolder:{
-            enabled:true,
-            shapeName:"models/Rewards/UniversalGIft.glb",  
-            positionType: 'absolute', 
-            position: new Vector3(34.7+10.75,0.8,30.7+3.85+3.85+3.85)
-          }, 
-          trigger: { 
-            debugEnabled:false,
-            positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(8,1,8),
-            position: new Vector3(40,4,35)//where to put the trigger, triggerPositionType affects its relative offset
-          } 
-        }, 
         motionData: {
           rotationVelocity: ROTATE_VELOCITY_OFF,
           moveVelocity: MOVE_VELOCITY,
@@ -974,17 +654,17 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x8755e5bc8dc1458285161f4f4c3562535aa37610:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0xe0dfb4793f82b5c2b619fa4305a308e5880c2537:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
         imageWidth: 1024,
         imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "Unique utility in the next MegaCube",
+        detailsInfo: "4% GamiMall Coin bonus \n 4% WonderMine minging bonus",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "Mega Vision",
-        detailsTitle: "HIGH LIGHTS!",
+        title: "DAOAlchemist Torso",
+        detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
             price: 9999999, 
@@ -1001,38 +681,39 @@ if (true) {
         ],
         showStockQty:true,//defaults to true
         qtyCurrent: -2,
-        qtyTotal: 1000,
+        qtyTotal: 50,
         claimWindowEnabled:true,//defaults to true
-        claimStartMS:Date.UTC(2023,3,7,13,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        checkLatestMarketPrices: true,
+        claimStartMS: Date.UTC(2023,8,15,15,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
   });
 }
 
-////START MAKING REWARD R61
+//START MAKING REWARD R3
 if (true) {
   //block scope
   const transformArgs =
     //new Transform(
     {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
     };
   //)
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0x9590eb47aee3d9f412448a81007f39443e167bbc",
+    contract: "0xe93455667c8ee9fe0294920b9c0afaccfab84158",
     itemId: "0",
     options: {
       type: "2D-UI",
       featuredEntityData: {
         parent: _scene,
-        entityName: "entR6",
-        shapeName: "models/Rewards/rewardR61.glb",
-        hoverText: "Claim a CryptoSlots T-shirt",
+        entityName: "entR3",
+        shapeName: "models/Rewards/rewardR3.glb",
+        hoverText: "Claim Meta Residence Tower Wearable ",
         transform: transformArgs,
         lazyLoading:{
           enabled: true,
@@ -1041,13 +722,271 @@ if (true) {
             enabled:true,
             shapeName:"models/Rewards/UniversalGIft.glb",  
             positionType: 'absolute', 
-            position: new Vector3(34.7+10.75,0.8,30.7-3.85)
+            position: Vector3.create(34.7+10.75,0.8,30.7)
           }, 
           trigger: { 
             debugEnabled:false,
             positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(8,1,8),
-            position: new Vector3(40,4,30)//where to put the trigger, triggerPositionType affects its relative offset
+            size: Vector3.create(8,1,8),
+            position: Vector3.create(40,4,35)//where to put the trigger, triggerPositionType affects its relative offset
+          } 
+        },
+        motionData: {
+          rotationVelocity: ROTATE_VELOCITY_OFF,
+          moveVelocity: MOVE_VELOCITY,
+          moveInterval: MOVE_INTERVAL,
+        },
+      },
+      nftUIData: {
+        style: "version20Modal",
+        type: "MetaDoge",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0xe93455667c8ee9fe0294920b9c0afaccfab84158:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        //imageSection: {  },
+        imageWidth: 1024,
+        imageHeight: 1024,
+        detailsFontSize: 12, 
+        
+        detailsInfo: "3% GamiMall Coin bonus \n 5 coins per 15 minutes in MRT ",
+        directLink: "https://market.decentraland.org/",
+        directLinkFontSize: 10,
+        title: "MRT Pink Slippers",
+        detailsTitle: "HIGHLIGHTS!",
+        cost: [
+          {
+            price: 9999999, 
+            type: "VirtualCurrency",
+            id: "GC",
+            label: "Coins",
+          },
+          {
+            price: 9999999, 
+            type: "VirtualCurrency",
+            id: "MC",
+            label: "Coins"
+          }
+        ],
+        showStockQty:true,//defaults to true
+        qtyCurrent: -2,
+        qtyTotal: 60,
+        claimWindowEnabled:true,//defaults to true
+        checkLatestMarketPrices: true,
+        claimStartMS: Date.UTC(2023,8,15,14,30,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
+      },
+    },
+  });
+}
+
+//START MAKING REWARD R4
+if (true) {
+  //block scope
+  const transformArgs =
+    //new Transform(
+    {
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
+    };
+  //)
+
+  wearableArr.push({
+    sceneId: "gamimall",
+    contract: "0x681a6e37e96340f21bf7401e3d770d10e3e1f1d7",
+    itemId: "0",
+    options: {
+      type: "2D-UI",
+      featuredEntityData: {
+        parent: _scene,
+        entityName: "entR4",
+        shapeName: "models/Rewards/rewardR4.glb",
+        hoverText: "Claim a VroomWay wearable ",
+        transform: transformArgs,
+        lazyLoading:{
+          enabled: true,
+          debugEnabled:false, 
+          placeHolder:{
+            enabled:true,
+            shapeName:"models/Rewards/UniversalGIft.glb",  
+            positionType: 'absolute', 
+            position: Vector3.create(34.7+10.75,0.8,30.7+3.85)
+          }, 
+          trigger: { 
+            debugEnabled:false,
+            positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
+            size: Vector3.create(8,1,8),
+            position: Vector3.create(40,4,35)//where to put the trigger, triggerPositionType affects its relative offset
+          } 
+        },
+        motionData: {
+          rotationVelocity: ROTATE_VELOCITY_OFF,
+          moveVelocity: MOVE_VELOCITY,
+          moveInterval: MOVE_INTERVAL,
+        },
+      },
+      nftUIData: {
+        style: "version20Modal",
+        type: "MetaDoge",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x681a6e37e96340f21bf7401e3d770d10e3e1f1d7:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        //imageSection: {  },
+        imageWidth: 1024,
+        imageHeight: 1024,
+        detailsFontSize: 12, 
+        
+        detailsInfo: "3% GamiMall coin bonus \n smart wearable with multiple utilities ",
+        directLink: "https://market.decentraland.org/",
+        directLinkFontSize: 10,
+        title: "BuildaVroom Skin",
+        detailsTitle: "HIGHLIGHTS!",
+        cost: [
+          {
+            price: 9999999, 
+            type: "VirtualCurrency",
+            id: "GC",
+            label: "Coins",
+          },
+          {
+            price: 9999999, 
+            type: "VirtualCurrency",
+            id: "MC",
+            label: "Coins"
+          }
+        ],
+        showStockQty:true,//defaults to true
+        qtyCurrent: -2,
+        qtyTotal: 50,
+        claimWindowEnabled:true,//defaults to true
+        checkLatestMarketPrices: true,
+        claimStartMS: Date.UTC(2023,8,15,14,30,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
+      },
+    },
+  });
+}
+
+//START MAKING REWARD R5
+if (true) {
+  //block scope
+  const transformArgs =
+    //new Transform(
+    {
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
+    };
+  //)
+
+  wearableArr.push({
+    sceneId: "gamimall",
+    contract: "0x49962c9b084430ac77fd3f3960cc43ee6a5033ee",
+    itemId: "0",
+    options: {
+      type: "2D-UI",
+      featuredEntityData: {
+        parent: _scene,
+        entityName: "entR5",
+        shapeName: "models/Rewards/rewardR5.glb",
+        hoverText: "Claim a MetaParty Wearable",
+        transform: transformArgs,
+        lazyLoading:{
+          enabled: true,
+          debugEnabled:false, 
+          placeHolder:{
+            enabled:true,
+            shapeName:"models/Rewards/UniversalGIft.glb",  
+            positionType: 'absolute', 
+            position: Vector3.create(34.7+10.75,0.8,30.7+3.85+3.85)
+          }, 
+          trigger: { 
+            debugEnabled:false,
+            positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
+            size: Vector3.create(8,1,8),
+            position: Vector3.create(40,4,35)//where to put the trigger, triggerPositionType affects its relative offset
+          } 
+        },
+        motionData: {
+          rotationVelocity: ROTATE_VELOCITY_OFF,
+          moveVelocity: MOVE_VELOCITY,
+          moveInterval: MOVE_INTERVAL,
+        },
+      },
+      nftUIData: {
+        style: "version20Modal",
+        type: "MetaDoge",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x49962c9b084430ac77fd3f3960cc43ee6a5033ee:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        //imageSection: {  },
+        imageWidth: 1024,
+        imageHeight: 1024,
+        detailsFontSize: 12, 
+        
+        detailsInfo: "3% GamiMall Coin bonus \n total 50 USD raffle",
+        directLink: "https://market.decentraland.org/",
+        directLinkFontSize: 10,
+        title: "DAOAlchemist Glasses",
+        detailsTitle: "HIGHLIGHTS!",
+        cost: [
+          {
+            price: 9999999, 
+            type: "VirtualCurrency",
+            id: "GC",
+            label: "Coins",
+          },
+          {
+            price: 9999999, 
+            type: "VirtualCurrency",
+            id: "MC",
+            label: "Coins"
+          }
+        ],
+        showStockQty:true,//defaults to true
+        qtyCurrent: -2,
+        qtyTotal: 60,
+        claimWindowEnabled:true,//defaults to true
+        checkLatestMarketPrices: true,
+        claimStartMS: Date.UTC(2023,8,15,14,30,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
+      },
+    },
+  });
+}
+
+//START MAKING REWARD R6
+if (true) {
+  //block scope
+  const transformArgs =
+    //new Transform(
+    {
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
+    };
+  //)
+
+  wearableArr.push({
+    sceneId: "gamimall",
+    contract: "0x8b9d82662463c15017fd6b30de51e4754b57dc33",
+    itemId: "0",
+    options: {
+      type: "2D-UI",
+      featuredEntityData: {
+        parent: _scene,
+        entityName: "entR6",
+        shapeName: "models/Rewards/rewardR6.glb",
+        hoverText: "Claim a DG Live Wearable",
+        transform: transformArgs,
+        lazyLoading:{
+          enabled: true,
+          debugEnabled:false, 
+          placeHolder:{
+            enabled:true,
+            shapeName:"models/Rewards/UniversalGIft.glb",  
+            positionType: 'absolute', 
+            position: Vector3.create(34.7+10.75,0.8,30.7+3.85+3.85+3.85)
+          }, 
+          trigger: { 
+            debugEnabled:false,
+            positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
+            size: Vector3.create(8,1,8),
+            position: Vector3.create(40,4,35)//where to put the trigger, triggerPositionType affects its relative offset
           } 
         }, 
         motionData: {
@@ -1059,16 +998,16 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x9590eb47aee3d9f412448a81007f39443e167bbc:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x8b9d82662463c15017fd6b30de51e4754b57dc33:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
         imageWidth: 1024,
         imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "3% Gamimall coins bonus \n 3% CryptoSlots future game bonus",
+        detailsInfo: "3% Meta GamiMall Coins Bonus \n total 50 USD raffle",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "Winning Streak Hoodie",
+        title: "DAOAlchemist Mask",
         detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
@@ -1088,7 +1027,94 @@ if (true) {
         qtyCurrent: -2,
         qtyTotal: 80,
         claimWindowEnabled:true,//defaults to true
-        claimStartMS:Date.UTC(2023,3,7,13,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        checkLatestMarketPrices: true,
+        claimStartMS:Date.UTC(2023,8,15,14,30,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
+      },
+    },
+  });
+}
+
+////START MAKING REWARD R61
+if (true) {
+  //block scope
+  const transformArgs =
+    //new Transform(
+    {
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
+    };
+  //)
+
+  wearableArr.push({
+    sceneId: "gamimall",
+    contract: "0x27637f88b881538c7148c78ccaae10d6f2bf22a2",
+    itemId: "0",
+    options: {
+      type: "2D-UI",
+      featuredEntityData: {
+        parent: _scene,
+        entityName: "entR6",
+        shapeName: "models/Rewards/RewardR61.glb",
+        hoverText: "Claim a SpottieWifi skin",
+        transform: transformArgs,
+        lazyLoading:{
+          enabled: true,
+          debugEnabled:false, 
+          placeHolder:{
+            enabled:true,
+            shapeName:"models/Rewards/UniversalGIft.glb",  
+            positionType: 'absolute', 
+            position: Vector3.create(34.7+10.75,0.8,30.7-3.85)
+          }, 
+          trigger: { 
+            debugEnabled:false,
+            positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
+            size: Vector3.create(8,1,8),
+            position: Vector3.create(40,4,30)//where to put the trigger, triggerPositionType affects its relative offset
+          } 
+        }, 
+        motionData: {
+          rotationVelocity: ROTATE_VELOCITY_OFF,
+          moveVelocity: MOVE_VELOCITY,
+          moveInterval: MOVE_INTERVAL,
+        },
+      },
+      nftUIData: {
+        style: "version20Modal",
+        type: "MetaDoge",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x27637f88b881538c7148c78ccaae10d6f2bf22a2:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        //imageSection: {  },
+        imageWidth: 1024,
+        imageHeight: 1024,
+        detailsFontSize: 12, 
+        
+        detailsInfo: "Claim a SpottieWifi skin, win \n All time high NFT",
+        directLink: "https://market.decentraland.org/",
+        directLinkFontSize: 10,
+        title: "Spottiewifi Skin",
+        detailsTitle: "HIGHLIGHTS!",
+        cost: [
+          {
+            price: 9999999, 
+            type: "VirtualCurrency",
+            id: "GC",
+            label: "Coins",
+          },
+          {
+            price: 9999999, 
+            type: "VirtualCurrency",
+            id: "MC",
+            label: "Coins"
+          }
+        ],
+        showStockQty:true,//defaults to true
+        qtyCurrent: -2,
+        qtyTotal: 80,
+        claimWindowEnabled:true,//defaults to true
+        checkLatestMarketPrices: true,
+        claimStartMS:Date.UTC(2023,8,15,14,30,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
@@ -1102,15 +1128,15 @@ if (true) {
   const transformArgs =
     //new Transform(
     {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
     };
   //)
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0x12fedcf4e359b56e7677e0ddb6512c64b94a3167",
+    contract: "0x6fad7711dda6bb2f6901508e81dcf0ca20ee16c7",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -1118,7 +1144,7 @@ if (true) {
         parent: _scene,
         entityName: "entS1",
         shapeName: "models/Rewards/rewardS1.glb",
-        hoverText: "Claim a Chef Baker Hat ",
+        hoverText: "Claim a Cutter for a Cause Wearable ",
         transform: transformArgs,
         lazyLoading:{
           enabled: true,
@@ -1127,13 +1153,13 @@ if (true) {
             enabled:true,
             shapeName:"models/Rewards/SilversponsorGIft.glb",  
             positionType: 'featureEnt', 
-            //position: new Vector3(34.7+10.75,0.8,30.7+3.85+3.85)
+            //position: Vector3.create(34.7+10.75,0.8,30.7+3.85+3.85)
           }, 
           trigger: { 
             debugEnabled:false,
             positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(14,1,1),
-            position: new Vector3(40,1 ,61)//where to put the trigger, triggerPositionType affects its relative offset
+            size: Vector3.create(14,1,1),
+            position: Vector3.create(40,1 ,61)//where to put the trigger, triggerPositionType affects its relative offset
           } 
         }, 
         motionData: {
@@ -1145,17 +1171,17 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x12fedcf4e359b56e7677e0ddb6512c64b94a3167:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x6fad7711dda6bb2f6901508e81dcf0ca20ee16c7:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
         imageWidth: 1024,
         imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "Want to be a chef in metaverse?",
+        detailsInfo: "Cute Cookie Pawprint Gloves ",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "Chef Baker Hat",
-        detailsTitle: "HIGH LIGHTS!",
+        title: "Pawprint Gloves",
+        detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
             price: 9999999, 
@@ -1168,7 +1194,8 @@ if (true) {
         qtyCurrent: -2,
         qtyTotal: 100,
         claimWindowEnabled:true,//defaults to true
-        claimStartMS: Date.UTC(2023,3,7,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        checkLatestMarketPrices: false,
+        claimStartMS: Date.UTC(2023,8,15,14,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
@@ -1181,9 +1208,9 @@ if (true) {
   const transformArgs =
     //new Transform(
     {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
     };
   //)
 
@@ -1197,7 +1224,7 @@ if (true) {
         parent: _scene,
         entityName: "entS2",
         shapeName: "models/Rewards/rewardS2.glb",
-        hoverText: "Claim a SpanishMuseum Jacket ",
+        hoverText: "Claim a SpanishMuseum Wearable ",
         transform: transformArgs,
         lazyLoading:{
           enabled: true,
@@ -1206,13 +1233,13 @@ if (true) {
             enabled:true,
             shapeName:"",  
             positionType: 'featureEnt', 
-            //position: new Vector3(34.7+10.75,0.8,30.7+3.85+3.85)
+            //position: Vector3.create(34.7+10.75,0.8,30.7+3.85+3.85)
           }, 
           trigger: { 
             debugEnabled:false,
             positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(14,1,1),
-            position: new Vector3(40,1 ,61)//where to put the trigger, triggerPositionType affects its relative offset
+            size: Vector3.create(14,1,1),
+            position: Vector3.create(40,1 ,61)//where to put the trigger, triggerPositionType affects its relative offset
           } 
         }, 
         motionData: {
@@ -1234,7 +1261,7 @@ if (true) {
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
         title: "SPM Jacket",
-        detailsTitle: "HIGH LIGHTS!",
+        detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
             price: 9999999, 
@@ -1247,7 +1274,8 @@ if (true) {
         qtyCurrent: -2,
         qtyTotal: 100,
         claimWindowEnabled:true,//defaults to true
-        claimStartMS: Date.UTC(2023,3,7,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        checkLatestMarketPrices: false,
+        claimStartMS: Date.UTC(2023,8,15,14,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
@@ -1260,15 +1288,15 @@ if (true) {
   const transformArgs =
     //new Transform(
     {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
     };
   //)
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0xc8333367125ed310a9d8c3e9da06d1b0bb469d6d",
+    contract: "0x5343af57a265ffd9b64762d692528b87c1286053",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -1276,7 +1304,7 @@ if (true) {
         parent: _scene,
         entityName: "entS3",
         shapeName: "models/Rewards/rewardS3.glb",
-        hoverText: "Claim a MetaCat T-shirt",
+        hoverText: "Claim a DJ-Trax Wearable",
         transform: transformArgs,
         lazyLoading:{
           enabled: true,
@@ -1285,13 +1313,13 @@ if (true) {
             enabled:true,
             shapeName:"",  
             positionType: 'featureEnt', 
-            //position: new Vector3(34.7+10.75,0.8,30.7+3.85+3.85)
+            //position: Vector3.create(34.7+10.75,0.8,30.7+3.85+3.85)
           }, 
           trigger: { 
             debugEnabled:false,
             positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(14,1,1),
-            position: new Vector3(40,1 ,61)//where to put the trigger, triggerPositionType affects its relative offset
+            size: Vector3.create(14,1,1),
+            position: Vector3.create(40,1 ,61)//where to put the trigger, triggerPositionType affects its relative offset
           } 
         }, 
         motionData: {
@@ -1303,17 +1331,17 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0xc8333367125ed310a9d8c3e9da06d1b0bb469d6d:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x5343af57a265ffd9b64762d692528b87c1286053:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
-        imageWidth: 1024,
-        imageHeight: 1024,
+        imageWidth: 512,
+        imageHeight: 512,
         detailsFontSize: 12, 
         
-        detailsInfo: "1% GamiMall Coin bonus \n MetaCat Land using right",
+        detailsInfo: "Very popular TRax Head",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "MetaCat T shirt",
-        detailsTitle: "HIGH LIGHTS!",
+        title: "DJ-Trax Head",
+        detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
             price: 9999999, 
@@ -1324,9 +1352,10 @@ if (true) {
         ],
         showStockQty:true,//defaults to true
         qtyCurrent: -2,
-        qtyTotal: 80,
+        qtyTotal: 50,
         claimWindowEnabled:true,//defaults to true
-        claimStartMS: Date.UTC(2023,3,7,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        checkLatestMarketPrices: false,
+        claimStartMS: Date.UTC(2023,8,15,14,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
@@ -1339,15 +1368,15 @@ if (true) {
   const transformArgs =
     //new Transform(
     {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
     };
   //)
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0x97ad16f8182a30a919bc687a35ca714bc2ae77fb",
+    contract: "0xf3eb38b1649bdccc8761f3a0526b3173597a0363",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -1355,7 +1384,7 @@ if (true) {
         parent: _scene,
         entityName: "entS4",
         shapeName: "models/Rewards/rewardS4.glb",
-        hoverText: "Claim a MRT raffle ticket",
+        hoverText: "Claim a Low Poly Models Wearable",
         transform: transformArgs,
         lazyLoading:{
           enabled: true,
@@ -1364,13 +1393,13 @@ if (true) {
             enabled:true,
             shapeName:"",  
             positionType: 'featureEnt', 
-            //position: new Vector3(34.7+10.75,0.8,30.7+3.85+3.85)
+            //position: Vector3.create(34.7+10.75,0.8,30.7+3.85+3.85)
           }, 
           trigger: { 
             debugEnabled:false,
             positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(14,1,1),
-            position: new Vector3(40,1 ,61)//where to put the trigger, triggerPositionType affects its relative offset
+            size: Vector3.create(14,1,1),
+            position: Vector3.create(40,1 ,61)//where to put the trigger, triggerPositionType affects its relative offset
           } 
         }, 
         motionData: {
@@ -1382,17 +1411,17 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "images/wearables/MRT.png",//"https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x30d3387ff3de2a21bef7032f82d00ff7739e403c:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "images/wearables/Lowpolyreward.png",//"https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x30d3387ff3de2a21bef7032f82d00ff7739e403c:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
-        imageWidth: 600,
-        imageHeight: 600,
+        imageWidth: 512,
+        imageHeight: 512,
         detailsFontSize: 12, 
         
-        detailsInfo: "2 winners will reiceve a MRT apartment",
+        detailsInfo: "Claim 1 random part of the wearble that \n is in the suite (3 claims per account)",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "MRT ticket",
-        detailsTitle: "HIGH LIGHTS!",
+        title: "LPMxSOA|Breakout",
+        detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
             price: 9999999, 
@@ -1403,9 +1432,10 @@ if (true) {
         ],
         showStockQty:true,//defaults to true
         qtyCurrent: -2,
-        qtyTotal: 5,
+        qtyTotal: 150,
         claimWindowEnabled:true,//defaults to true
-        claimStartMS:Date.UTC(2023,3,7,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        checkLatestMarketPrices: true,
+        claimStartMS:Date.UTC(2023,8,15,14,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
@@ -1418,15 +1448,15 @@ if (true) {
   const transformArgs =
     //new Transform(
     {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
     };
   //)
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0x115035d249604f767ff6795827a4bba06b1c332c",
+    contract: "0x367999927133f4d54fccb80150013933a139abb1",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -1434,7 +1464,7 @@ if (true) {
         parent: _scene,
         entityName: "entS5",
         shapeName: "models/Rewards/rewardS5.glb",
-        hoverText: "Claim a Apes 3D Rocket ",
+        hoverText: "Claim a PinkPunk Wearable ",
         transform: transformArgs,
         lazyLoading:{
           enabled: true,
@@ -1443,13 +1473,13 @@ if (true) {
             enabled:true,
             shapeName:"",  
             positionType: 'featureEnt', 
-            //position: new Vector3(34.7+10.75,0.8,30.7+3.85+3.85)
+            //position: Vector3.create(34.7+10.75,0.8,30.7+3.85+3.85)
           }, 
           trigger: { 
             debugEnabled:false,
             positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(14,1,1),
-            position: new Vector3(40,1 ,61)//where to put the trigger, triggerPositionType affects its relative offset
+            size: Vector3.create(14,1,1),
+            position: Vector3.create(40,1 ,61)//where to put the trigger, triggerPositionType affects its relative offset
           } 
         }, 
         motionData: {
@@ -1461,17 +1491,17 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "images/wearables/apes3d.png",//"https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x115035d249604f767ff6795827a4bba06b1c332c:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x367999927133f4d54fccb80150013933a139abb1:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
-        imageWidth: 256,
-        imageHeight: 256,
+        imageWidth: 1024,
+        imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "1% GamiMall Coin bonus",
+        detailsInfo: "Interesting design by Punk Pink",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "Apes3D Rocket",
-        detailsTitle: "HIGH LIGHTS!",
+        title: "5 Ghosts",
+        detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
             price: 9999999, 
@@ -1482,9 +1512,10 @@ if (true) {
         ],
         showStockQty:true,//defaults to true
         qtyCurrent: -2,
-        qtyTotal: 40,
+        qtyTotal: 50,
         claimWindowEnabled:true,//defaults to true
-        claimStartMS:Date.UTC(2023,3,7,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        checkLatestMarketPrices: false,
+        claimStartMS:Date.UTC(2023,8,15,14,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
@@ -1497,15 +1528,15 @@ if (true) {
   const transformArgs =
     //new Transform(
     {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
     };
   //)
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0x0e4f31c0c0d4cefa34b624c6ad09e4c04af624fa",
+    contract: "0x35f8aee672cde8e5fd09c93d2bfe4ff5a9cf0756",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -1513,7 +1544,7 @@ if (true) {
         parent: _scene,
         entityName: "entS6",
         shapeName: "models/Rewards/rewardS6.glb",
-        hoverText: "Claim a Waifumon3D",
+        hoverText: "Claim a GolfCraft Fashion Tickets",
         transform: transformArgs,
         lazyLoading:{
           enabled: true,
@@ -1522,13 +1553,13 @@ if (true) {
             enabled:true,
             shapeName:"",  
             positionType: 'featureEnt', 
-            //position: new Vector3(34.7+10.75,0.8,30.7+3.85+3.85)
+            //position: Vector3.create(34.7+10.75,0.8,30.7+3.85+3.85)
           }, 
           trigger: { 
             debugEnabled:false,
             positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(14,1,1),
-            position: new Vector3(40,1 ,61)//where to put the trigger, triggerPositionType affects its relative offset
+            size: Vector3.create(14,1,1),
+            position: Vector3.create(40,1 ,61)//where to put the trigger, triggerPositionType affects its relative offset
           } 
         }, 
         motionData: {
@@ -1540,17 +1571,17 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x0e4f31c0c0d4cefa34b624c6ad09e4c04af624fa:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "images/wearables/Golfcraftreward.png",//"https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x0e4f31c0c0d4cefa34b624c6ad09e4c04af624fa:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
-        imageWidth: 1024,
-        imageHeight: 1024,
+        imageWidth: 512,
+        imageHeight: 512,
         detailsFontSize: 12, 
         
-        detailsInfo: "5% GamiMall Coin bonus",
+        detailsInfo: "Holders of this NFT can Redeem \n 500 GolfCraft Fashion Tickets",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "Waifumon3D",
-        detailsTitle: "HIGH LIGHTS!",
+        title: "GC Fashion Tickets",
+        detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
             price: 9999999, 
@@ -1561,9 +1592,10 @@ if (true) {
         ],
         showStockQty:true,//defaults to true
         qtyCurrent: -2,
-        qtyTotal: 60,
+        qtyTotal: 7,
         claimWindowEnabled:true,//defaults to true
-        claimStartMS:Date.UTC(2023,3,7,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        checkLatestMarketPrices: false,
+        claimStartMS:Date.UTC(2023,8,15,14,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
@@ -1576,15 +1608,15 @@ if (true) {
   const transformArgs =
     //new Transform(
     {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
     };
   //)
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0x35f8aee672cdE8e5FD09C93D2BfE4FF5a9cF0756",
+    contract: "0x8755e5bc8dc1458285161f4f4c3562535aa37610",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -1592,7 +1624,7 @@ if (true) {
         parent: _scene,
         entityName: "entS7",
         shapeName: "models/Rewards/rewardS7.glb",
-        hoverText: "Claim a Golfcraft Sammich ticket",
+        hoverText: "Claim a Polygonal Mind Wearable",
         transform: transformArgs,
         lazyLoading:{
           enabled: true,
@@ -1601,13 +1633,13 @@ if (true) {
             enabled:true,
             shapeName:"",  
             positionType: 'featureEnt', 
-            //position: new Vector3(34.7+10.75,0.8,30.7+3.85+3.85)
+            //position: Vector3.create(34.7+10.75,0.8,30.7+3.85+3.85)
           }, 
           trigger: { 
             debugEnabled:false,
             positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(14,1,1),
-            position: new Vector3(40,1 ,61)//where to put the trigger, triggerPositionType affects its relative offset
+            size: Vector3.create(14,1,1),
+            position: Vector3.create(40,1 ,61)//where to put the trigger, triggerPositionType affects its relative offset
           } 
         }, 
         motionData: {
@@ -1619,17 +1651,17 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "images/wearables/golfcraft.png",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x8755e5bc8dc1458285161f4f4c3562535aa37610:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
-        imageWidth: 600,
-        imageHeight: 600,
+        imageWidth: 1024,
+        imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "Get a random Sammich wearable",
+        detailsInfo: "Utility tool in next MegaCube",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "Golfcraft ticket",
-        detailsTitle: "HIGH LIGHTS!",
+        title: "Mega Vision",
+        detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
             price: 9999999, 
@@ -1638,10 +1670,11 @@ if (true) {
             label: "Coins",
           }
         ],
+        checkLatestMarketPrices:false,
         showStockQty:true,//defaults to true
         qtyCurrent: -2,
-        qtyTotal: 6,
-        claimWindowEnabled:true,//defaults to true
+        qtyTotal: 1000,
+        claimWindowEnabled:false,//defaults to true
         claimStartMS: Date.UTC(2023,3,7,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
@@ -1655,9 +1688,9 @@ if (true) {
   const transformArgs =
     //new Transform(
     {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
     };
   //)
 
@@ -1680,13 +1713,13 @@ if (true) {
             enabled:true,
             shapeName:"",  
             positionType: 'featureEnt', 
-            //position: new Vector3(34.7+10.75,0.8,30.7+3.85+3.85)
+            //position: Vector3.create(34.7+10.75,0.8,30.7+3.85+3.85)
           }, 
           trigger: { 
             debugEnabled:false,
             positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(14,1,1),
-            position: new Vector3(40,1 ,61)//where to put the trigger, triggerPositionType affects its relative offset
+            size: Vector3.create(14,1,1),
+            position: Vector3.create(40,1 ,61)//where to put the trigger, triggerPositionType affects its relative offset
           } 
         }, 
         motionData: {
@@ -1708,7 +1741,7 @@ if (true) {
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
         title: "Coca-Cola Jumper",
-        detailsTitle: "HIGH LIGHTS!",
+        detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
             price: 9999999, 
@@ -1719,8 +1752,9 @@ if (true) {
         ],
         showStockQty:true,//defaults to true
         qtyCurrent: -2,
-        qtyTotal: 20,
+        qtyTotal: 50,
         claimWindowEnabled:true,//defaults to true
+        checkLatestMarketPrices: false,
         claimStartMS:Date.UTC(2023,3,7,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
@@ -1734,15 +1768,15 @@ if (true) {
   const transformArgs =
     //new Transform(
     {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
     };
   //)
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0x2dc7f6b5044ba0cdd0aa84cc02b32b4eb36e3f61",
+    contract: "0x0c0de214ab1ceae679c757249868ac656cf51f32",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -1750,7 +1784,7 @@ if (true) {
         parent: _scene,
         entityName: "entS9",
         shapeName: "models/Rewards/rewardS9.glb",
-        hoverText: "Claim a Meama Hoodie",
+        hoverText: "Claim a BeatTrekkers Wearable",
         transform: transformArgs,
         lazyLoading:{
           enabled: true,
@@ -1759,13 +1793,13 @@ if (true) {
             enabled:true,
             shapeName:"",  
             positionType: 'featureEnt', 
-            //position: new Vector3(34.7+10.75,0.8,30.7+3.85+3.85)
+            //position: Vector3.create(34.7+10.75,0.8,30.7+3.85+3.85)
           }, 
           trigger: { 
             debugEnabled:false,
             positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(14,1,1),
-            position: new Vector3(40,1 ,61)//where to put the trigger, triggerPositionType affects its relative offset
+            size: Vector3.create(14,1,1),
+            position: Vector3.create(40,1 ,61)//where to put the trigger, triggerPositionType affects its relative offset
           } 
         }, 
         motionData: {
@@ -1777,17 +1811,17 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x2dc7f6b5044ba0cdd0aa84cc02b32b4eb36e3f61:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x0c0de214ab1ceae679c757249868ac656cf51f32:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
         imageWidth: 1024,
         imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "A coffee can always keep you fresh and warm",
+        detailsInfo: "Do you feel the beats?",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "Meama Hoodie",
-        detailsTitle: "HIGH LIGHTS!",
+        title: "BeatTrekkers Jeans",
+        detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
             price: 9999999, 
@@ -1800,7 +1834,8 @@ if (true) {
         qtyCurrent: -2,
         qtyTotal: 100,
         claimWindowEnabled:true,//defaults to true
-        claimStartMS:Date.UTC(2023,3,7,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        checkLatestMarketPrices: false,
+        claimStartMS:Date.UTC(2023,8,15,14,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
@@ -1813,15 +1848,15 @@ if (true) {
   const transformArgs =
     //new Transform(
     {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
     };
   //)
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0x7df780724f2f816e1b8428d8b192fd8c3539c22b",
+    contract: "0x4c3b25b9d607cd3baa61158110e9bf5429df13b8",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -1829,7 +1864,7 @@ if (true) {
         parent: _scene,
         entityName: "entS10",
         shapeName: "models/Rewards/rewardS10.glb",
-        hoverText: "Claim a Sensorium T-shirt",
+        hoverText: "Claim a SXBet T-shirt",
         transform: transformArgs,
         lazyLoading:{
           enabled: true,
@@ -1838,13 +1873,13 @@ if (true) {
             enabled:true,
             shapeName:"",  
             positionType: 'featureEnt', 
-            //position: new Vector3(34.7+10.75,0.8,30.7+3.85+3.85)
+            //position: Vector3.create(34.7+10.75,0.8,30.7+3.85+3.85)
           }, 
           trigger: { 
             debugEnabled:false,
             positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(14,1,1),
-            position: new Vector3(40,1 ,61)//where to put the trigger, triggerPositionType affects its relative offset
+            size: Vector3.create(14,1,1),
+            position: Vector3.create(40,1 ,61)//where to put the trigger, triggerPositionType affects its relative offset
           } 
         }, 
         motionData: {
@@ -1856,17 +1891,17 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaViu Hat",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x7df780724f2f816e1b8428d8b192fd8c3539c22b:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x4c3b25b9d607cd3baa61158110e9bf5429df13b8:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
         imageWidth: 1024,
         imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "1% GamiMall Coin bonus \n Sensorium Future token airdrop",
+        detailsInfo: "20 usd free credits in SXBet",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "Sensorium T-shirt",
-        detailsTitle: "HIGH LIGHTS!",
+        title: "SXBet Tshirt",
+        detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
             price: 9999999, 
@@ -1877,9 +1912,10 @@ if (true) {
         ],
         showStockQty:true,//defaults to true
         qtyCurrent: -2,
-        qtyTotal: 80,
+        qtyTotal: 200,
         claimWindowEnabled:true,//defaults to true
-        claimStartMS:Date.UTC(2023,3,7,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        checkLatestMarketPrices: false,
+        claimStartMS:Date.UTC(2023,8,15,14,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
@@ -1892,15 +1928,15 @@ if (true) {
   const transformArgs =
     //new Transform(
     {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
     };
   //)
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0x5aaaf59cf52b38af117a78b6f7763748aede1a13",
+    contract: "0x348829d82bf657a8640bd96d7a8e89eef12fe72e",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -1908,7 +1944,7 @@ if (true) {
         parent: _scene,
         entityName: "entS10",
         shapeName: "models/Rewards/rewardS11.glb",
-        hoverText: "Claim a pair of NUO Sneakers",
+        hoverText: "Claim a MetaFoxCrew Wearable",
         transform: transformArgs,
         lazyLoading:{
           enabled: true,
@@ -1917,13 +1953,13 @@ if (true) {
             enabled:true,
             shapeName:"",  
             positionType: 'featureEnt', 
-            //position: new Vector3(34.7+10.75,0.8,30.7+3.85+3.85)
+            //position: Vector3.create(34.7+10.75,0.8,30.7+3.85+3.85)
           }, 
           trigger: { 
             debugEnabled:false,
             positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(14,1,1),
-            position: new Vector3(40,1 ,61)//where to put the trigger, triggerPositionType affects its relative offset
+            size: Vector3.create(14,1,1),
+            position: Vector3.create(40,1 ,61)//where to put the trigger, triggerPositionType affects its relative offset
           } 
         }, 
         motionData: {
@@ -1935,17 +1971,17 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "NUO Mask",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x5aaaf59cf52b38af117a78b6f7763748aede1a13:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x348829d82bf657a8640bd96d7a8e89eef12fe72e:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
         imageWidth: 1024,
         imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "Cool Asian style sneakers with \n one of the best designs",
+        detailsInfo: "Be a member of the Metafox Crew",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "NUO Sneakers",
-        detailsTitle: "HIGH LIGHTS!",
+        title: "Metafox Crew Member",
+        detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
             price: 9999999, 
@@ -1956,38 +1992,39 @@ if (true) {
         ],
         showStockQty:true,//defaults to true
         qtyCurrent: -2,
-        qtyTotal: 80,
+        qtyTotal: 100,
         claimWindowEnabled:true,//defaults to true
-        claimStartMS:Date.UTC(2023,3,7,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        checkLatestMarketPrices: false,
+        claimStartMS:Date.UTC(2023,8,15,14,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
   });
 }
-/*
+
 //START MAKING REWARD S12
 if (true) {
   //block scope
   const transformArgs =
     //new Transform(
     {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
     };
   //)
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0x55e59c43f0b2eea14d5126fc8d531476fbd69529",
+    contract: "0x683156c152fb247701c5bde3b6da4c97f88b98e7",
     itemId: "0",
     options: {
       type: "2D-UI",
       featuredEntityData: {
         parent: _scene,
         entityName: "entS12",
-        shapeName: "",//"models/Rewards/rewardS12.glb",
-        hoverText: "Claim a Muscle Doge wearable ",
+        shapeName: "models/Rewards/rewardS12.glb",
+        hoverText: "Claim a CreatorDAO Wearable",
         transform: transformArgs,
         motionData: {
           rotationVelocity: ROTATE_VELOCITY_OFF,
@@ -1998,20 +2035,20 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MVFW METADOGE",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x55e59c43f0b2eea14d5126fc8d531476fbd69529:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x683156c152fb247701c5bde3b6da4c97f88b98e7:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
         imageWidth: 1024,
         imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "",
+        detailsInfo: "The first DCL wearable of Creator DAO",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "MVFW METADOGE",
-        detailsTitle: "HIGH LIGHTS!",
+        title: "CDVeste",
+        detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
-            price: 5999, 
+            price: 9999999999, 
             type: "VirtualCurrency",
             id: "GC",
             label: "Coins",
@@ -2021,13 +2058,14 @@ if (true) {
         qtyCurrent: -2,
         qtyTotal: 100,
         claimWindowEnabled:true,//defaults to true
-        claimStartMS: Date.UTC(2022,10,18,14,30,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        checkLatestMarketPrices: false,
+        claimStartMS: Date.UTC(2023,8,15,14,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
   });
 }
-*/
+
 //OTHERS
 
   //START MAKING REWARD Moon1
@@ -2035,9 +2073,9 @@ if (true) {
     //block scope
     const transformArgs =
       {
-        position: new Vector3(48, 0, 40),
-        rotation: new Quaternion(0, 0, 0, 1),
-        scale: new Vector3(1, 1, 1),
+        position: Vector3.create(48, 0, 40),
+        rotation: Quaternion.create(0, 0, 0, 1),
+        scale: Vector3.create(1, 1, 1),
       };
 
     wearableArr.push({
@@ -2060,13 +2098,13 @@ if (true) {
             enabled:true,
             shapeName:"models/Rewards/MoonSquareGifts.glb",  
             positionType: 'featureEnt', 
-            //position: new Vector3(34.7,0.8,30.7)
+            //position: Vector3.create(34.7,0.8,30.7)
           }, 
           trigger: { 
             debugEnabled:false,
             positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(25,1,25),
-            position: new Vector3(25,24,52)//where to put the trigger, triggerPositionType affects its relative offset
+            size: Vector3.create(25,1,25),
+            position: Vector3.create(25,24,52)//where to put the trigger, triggerPositionType affects its relative offset
           } 
         },
           motionData: {
@@ -2088,7 +2126,7 @@ if (true) {
           directLink: "https://market.decentraland.org/",
           directLinkFontSize: 10,
           title: "Cyber Glass #1",
-          detailsTitle: "HIGH LIGHTS!",
+          detailsTitle: "HIGHLIGHTS!",
           cost: [
             {
               price: 999999, 
@@ -2120,9 +2158,9 @@ if (true) {
       //block scope
       const transformArgs =
         {
-          position: new Vector3(48, 0, 40),
-          rotation: new Quaternion(0, 0, 0, 1),
-          scale: new Vector3(1, 1, 1),
+          position: Vector3.create(48, 0, 40),
+          rotation: Quaternion.create(0, 0, 0, 1),
+          scale: Vector3.create(1, 1, 1),
         };  
   
       wearableArr.push({
@@ -2144,13 +2182,13 @@ if (true) {
                 enabled:true,
                 shapeName:"",  
                 positionType: 'featureEnt', 
-                //position: new Vector3(34.7,0.8,30.7)
+                //position: Vector3.create(34.7,0.8,30.7)
               }, 
               trigger: { 
                 debugEnabled:false,
                 positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-                size: new Vector3(25,1,25),
-                position: new Vector3(25,24,52)//where to put the trigger, triggerPositionType affects its relative offset
+                size: Vector3.create(25,1,25),
+                position: Vector3.create(25,24,52)//where to put the trigger, triggerPositionType affects its relative offset
               } 
             },
             motionData: {
@@ -2172,7 +2210,7 @@ if (true) {
             directLink: "https://market.decentraland.org/",
             directLinkFontSize: 10,
             title: "Cyber Ear Phone",
-            detailsTitle: "HIGH LIGHTS!",
+            detailsTitle: "HIGHLIGHTS!",
             cost: [
               {
                 price: 999999, 
@@ -2204,9 +2242,9 @@ if (true) {
     //block scope
     const transformArgs =
       {
-        position: new Vector3(48, 0, 40),//37,3,3),//
-        rotation: new Quaternion(0, 0, 0, 1),
-        scale: new Vector3(1, 1, 1),
+        position: Vector3.create(48, 0, 40),//37,3,3),//
+        rotation: Quaternion.create(0, 0, 0, 1),
+        scale: Vector3.create(1, 1, 1),
       };
 
     wearableArr.push({
@@ -2228,13 +2266,13 @@ if (true) {
               enabled:true,
               shapeName:"models/Rewards/MoonSquareGifts.glb",  
               positionType: 'featureEnt', 
-              //position: new Vector3(34.7,0.8,30.7)
+              //position: Vector3.create(34.7,0.8,30.7)
             }, 
             trigger: { 
               debugEnabled:false,
               positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-              size: new Vector3(25,1,25),
-              position: new Vector3(25,24,52)//where to put the trigger, triggerPositionType affects its relative offset
+              size: Vector3.create(25,1,25),
+              position: Vector3.create(25,24,52)//where to put the trigger, triggerPositionType affects its relative offset
             } 
           },
           motionData: {
@@ -2256,7 +2294,7 @@ if (true) {
           directLink: "https://market.decentraland.org/",
           directLinkFontSize: 10,
           title: "Cyber Glass #2",
-          detailsTitle: "HIGH LIGHTS!",
+          detailsTitle: "HIGHLIGHTS!",
           cost: [
             {
               price: 999999, 
@@ -2288,14 +2326,14 @@ if (true) {
           //block scope
           const transformArgs =
             {
-              position: new Vector3(48, 0, 40),//37,3,3),//
-              rotation: new Quaternion(0, 0, 0, 1),
-              scale: new Vector3(1, 1, 1),
+              position: Vector3.create(48, 0, 40),//37,3,3),//
+              rotation: Quaternion.create(0, 0, 0, 1),
+              scale: Vector3.create(1, 1, 1),
             };
       
           wearableArr.push({
             sceneId: "gamimall",
-            contract: "0xa064e9e96bdc3a74c5257b7b0751e47003084300",
+            contract: "0x2596aa76d20d911b591e8c5f24a55c3c5a5d75c0",
             itemId: "0",
             options: {
               type: "2D-UI",
@@ -2303,7 +2341,7 @@ if (true) {
                 parent: _scene,
                 entityName: "ent4",
                 shapeName: "models/Rewards/Moon4.glb",//
-                hoverText: "Claim a Shoe-tiful",
+                hoverText: "Claim a Helpimstreaming wearable",
                 transform: transformArgs,
                 lazyLoading:{
                   enabled: true,
@@ -2312,13 +2350,13 @@ if (true) {
                     enabled:true,
                     shapeName:"models/Rewards/MoonSquareGifts.glb",  
                     positionType: 'featureEnt', 
-                    //position: new Vector3(34.7,0.8,30.7)
+                    //position: Vector3.create(34.7,0.8,30.7)
                   }, 
                   trigger: { 
                     debugEnabled:false,
                     positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-                    size: new Vector3(25,1,25),
-                    position: new Vector3(25,24,52)//where to put the trigger, triggerPositionType affects its relative offset
+                    size: Vector3.create(25,1,25),
+                    position: Vector3.create(25,24,52)//where to put the trigger, triggerPositionType affects its relative offset
                   } 
                 },
                 motionData: {
@@ -2330,17 +2368,17 @@ if (true) {
               nftUIData: {
                 style: "version20Modal",
                 type: "MetaDoge",
-                image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0xa064e9e96bdc3a74c5257b7b0751e47003084300:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+                image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x2596aa76d20d911b591e8c5f24a55c3c5a5d75c0:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
                 //imageSection: {  },
-                imageWidth: 1024,
-                imageHeight: 1024,
+                imageWidth: 512,
+                imageHeight: 512,
                 detailsFontSize: 12,
                 
-                detailsInfo: "Sponsored By PunkPink \n GRAB IT WHILE STOCK LAST",
+                detailsInfo: "Sponsored By Helpimstreaming \n MANA logo on your eyes",
                 directLink: "https://market.decentraland.org/",
                 directLinkFontSize: 10,
-                title: "Shoe-tiful",
-                detailsTitle: "HIGH LIGHTS!",
+                title: "MANA Vision",
+                detailsTitle: "HIGHLIGHTS!",
                 cost: [
                   {
                     price: 999999, 
@@ -2372,9 +2410,9 @@ if (true) {
       //block scope
       const transformArgs =
         {
-          position: new Vector3(48, 0, 40),
-          rotation: new Quaternion(0, 0, 0, 1),
-          scale: new Vector3(1, 1, 1),
+          position: Vector3.create(48, 0, 40),
+          rotation: Quaternion.create(0, 0, 0, 1),
+          scale: Vector3.create(1, 1, 1),
         };
   
       wearableArr.push({
@@ -2396,13 +2434,13 @@ if (true) {
                 enabled:true,
                 shapeName:"models/Rewards/HeavenSquareGifts.glb",  
                 positionType: 'featureEnt', 
-                //position: new Vector3(34.7,0.8,30.7)
+                //position: Vector3.create(34.7,0.8,30.7)
               }, 
               trigger: { 
                 debugEnabled:false,
                 positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-                size: new Vector3(20,1,20),
-                position: new Vector3(27,51,56)//where to put the trigger, triggerPositionType affects its relative offset
+                size: Vector3.create(20,1,20),
+                position: Vector3.create(27,51,56)//where to put the trigger, triggerPositionType affects its relative offset
               } 
             },
             motionData: {
@@ -2424,7 +2462,7 @@ if (true) {
             directLink: "https://market.decentraland.org/",
             directLinkFontSize: 10,
             title: "Febo Slim Pants",
-            detailsTitle: "HIGH LIGHTS!",
+            detailsTitle: "HIGHLIGHTS!",
             cost: [
               {
                 price: 999999, 
@@ -2456,9 +2494,9 @@ if (true) {
   //block scope
   const transformArgs =
     {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
     };
 
   wearableArr.push({
@@ -2480,13 +2518,13 @@ if (true) {
             enabled:true,
             shapeName:"",  
             positionType: 'featureEnt', 
-            //position: new Vector3(34.7,0.8,30.7)
+            //position: Vector3.create(34.7,0.8,30.7)
           }, 
           trigger: { 
             debugEnabled:false,
             positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(20,1,20),
-            position: new Vector3(27,51,56)//where to put the trigger, triggerPositionType affects its relative offset
+            size: Vector3.create(20,1,20),
+            position: Vector3.create(27,51,56)//where to put the trigger, triggerPositionType affects its relative offset
           } 
         },
         motionData: {
@@ -2508,7 +2546,7 @@ if (true) {
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
         title: "Rabbit Hat",
-        detailsTitle: "HIGH LIGHTS!",
+        detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
             price: 999999, 
@@ -2535,9 +2573,9 @@ if (true) {
   //block scope
   const transformArgs =
     {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
     };
 
   wearableArr.push({
@@ -2559,13 +2597,13 @@ if (true) {
             enabled:true,
             shapeName:"models/Rewards/MarsSquareGifts.glb",  
             positionType: 'featureEnt', 
-            //position: new Vector3(34.7,0.8,30.7)
+            //position: Vector3.create(34.7,0.8,30.7)
           }, 
           trigger: { 
             debugEnabled:false,
             positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(18,1,18),
-            position: new Vector3(50,32,60)//where to put the trigger, triggerPositionType affects its relative offset
+            size: Vector3.create(18,1,18),
+            position: Vector3.create(50,32,60)//where to put the trigger, triggerPositionType affects its relative offset
           } 
         },
         motionData: {
@@ -2587,7 +2625,7 @@ if (true) {
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
         title: "Muscle Doge",
-        detailsTitle: "HIGH LIGHTS!",
+        detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
             price: 999999, 
@@ -2619,9 +2657,9 @@ if (true) {
       //block scope
       const transformArgs =
         {
-          position: new Vector3(48, 0, 40),
-          rotation: new Quaternion(0, 0, 0, 1),
-          scale: new Vector3(1, 1, 1),
+          position: Vector3.create(48, 0, 40),
+          rotation: Quaternion.create(0, 0, 0, 1),
+          scale: Vector3.create(1, 1, 1),
         };
   
       wearableArr.push({
@@ -2643,13 +2681,13 @@ if (true) {
                 enabled:true,
                 shapeName:"",  
                 positionType: 'featureEnt', 
-                //position: new Vector3(34.7,0.8,30.7)
+                //position: Vector3.create(34.7,0.8,30.7)
               }, 
               trigger: { 
                 debugEnabled:false,
                 positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-                size: new Vector3(18,1,18),
-                position: new Vector3(50,32,60)//where to put the trigger, triggerPositionType affects its relative offset
+                size: Vector3.create(18,1,18),
+                position: Vector3.create(50,32,60)//where to put the trigger, triggerPositionType affects its relative offset
               } 
             },
             motionData: {
@@ -2671,7 +2709,7 @@ if (true) {
             directLink: "https://market.decentraland.org/",
             directLinkFontSize: 10,
             title: "Cyber Earring",
-            detailsTitle: "HIGH LIGHTS!",
+            detailsTitle: "HIGHLIGHTS!",
             cost: [
               {
                 price: 999999, 
@@ -2703,14 +2741,14 @@ if (true) {
   //block scope
   const transformArgs =
     {
-      position: new Vector3(48, 0, 40),
-      rotation: new Quaternion(0, 0, 0, 1),
-      scale: new Vector3(1, 1, 1),
+      position: Vector3.create(48, 0, 40),
+      rotation: Quaternion.create(0, 0, 0, 1),
+      scale: Vector3.create(1, 1, 1),
     };
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0xb942cdee678aaf8a17a3bbb405b0b32f08bedad6",
+    contract: "0xd2132c5f42e9b0e2fb494b98963dc9a4470c19d0",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -2718,7 +2756,7 @@ if (true) {
         parent: _scene,
         entityName: "ent4",
         shapeName: "models/Rewards/Mars3.glb",
-        hoverText: "Claim a CryptoCrow NFT ",
+        hoverText: "Claim a Exodus wearable ",
         transform: transformArgs,
         lazyLoading:{
           enabled: true,
@@ -2727,13 +2765,13 @@ if (true) {
             enabled:true,
             shapeName:"",  
             positionType: 'featureEnt', 
-            //position: new Vector3(34.7,0.8,30.7)
+            //position: Vector3.create(34.7,0.8,30.7)
           }, 
           trigger: { 
             debugEnabled:false,
             positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-            size: new Vector3(18,1,18),
-            position: new Vector3(50,32,60)//where to put the trigger, triggerPositionType affects its relative offset
+            size: Vector3.create(18,1,18),
+            position: Vector3.create(50,32,60)//where to put the trigger, triggerPositionType affects its relative offset
           } 
         },
         motionData: {
@@ -2745,16 +2783,16 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "images/wearables/CCRW.png",//"https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x85503e1c32b7669614ff5738c5da732b6670e8cd:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0xd2132c5f42e9b0e2fb494b98963dc9a4470c19d0:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
-        imageWidth: 732,
-        imageHeight: 586,
+        imageWidth: 512,
+        imageHeight: 512,
         detailsFontSize: 12,
         
-        detailsInfo: "CryptoCrow NFT created by Deadstar \n  more info in our discord",
+        detailsInfo: "Sponsored by JTV's Exodus",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "CryptoCrow",
+        title: "Red santa hat",
         detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
@@ -2772,7 +2810,7 @@ if (true) {
         ],
         showStockQty:true,//defaults to true
         qtyCurrent: -2,
-        qtyTotal: 10,
+        qtyTotal: 50,
         claimWindowEnabled:true,//defaults to true
         claimStartMS:  Date.UTC(2022,11,23,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
@@ -2787,9 +2825,9 @@ if (true) {
     //block scope
     const transformArgs =
       {
-        position: new Vector3(48, 0, 40),
-        rotation: new Quaternion(0, 0, 0, 1),
-        scale: new Vector3(1, 1, 1),
+        position: Vector3.create(48, 0, 40),
+        rotation: Quaternion.create(0, 0, 0, 1),
+        scale: Vector3.create(1, 1, 1),
       };
   
     wearableArr.push({
@@ -2811,13 +2849,13 @@ if (true) {
               enabled:true,
               shapeName:"models/Rewards/MuscleSquareGifts.glb",  
               positionType: 'featureEnt', 
-              //position: new Vector3(34.7,0.8,30.7)
+              //position: Vector3.create(34.7,0.8,30.7)
             }, 
             trigger: { 
               debugEnabled:false,
               positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-              size: new Vector3(18,1,18),
-              position: new Vector3(57,10,52)//where to put the trigger, triggerPositionType affects its relative offset
+              size: Vector3.create(18,1,18),
+              position: Vector3.create(57,10,52)//where to put the trigger, triggerPositionType affects its relative offset
             } 
           },
           motionData: {
@@ -2839,7 +2877,7 @@ if (true) {
           directLink: "https://market.decentraland.org/",
           directLinkFontSize: 10,
           title: "MetaViu Hat",
-          detailsTitle: "HIGH LIGHTS!",
+          detailsTitle: "HIGHLIGHTS!",
           cost: [
             {
               price: 999999, 
@@ -2871,9 +2909,9 @@ if (true) {
       //block scope
       const transformArgs =
         {
-          position: new Vector3(48, 0, 40),
-          rotation: new Quaternion(0, 0, 0, 1),
-          scale: new Vector3(1, 1, 1),
+          position: Vector3.create(48, 0, 40),
+          rotation: Quaternion.create(0, 0, 0, 1),
+          scale: Vector3.create(1, 1, 1),
         };
     
       wearableArr.push({
@@ -2895,13 +2933,13 @@ if (true) {
                 enabled:true,
                 shapeName:"",  
                 positionType: 'featureEnt', 
-                //position: new Vector3(34.7,0.8,30.7)
+                //position: Vector3.create(34.7,0.8,30.7)
               }, 
               trigger: { 
                 debugEnabled:false,
                 positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-                size: new Vector3(18,1,18),
-                position: new Vector3(57,10,52)//where to put the trigger, triggerPositionType affects its relative offset
+                size: Vector3.create(18,1,18),
+                position: Vector3.create(57,10,52)//where to put the trigger, triggerPositionType affects its relative offset
               } 
             },
             motionData: {
@@ -2923,7 +2961,7 @@ if (true) {
             directLink: "https://market.decentraland.org/",
             directLinkFontSize: 10,
             title: "Zeitgeist Long Gown",
-            detailsTitle: "HIGH LIGHTS!",
+            detailsTitle: "HIGHLIGHTS!",
             cost: [
               {
                 price: 999999, 
@@ -2954,9 +2992,9 @@ if (true) {
       //block scope
       const transformArgs =
         {
-          position: new Vector3(48, 0, 40),
-          rotation: new Quaternion(0, 0, 0, 1),
-          scale: new Vector3(1, 1, 1),
+          position: Vector3.create(48, 0, 40),
+          rotation: Quaternion.create(0, 0, 0, 1),
+          scale: Vector3.create(1, 1, 1),
         };
     
       wearableArr.push({
@@ -2978,13 +3016,13 @@ if (true) {
                 enabled:true,
                 shapeName:"",  
                 positionType: 'featureEnt', 
-                //position: new Vector3(34.7,0.8,30.7)
+                //position: Vector3.create(34.7,0.8,30.7)
               }, 
               trigger: { 
                 debugEnabled:false,
                 positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-                size: new Vector3(18,1,18),
-                position: new Vector3(57,10,52)//where to put the trigger, triggerPositionType affects its relative offset
+                size: Vector3.create(18,1,18),
+                position: Vector3.create(57,10,52)//where to put the trigger, triggerPositionType affects its relative offset
               } 
             },
             motionData: {
@@ -3006,7 +3044,7 @@ if (true) {
             directLink: "https://market.decentraland.org/",
             directLinkFontSize: 10,
             title: "ScarCryptoFace Hood",
-            detailsTitle: "HIGH LIGHTS!",
+            detailsTitle: "HIGHLIGHTS!",
             cost: [
               {
                 price: 999999, 
@@ -3037,14 +3075,14 @@ if (true) {
       //block scope
       const transformArgs =
         {
-          position: new Vector3(48, 0, 40),
-          rotation: new Quaternion(0, 0, 0, 1),
-          scale: new Vector3(1, 1, 1),
+          position: Vector3.create(48, 0, 40),
+          rotation: Quaternion.create(0, 0, 0, 1),
+          scale: Vector3.create(1, 1, 1),
         };
     
       wearableArr.push({
         sceneId: "gamimall",
-        contract: "0x635cf423513422f2194b8dbddf3c864808420fa7",
+        contract: "0xe0bb1d4a85ed78418f7378bacab475a5aafb5446",
         itemId: "0",
         options: {
           type: "2D-UI",
@@ -3052,7 +3090,7 @@ if (true) {
             parent: _scene,
             entityName: "ent4",
             shapeName: "models/Rewards/CoinsBag.glb",
-            hoverText: "Claim a MetaGamiMall Coins Bag V1",
+            hoverText: "Claim a MetaGamiMall Coins Bag V2",
             transform: transformArgs,
             lazyLoading:{
               enabled: false,
@@ -3061,13 +3099,13 @@ if (true) {
                 enabled:true,
                 shapeName:"",  
                 positionType: 'featureEnt', 
-                //position: new Vector3(34.7,0.8,30.7)
+                //position: Vector3.create(34.7,0.8,30.7)
               }, 
               trigger: { 
                 debugEnabled:false,
                 positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
-                size: new Vector3(18,1,18),
-                position: new Vector3(57,10,52)//where to put the trigger, triggerPositionType affects its relative offset
+                size: Vector3.create(18,1,18),
+                position: Vector3.create(57,10,52)//where to put the trigger, triggerPositionType affects its relative offset
               } 
             },
             motionData: {
@@ -3079,15 +3117,15 @@ if (true) {
           nftUIData: {
             style: "version20Modal",
             type: "MetaDoge",
-            image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x635cf423513422f2194b8dbddf3c864808420fa7:0/thumbnail",
-            imageWidth: 1000,
-            imageHeight: 1000,
+            image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0xe0bb1d4a85ed78418f7378bacab475a5aafb5446:0/thumbnail",
+            imageWidth: 256,
+            imageHeight: 256,
             detailsFontSize: 12,
             
-            detailsInfo: "3% coins bonus,Burn this \n wearable to redeem 10k GameMall Coins",
+            detailsInfo: "1-10% aggregatable coins bonus,Burn \n it to redeem 5k GameMall Coins",
             directLink: "https://market.decentraland.org/",
             directLinkFontSize: 10,
-            title: "Coins Bag V1",
+            title: "Coins Bag V2",
             detailsTitle: "HIGHLIGHTS!",
             cost: [
               {
@@ -3103,10 +3141,11 @@ if (true) {
                 label: "Coins"
               }
             ],
-            showStockQty:true,//defaults to true
+            showStockQty:false,//defaults to true
             qtyCurrent: -2,
-            qtyTotal: 200,
+            qtyTotal: 100,
             claimWindowEnabled:true,//defaults to true
+            checkLatestMarketPrices: true,
             claimStartMS:  Date.UTC(2023,5,10,13,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
             claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
           },

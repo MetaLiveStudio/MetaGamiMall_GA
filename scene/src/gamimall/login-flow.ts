@@ -1,5 +1,6 @@
-import * as utils from "@dcl/ecs-scene-utils";
-import * as ui from "@dcl/ui-scene-utils";
+//import * as utils from "@dcl/ecs-scene-utils";
+import * as utils from '@dcl-sdk/utils'
+//import * as ui from "@dcl/ui-scene-utils";
 import PlayFab from "./playfab_sdk/PlayFabClientApi";
 import * as PlayFabSDK from "./playfab_sdk/index";
 import {
@@ -12,10 +13,10 @@ import {
   UserSettings,
 } from "./playfab_sdk/playfab.types";
 
-import * as EthereumController from "@decentraland/EthereumController";
-import { getProvider } from "@decentraland/web3-provider";
-import { GLOBAL_CANVAS } from "./resources";
-import { GAME_STATE } from "src/state";
+//import * as EthereumController from "@decentraland/EthereumController";
+//import { getProvider } from "@decentraland/web3-provider";
+//import { GLOBAL_CANVAS } from "./resources";
+import { GAME_STATE } from "../state";
 import {
   getAndSetRealmDataIfNull,
   getAndSetUserData,
@@ -23,19 +24,23 @@ import {
   getAndSetUserDataIfNullNoWait,
   getRealmDataFromLocal,
   getUserDataFromLocal,
-} from "src/userData";
+} from "../userData";
 
-import { isNull, notNull } from "src/utils";
-import { CONFIG } from "src/config";
-import { initRegistry, REGISTRY } from "src/registry";
-import { Constants as DecentRallyConstants } from "src/meta-decentrally/modules/resources/globals";
-import { LoginFlowCallback, LoginFlowResult } from "src/meta-decentrally/login/login-types";
-import { preventConcurrentExecution } from "src/meta-decentrally/modules/utilities";
-import { signedFetch } from '@decentraland/SignedFetch';
+import { isNull, notNull } from "../utils";
+import { CONFIG, initConfig } from "../config";
+import { initRegistry, REGISTRY } from "../registry";
+//import { Constants as DecentRallyConstants } from "src/meta-decentrally/modules/resources/globals";
+import { LoginFlowCallback, LoginFlowResult } from "../meta-decentrally/login/login-types";
+import { preventConcurrentExecution } from "../meta-decentrally/modules/utilities";
+//import { signedFetch } from '@decentraland/SignedFetch';
+import { log } from "../back-ports/backPorts";
+import { executeTask } from "@dcl/sdk/ecs";
+import { signedFetch } from "~system/SignedFetch";
+import { Color4 } from "@dcl/sdk/math";
+import * as ui from 'dcl-ui-toolkit'
 
-
-initRegistry()
-PlayFab.settings.titleId = CONFIG.PLAYFAB_TITLEID;
+//initRegistry()
+//initConfig()
 
 // play ambient music
 //playLoop(ambienceSound, 0.4);
@@ -44,26 +49,30 @@ PlayFab.settings.titleId = CONFIG.PLAYFAB_TITLEID;
 // Request login with MetaMask
 //
 // const dclAuthURL = 'http://localhost:3000/api/dcl/auth'
-const dclAuthURL = CONFIG.LOGIN_ENDPOINT; //'https://dev.metadoge.art/api/dcl/auth'
+ //'https://dev.metadoge.art/api/dcl/auth'
 
  
 ///src/gamimall/login-flow.ts
+//TODO remake this!!!
+
 export const loginErrorPrompt = new ui.OptionPrompt(
-  "Unable to Login",
-  "Error",
-  () => {
-    loginErrorPrompt.close();
-  },
-  () => {
-    loginErrorPrompt.hide();
-    GAME_STATE.playerState.requestDoLoginFlow();
-  },
-  "Cancel",
-  "Try Again",
-  true
+  {
+   text: "Unable to Login",
+   title: "Error",
+   onReject: () => {
+      loginErrorPrompt.hide()
+    },
+   onAccept: () => {
+      loginErrorPrompt.hide();
+      GAME_STATE.playerState.requestDoLoginFlow();
+    },
+    rejectLabel: "Cancel",
+    acceptLabel: "Try Again",
+    useDarkTheme: true
+  }
 );
 
-loginErrorPrompt.hide();
+//loginErrorPrompt.show()
 
 
 //this is a active logout, will make calls
@@ -106,9 +115,9 @@ export function doLoginFlow(callback?:LoginFlowCallback,resultInPlace?:LoginFlow
   const promise:Promise<LoginFlowResult> = new Promise( async (resolve, reject)=>{
       try{
           let loginRes:LoginFlowResult
-          if(CONFIG.LOGIN_FLOW_TYPE == 'signedTypeV4'){
+          /*if(CONFIG.LOGIN_FLOW_TYPE == 'signedTypeV4'){
             loginRes = await doLoginFlowAsync()
-          }else if(CONFIG.LOGIN_FLOW_TYPE == 'dclSignedFetch'){
+          }else */if(CONFIG.LOGIN_FLOW_TYPE == 'dclSignedFetch'){
             loginRes = await doLoginFlowAsync_signedFetch()
           }else{
             const msg = 'ERROR: unrecognized '+CONFIG.LOGIN_FLOW_TYPE
@@ -137,7 +146,7 @@ export function doLoginFlow(callback?:LoginFlowCallback,resultInPlace?:LoginFlow
   })
   return promise
 }
-DecentRallyConstants.doLoginFlow = doLoginFlow
+//DecentRallyConstants.doLoginFlow = doLoginFlow
 //REGISTRY.doLoginFlow = doLoginFlow
 
 
@@ -160,7 +169,7 @@ export function registerLoginFlowListener(){
 
 
 //prevent login action ran more than 1 at a time
-const doLoginFlowAsync = preventConcurrentExecution("doLoginFlowAsync",async (resultInPlace?:LoginFlowResult) => {
+/*const doLoginFlowAsync = preventConcurrentExecution("doLoginFlowAsync",async (resultInPlace?:LoginFlowResult) => {
   log("doLoginFlowAsync " + GAME_STATE.playerState.loginFlowState)
   log("preventConcurrentExecution.doLoginFlowAsync")
   const retVal:LoginFlowResult = resultInPlace !== undefined ? resultInPlace : {chain:[]}
@@ -203,7 +212,7 @@ const doLoginFlowAsync = preventConcurrentExecution("doLoginFlowAsync",async (re
       log("doLoginFlowAsync threw an error",retVal,e)   
   }
   return retVal
-})
+})*/
 
 
 //prevent login action ran more than 1 at a time
@@ -224,6 +233,7 @@ const doLoginFlowAsync_signedFetch = preventConcurrentExecution("doLoginFlowAsyn
           GAME_STATE.playerState.playerCustomID = uuid
           retVal.customId = uuid
       case 'wallet-success':
+        log("doLoginFlowAsync.calling.loginUser")
           retVal.chain.push( GAME_STATE.playerState.loginFlowState )
           //TODO add catch? call do login flow aync again?
           const result = await loginUser(GAME_STATE.playerState.playerCustomID)
@@ -249,13 +259,13 @@ function handleCustomIdError(json:any|Error){
     if(json instanceof Error){
         GAME_STATE.playerState.loginFlowState='wallet-error'
 
-        loginErrorPrompt.text.value =
-          "There was a an error signing in\n" + json.message;
+        loginErrorPrompt.textElement.value =
+          "There was a an error signing in\n" + json.message //);
         loginErrorPrompt.show();
-        //Constants.Game_2DUI.showLoginErrorPrompt( undefined,"There was a an error signing in\n" + json.message  )
+        ////Constants.Game_2DUI.showLoginErrorPrompt( undefined,"There was a an error signing in\n" + json.message  )
     }else{
         GAME_STATE.playerState.loginFlowState='wallet-error'
-        loginErrorPrompt.text.value =
+        loginErrorPrompt.textElement.value =
           "There was a an error signing in\n" + json.message;
         loginErrorPrompt.show();
     }
@@ -263,7 +273,7 @@ function handleCustomIdError(json:any|Error){
 //TODO return value
 //see //https://github.com/MetaLiveStudio/metadoge#apidclauth
 async function fetchCustomId(){
-  return executeTask<string>(async () => {
+  //return //async () => {
       log("fetchCustomId start ")
 
       const callUrl = CONFIG.LOGIN_ENDPOINT
@@ -274,38 +284,38 @@ async function fetchCustomId(){
       let method = "POST"
       let headers = { "Content-Type": "application/json" }
       let body = JSON.stringify({
-          address: userData.userId,
-          hasConnectedWeb3: userData.hasConnectedWeb3,
-          catalyst: realm.domain,
-          room: realm.layer
-      })
-
+          address: userData?.userId,
+          hasConnectedWeb3: userData?.hasConnectedWeb3,
+          catalyst: realm?.baseUrl,//,//realm?.domain,
+          room: ""////realm?.layer //deprecated avoid it
+      }) 
+      
       try {
           //+ "?&titleId="+CONFIG.PLAYFAB_TITLEID
           //for some reason any query params breaks it
-          let response = await signedFetch(callUrl , {
-          headers: headers,
-          method: method,
-          body: body,
-          })
+          let response = await signedFetch({url:callUrl , init:{
+            headers: headers,
+            method: method,
+            body: body,
+            }})
       
-          if (!response.text) {
+          if (!response.body) {
               throw new Error("Invalid response")
           }
       
-          let json = await JSON.parse(response.text)
-      
-          log("Response received: ", json)
+          let json = JSON.parse(response.body)
+       
+          log("fetchCustomId","Response received: ", json)
           if (json.data && json.data.uuid){ 
               GAME_STATE.playerState.loginFlowState='wallet-success'
               
               //{ valid: true, msg: 'Valid request', data: {uuid: uuid} }
-              log("calling PlayFabSDK.LoginWithCustomID")
+              log("fetchCustomId calling PlayFabSDK.LoginWithCustomID")
               addLoginInfo(PlayFab.settings.titleId)
               const playerCustId=json.data.uuid
               GAME_STATE.playerState.setPlayerCustomID(playerCustId) 
 
-              return playerCustId
+              return playerCustId// as string
           }else{
               handleCustomIdError(json)
               //return 'error'
@@ -317,10 +327,10 @@ async function fetchCustomId(){
           //return err.message 
           throw err
       }
-  })
+  //}
 
 }
-
+/*
 async function signWithWallet(doLogin?:boolean) {
   //executeTask(async () => {
     log("walletsign start ");
@@ -378,13 +388,13 @@ function verifyLoginWithMetamask(address: any, signature: any) {
     //loginUser("will-sdk-test")
   });
 }
-
+*/
 //
 // Connect to Colyseus server!
 // Set up the scene after connection has been established.
 //
 //let playerLoginResult:LoginResult;
-
+/*
 const canvas = GLOBAL_CANVAS;
 
 let message: UIText;
@@ -396,6 +406,7 @@ message.hTextAlign = "right";
 message.vAlign = "bottom";
 message.positionX = 300;
 message.positionY = 30;
+*/
 
 function addLoginInfo(title: string) {
   updatePlayerHudInfo(`**Logging in ${title}`, Color4.White());
@@ -404,8 +415,8 @@ function addLoginInfo(title: string) {
 function updatePlayerHudInfo(msg: string, color: Color4) {
   log("updatePlayerHudInfo ", msg);
   if (CONFIG.IN_PREVIEW && CONFIG.SHOW_PLAYER_DEBUG_INFO) {
-    message.value = msg;
-    message.color = color;
+    //message.value = msg;
+    //message.color = color;
   }
 }
 
@@ -448,18 +459,20 @@ function updateLoginInfoFromResult(result: LoginResult) {
       PlayFabSDK.UpdateUserTitleDisplayName({
         DisplayName: userData.displayName,
       }).then(() => {
-        //dont do them at the same time as causes race condition errors writting too fast to player
-        PlayFabSDK.UpdateUserData({
-          Data: {
-            ethPublicKey: userData.publicKey,
-          },
-          // Optional list of Data-keys to remove from UserData. Some SDKs cannot insert null-values into Data due to language
-          // constraints. Use this to delete the keys directly.
-          //KeysToRemove?: string[];
-          // Permission to be applied to all user data keys written in this request. Defaults to "private" if not set. This is used
-          // for requests by one player for information about another player; those requests will only return Public keys.
-          Permission: "private",
-        });
+        if(userData.publicKey !== undefined){
+          //dont do them at the same time as causes race condition errors writting too fast to player
+          PlayFabSDK.UpdateUserData({
+            Data: {
+              ethPublicKey: userData.publicKey,
+            },
+            // Optional list of Data-keys to remove from UserData. Some SDKs cannot insert null-values into Data due to language
+            // constraints. Use this to delete the keys directly.
+            //KeysToRemove?: string[];
+            // Permission to be applied to all user data keys written in this request. Defaults to "private" if not set. This is used
+            // for requests by one player for information about another player; those requests will only return Public keys.
+            Permission: "private",
+          });
+        }
       });
     } else {
       log("WARNING userdata existant. cannot set display title/user key");
@@ -486,14 +499,14 @@ export function refreshUserData(calledBy:string) {
   //quick and dirty - place holder. for now just will relogin
   //FIXME long term should call fetch user data. want to track logins and resusing here muddles the login vs info fetching
   //wait 500 ms for playfab scores to sync
-  utils.setTimeout(1000, () => {
+  utils.timers.setTimeout(()=>{
     fetchPlayerCombinedInfo();
-  });
-  utils.setTimeout(3000, () => {
+  },1000)
+  utils.timers.setTimeout(()=>{
     fetchLeaderboardInfo(); //takes longer to update ?!?!
     //TODO only fetch when in that section, trick is need to also know when this type of game ended
     //fetchLeaderboardInfo("VB_"); //takes longer to update ?!?!
-  });
+  },3000)
 }
 export function loginUser(uuid: any):Promise<LoginResult>{
   log("loginUser START");
@@ -501,6 +514,8 @@ export function loginUser(uuid: any):Promise<LoginResult>{
       //make sure we have it
       getAndSetUserDataIfNullNoWait(); //not calling await, hoping its fast
 
+      PlayFab.settings.titleId = CONFIG.PLAYFAB_TITLEID;
+      log("loginUser","calling LoginWithCustomID");
       PlayFabSDK.LoginWithCustomID({
         CreateAccount: true,
         // Custom unique identifier for the user, generated by the title.
@@ -529,21 +544,22 @@ export function loginUser(uuid: any):Promise<LoginResult>{
         TitleId: PlayFab.settings.titleId,
       })
         .then(function (result: LoginResult) {
-          log("promise.LoginWithCustomID", result);
+          log("loginUser","promise.LoginWithCustomID", result);
 
           GAME_STATE.playerState.setPlayFabLoginResult(result);
 
           updateLoginInfoFromResult(result);
 
-          REGISTRY.ui.loginPanel.hide();
-          //REGISTRY.ui.racePanel.show()
+          //TODO add login panel call back!!!
+          //REGISTRY.ui.loginPanel.hide();
+          //////REGISTRY.ui.racePanel.show()
           REGISTRY.ui.staminaPanel.show();
 
           resolve(result)
           //TODO update user wallet address (UpdateUserData) + displayname (UpdateUserTitleDisplayName)
         })
         .catch(function (error: LoginResult) {
-          log("promise.LoginWithCustomID failed", error);
+          log("loginUser","promise.LoginWithCustomID failed", error);
           updateLoginInfoFromResult(error);
 
           reject(error)
@@ -558,23 +574,23 @@ export function fetchLeaderboardInfo(prefix: string = "") {
     log("fetchLeaderboardInfo DISABLED FOR ",prefix);
     return
   }
-  var getLeaderboardDaily: PlayFabServerModels.GetLeaderboardRequest = {
+  var getLeaderboardDaily: PlayFabClientModels.GetLeaderboardRequest = {
     StatisticName: prefix + "coinsCollectedDaily",
     StartPosition: 0,
     MaxResultsCount: CONFIG.GAME_LEADEBOARD_MAX_RESULTS,
   };
-  var getLeaderboardLevelEpoch: PlayFabServerModels.GetLeaderboardRequest = {
+  var getLeaderboardLevelEpoch: PlayFabClientModels.GetLeaderboardRequest = {
     StatisticName: prefix + "coinsCollectedEpoch", //coins collected is level when formula applied
     StartPosition: 0,
     MaxResultsCount: CONFIG.GAME_LEADEBOARD_LVL_MAX_RESULTS,
   };
   
-  var getLeaderboardWeekly: PlayFabServerModels.GetLeaderboardRequest = {
+  var getLeaderboardWeekly: PlayFabClientModels.GetLeaderboardRequest = {
     StatisticName: prefix + "coinsCollectedWeekly",
     StartPosition: 0,
     MaxResultsCount: CONFIG.GAME_LEADEBOARD_MAX_RESULTS,
   };
-  var getLeaderboardHourly: PlayFabServerModels.GetLeaderboardRequest = {
+  var getLeaderboardHourly: PlayFabClientModels.GetLeaderboardRequest = {
     StatisticName: prefix + "coinsCollectedHourly",
     StartPosition: 0,
     MaxResultsCount: CONFIG.GAME_LEADEBOARD_MAX_RESULTS,
@@ -603,7 +619,7 @@ export function fetchLeaderboardInfo(prefix: string = "") {
 
 export function fetchPlayerCombinedInfo() {
   log("fetchPlayerCombinedInfo called");
-  var getPlayerCombinedInfoRequestParams: PlayFabServerModels.GetPlayerCombinedInfoRequestParams =
+  var getPlayerCombinedInfoRequestParams: PlayFabClientModels.GetPlayerCombinedInfoRequestParams =
     {
       GetUserReadOnlyData: true,
       GetUserInventory: CONFIG.GAME_PLAFAB_INVENTORY_ENABLED,

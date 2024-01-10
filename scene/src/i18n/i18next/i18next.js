@@ -621,6 +621,9 @@ class I18n extends EventEmitter {
   }
 }
 
+export function initI18Next(){
+  
+}
 const instance = I18n.createInstance();
 instance.createInstance = I18n.createInstance;
 

@@ -23,6 +23,13 @@ export class Config{
   PLAYFAB_TITLEID = process.env.PLAYFAB_TITLEID
   PLAYFAB_DEVELOPER_SECRET = process.env.PLAYFAB_DEVELOPER_SECRET
 
+  //if true will let use hardcode test track features, else not
+  DEBUG_HARCODED_TRACK_FEATURE_TESTING_ENABLED =
+    process.env.DEBUG_HARCODED_TRACK_FEATURE_TESTING_ENABLED !== undefined &&
+    process.env.DEBUG_HARCODED_TRACK_FEATURE_TESTING_ENABLED !== undefined &&
+    process.env.DEBUG_HARCODED_TRACK_FEATURE_TESTING_ENABLED === "true";
+
+
   //TODO somehow sync/share these coin type ids accross config.ts for race vs coin levels
   GAME_COIN_TYPE_GC = "GC";
   GAME_COIN_TYPE_MC = "MC";
@@ -37,6 +44,14 @@ export class Config{
     , y: process.env.GAME_LEVELING_FORMULA_Y !== undefined ? parseFloat(process.env.GAME_LEVELING_FORMULA_Y) : 2
     , min:0
     ,max:process.env.GAME_LEVELING_FORMULA_MAX_LVL !== undefined ? parseInt(process.env.GAME_LEVELING_FORMULA_MAX_LVL) : 30
+    ,levelOffset:process.env.GAME_LEVELING_FORMULA_LVL_OFFSET !== undefined ? parseInt(process.env.GAME_LEVELING_FORMULA_LVL_OFFSET) : 0
+  }
+  GAME_DAILY_COIN_MAX_FORMULA_CONST:LevelingFormulaConfig = {
+      x: process.env.GAME_DAILY_COIN_MAX_FORMULA_CONST_X !== undefined ? parseFloat(process.env.GAME_DAILY_COIN_MAX_FORMULA_CONST_X) : 7000
+    , y: process.env.GAME_DAILY_COIN_MAX_FORMULA_CONST_Y !== undefined ? parseFloat(process.env.GAME_DAILY_COIN_MAX_FORMULA_CONST_Y) : 9
+    , min:process.env.GAME_DAILY_COIN_MAX_FORMULA_MIN_LVL !== undefined ? parseInt(process.env.GAME_DAILY_COIN_MAX_FORMULA_MIN_LVL) : 7000
+    ,max:process.env.GAME_DAILY_COIN_MAX_FORMULA_MAX_LVL !== undefined ? parseInt(process.env.GAME_DAILY_COIN_MAX_FORMULA_MAX_LVL) : 19000
+    ,levelOffset:process.env.GAME_DAILY_COIN_MAX_FORMULA_LVL_OFFSET !== undefined ? parseInt(process.env.GAME_DAILY_COIN_MAX_FORMULA_LVL_OFFSET) : 9
   }
   LEVEL_UP_REWARD_PERCENT_GC = .1
   LEVEL_UP_REWARD_PERCENT_MC = .01

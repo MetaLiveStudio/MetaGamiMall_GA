@@ -1,12 +1,13 @@
 //import { hud } from "src/builderhud/BuilderHUD";
 //import resources from "src/resources"
-import { CommonResources } from "src/resources/common";
+//import { CommonResources } from "src/resources/common";
+import { log } from "../back-ports/backPorts";
 import { WearableBoothArgs, WearableBoothInitArgs } from "./types";
 
 //import { WearableMenuItem } from "src/store/ui/menuItemWearable";
 //import * as f from "../store/blockchain/fetch";
 
-const roundedSquareAlpha = CommonResources.RESOURCES.textures.transparent4card; //resource.roundedSquareAlpha
+//const roundedSquareAlpha = CommonResources.RESOURCES.textures.transparent4card; //resource.roundedSquareAlpha
 //END INCLUDE BLOCKCHAIN QUERY
 
 //let transparent = CommonResources.RESOURCES.materials.transparent
@@ -16,7 +17,10 @@ const roundedSquareAlpha = CommonResources.RESOURCES.textures.transparent4card; 
 //just do dirty work here??
 
 export async function createWearableBoothCard(args: WearableBoothInitArgs) {
-  args.featureEntity.addComponent(
+  log("wearble-fn","createWearableBoothCard","IMPLEMENT ME!!!!!");
+  
+  //USING IMPLEMENT ME LOG OVER convering this block
+  /*args.featureEntity.addComponent(
     new OnPointerDown(
       () => {
         log(
@@ -25,7 +29,7 @@ export async function createWearableBoothCard(args: WearableBoothInitArgs) {
       },
       { hoverText: "manually disabled for now" }
     )
-  );
+  );*/
 
   /*
   const parent = args.parent

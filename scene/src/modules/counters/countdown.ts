@@ -1,6 +1,10 @@
+import { Entity, TextShape, TransformTypeWithOptionals } from "@dcl/sdk/ecs"
+import { log } from "../../back-ports/backPorts"
+import { Quaternion, Vector3 } from "@dcl/sdk/math"
 
+//TODO WIP
 
-
+/*
 
 //40, 6, 8
 const baseX = 40
@@ -14,26 +18,22 @@ export class CountdownBanner{
     frame:Entity
     titleEnt:Entity
     hourEnt:Entity
-    hourText:TextShape
+    //hourText:TextShape
     eventName:string
     eventStartTime:number
 
-    constructor(eventName:string,eventStartTime:number,baseTransform:Transform){
+    constructor(eventName:string,eventStartTime:number,baseTransform:TransformTypeWithOptionals){
         this.eventName = eventName
         this.eventStartTime = eventStartTime
         
         const host = this.host = new Entity()
-        host.addComponent(//new Transform({
-            //position: new Vector3(baseX, baseY, baseZ),
-            //scale: new Vector3(1, 1, 1)
-        //}))
-        baseTransform)
+        host.addComponent(baseTransform)
 
         const frame = this.frame = new Entity()
         frame.addComponent(new GLTFShape("models/countdown_frame.glb"))
         frame.addComponent(new Transform({
-            position: new Vector3(0, 0, 0),
-            scale: new Vector3(1, 1, 1)
+            position: Vector3.create(0, 0, 0),
+            scale: Vector3.create(1, 1, 1)
         }))
         frame.setParent(host)
         
@@ -42,7 +42,7 @@ export class CountdownBanner{
         titleText.fontSize = 10
         titleText.color = new Color3(123 / 400, 84 / 400, 183 / 400)
         titleEnt.addComponent(new Transform({
-            position: new Vector3(0, .875, 0)
+            position: Vector3.create(0, .875, 0)
         }))
         titleEnt.addComponent(titleText)
         titleEnt.setParent(frame)
@@ -53,18 +53,24 @@ export class CountdownBanner{
         hourText.color = new Color3(123 / 600, 84 / 600, 183 / 600)
 
         hourEnt.addComponent(new Transform({
-            position: new Vector3(0, textY, 0)
+            position: Vector3.create(0, textY, 0)
         }))
         hourEnt.addComponent(hourText)
         hourEnt.setParent(frame)
     }
 
     updateText(text:string){
-        this.hourText.value = text
+        if(this.hourEnt){
+            const textShape = TextShape.getMutableOrNull(this.hourEnt)
+            if (textShape) {
+                textShape.text = text;
+            }
+        }
+        //this.hourText.value = text
     }
 
 
-    updateCounterTransform(baseTransform:Transform){
+    updateCounterTransform(baseTransform:TransformTypeWithOptionals){
         this.host.getComponent(Transform).position.copyFrom( baseTransform.position );
     }
 
@@ -156,24 +162,24 @@ export class CountdownTimerSystem {
 }
 //month is 0 based; 0 = January
 //format is year,month,date,hours,minutes,seconds,ms - UTC ALWAYS
-let eventTime0 = Date.UTC(2023, 3, 7, 12, 0, 0) //(Date.now() ) + (1) //Saturday, June 11, 2022 21:00:00 UTC 
+let eventTime0 = Date.UTC(2023, 8, 15, 14, 0, 0) //(Date.now() ) + (1) //Saturday, June 11, 2022 21:00:00 UTC 
 log("counter",new Date(eventTime0),eventTime0-(Date.now()))
-let eventTime1 = Date.UTC(2023, 3, 7, 14, 0, 0)
+let eventTime1 = Date.UTC(2023, 8, 15, 15, 0, 0)
 log("counter",new Date(eventTime1),eventTime1-(Date.now()))
-let eventTime2 = Date.UTC(2023, 3, 7, 13, 0, 0)
+let eventTime2 = Date.UTC(2023, 8, 15, 14, 30, 0)
 log("counter",new Date(eventTime2),eventTime2-(Date.now()))
-let eventTime3 = Date.UTC(2023, 3, 7, 12, 0, 0)
+let eventTime3 = Date.UTC(2023, 8, 15, 14, 0, 0)
 log("counter",new Date(eventTime3),eventTime3-(Date.now()))
 
 const countdownSystem = new CountdownTimerSystem()
 countdownSystem.addCounter(
     new CountdownBanner(
-        "MetaMineS2",
+        "MetaMineS3",
         eventTime0
         , new Transform({
-            position: new Vector3(baseX, baseY-3.5, baseZ),
-            rotation: Quaternion.Euler(0,0,0),
-            scale: new Vector3(0.7,0.7,0.7)})
+            position: Vector3.create(baseX, baseY-2.5, baseZ),
+            rotation: Quaternion.fromEulerDegrees(0,0,0),
+            scale: Vector3.create(0.7,0.7,0.7)})
     )
 )
 
@@ -182,9 +188,9 @@ countdownSystem.addCounter(
         "Premium Claim",
         eventTime1
         , new Transform({
-            position: new Vector3(baseX, baseY-6.5, baseZ+12),
+            position: Vector3.create(baseX, baseY-5.5, baseZ+12),
             rotation: Quaternion.Euler(0,0,0),
-            scale: new Vector3(0.5,0.5,0.5)
+            scale: Vector3.create(0.5,0.5,0.5)
         })
     )
 )
@@ -194,9 +200,9 @@ countdownSystem.addCounter(
         "Gold Claim",
         eventTime2
         , new Transform({
-            position: new Vector3(baseX, baseY-6.5, baseZ+28.5),
-            rotation: Quaternion.Euler(0,0,0),
-            scale: new Vector3(0.5,0.5,0.5)
+            position: Vector3.create(baseX, baseY-5.5, baseZ+28.5),
+            rotation: Quaternion.fromEulerDegrees(0,0,0),
+            scale: Vector3.create(0.5,0.5,0.5)
         })
     )
 )
@@ -206,9 +212,9 @@ countdownSystem.addCounter(
         "Silver Claim",
         eventTime3
         , new Transform({
-            position: new Vector3(baseX, baseY-6.5, baseZ+55),
-            rotation: Quaternion.Euler(0,0,0),
-            scale: new Vector3(0.5,0.5,0.5)
+            position: Vector3.create(baseX, baseY-2.5, baseZ+55),
+            rotation: Quaternion.fromEulerDegrees(0,0,0),
+            scale: Vector3.create(0.5,0.5,0.5)
         })
     )
 )
@@ -228,7 +234,7 @@ function digitFormat2Digit(val: number) {
         return "0" + val.toString()
     }
 }
-
+*/
 /*
 Input.instance.subscribe('BUTTON_DOWN', ActionButton.PRIMARY, false, (e) => {
     log(Camera.instance.position)

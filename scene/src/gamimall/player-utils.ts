@@ -1,9 +1,10 @@
-import { GAME_STATE, PlayerState } from "src/state";
+import { log } from "../back-ports/backPorts";
+import { GAME_STATE, PlayerState } from "../state";
 import {
   getAndSetUserData,
   getAndSetUserDataIfNullNoWait,
   getUserDataFromLocal,
-} from "src/userData";
+} from "../userData";
 
 export function getUserDisplayName(
   playerState: PlayerState

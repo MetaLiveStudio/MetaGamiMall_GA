@@ -1,6 +1,4 @@
-import * as serverStateSpec from "src/gamimall/state/MyRoomStateSpec";
-import { notNull } from "src/utils";
-
+import * as serverStateSpec from "../gamimall/state/MyRoomStateSpec";
 
 export function getCostById(cost: serverStateSpec.CostData[],id: string){
     if(cost !== undefined){
@@ -38,7 +36,7 @@ export function get2dUICostFormat(cost: serverStateSpec.CostData[], id: string,p
   if(cost !== undefined){
     const c = getCostById(cost,id)
       
-    if(notNull(c)){
+    if(c){
         return prefix + c.amount
     }
   }
