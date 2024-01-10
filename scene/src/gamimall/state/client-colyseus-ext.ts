@@ -1,4 +1,5 @@
-import { DataChange } from "colyseus.js"
+//fixme see why DataChange cannot be imported
+//import { DataChange } from "colyseus.js"
 
 export type ColyseusListenCallback<V>=(currentValue:V, previousValue:V)=>void
 
@@ -17,5 +18,5 @@ export type ColyseusCallbacksMap<K,V>=ColyseusCallbacksCollection<K,V>&Map<K,V>&
 }
 
 export type ColyseusCallbacksReferences<V>=ColyseusCallbacks<V>&{
-    onChange: (changes:DataChange[])=>void
+    onChange: (changes:any[])=>void
 }

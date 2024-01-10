@@ -1,4 +1,6 @@
-import { LevelingFormulaConfig } from "src/modules/leveling/levelingTypes";
+import { Vector3 } from "@dcl/sdk/math";
+import { LevelingFormulaConfig } from "../../modules/leveling/levelingTypes";
+import { PBGltfContainer } from "@dcl/sdk/ecs";
 
 export type ICostDataState = {
   amount: number,
@@ -77,7 +79,7 @@ export type SpawnZoneDef={
 }
 
 
-export type TrackFeatureType = "minable.rock1" | 'minable.rock2' |  "minable.MysteryBlock" | "buyable.item.bronze.shoe"| "buyable.rock2"| "buyable.rock3"| "buyable.BP"|"buyable.NI"|"buyable.ADS"|"buyable.MC"|"buyable.rock1";
+export type TrackFeatureType = "minable.rock1" | 'minable.rock2' |  "minable.MysteryBlock" | "buyable.item.bronze.shoe"| "buyable.rock2"| "buyable.rock3"| "buyable.BP"|"buyable.NI"|"buyable.ADS"|"buyable.MC"|"buyable.rock1"|"buyable.item.stat.raffle_coin_bag"|"buyable.item.ticket.raffle_coin_bag";
 export type TrackFeatureStatus = "not-init"|"active"|"inactive"|"cooling-down"|"scheduled";
 
 
@@ -100,10 +102,12 @@ export type ImageInfo={ //NEEDED FOR SCENE SIDE, server does not use this...yet
   width:number
   height:number
 }
+export type MinableUIType="claim-nft"|"claim-raffle"
+
 export type MinableUIConfig={ //NEEDED FOR SCENE SIDE, server does not use this...yet
   description?:string//2d ui popup description of item
   descriptionTitle?:string//2d ui popup description of item title
-  minableModel?:string//model used for minable
+  minableModel?:PBGltfContainer//model used for minable
   tool?:{
     enabled:boolean
     //toolType?:string//TODO
@@ -117,6 +121,11 @@ export type MinableUIConfig={ //NEEDED FOR SCENE SIDE, server does not use this.
   hoverText?:string //hover text
   clickDistance?:number //distance for click/hovertext to show
   modalClaimButtonLabel?:string //text the popup modal button uses, default "Mine"
+  uiDisplayType?:MinableUIType //type of display, default "minable"
+  checkLatestMarketPrices?:boolean//defaults false, if true, will check latest market prices
+  checkRemoteCostPrices?:boolean //defaults true, if true, will check remote cost prices
+  nftContract?:string//contract if is an nft and has dcl contract
+  uiScale?:number //scale of ui
   animations?:{
     enabled:boolean
     IDLE?: MinableAnimationNameDef
@@ -130,8 +139,8 @@ export type SpawnTypeDef={
   //locations:number //5
   concurrentMax:number //3, 999 uses all
   //concurrentMin:number //2 -1 no min
-  respawnTime:number[]//when to respawn after found if within max/min; -1 immediate
-  expireTime:number[]//when to remove; -1 is never
+  respawnTime?:number[]//when to respawn after found if within max/min; -1 immediate
+  expireTime?:number[]//when to remove; -1 is never
   coolDownTime?:number //cooldown time between spawns
 
   zones: SpawnZoneDef[]
@@ -283,8 +292,8 @@ export class TrackFeaturePosition implements ITrackFeaturePosition{
   //entity:Entity
 
   constructor(args:TrackFeaturePositionConstructorArgs){
-   
-    this.position = args.position
+   //FIXME BRING BACK
+    //this.position = args.position
     this.scale = args.scale
     this.rotation = args.rotation
     
@@ -441,3 +450,9 @@ export type RemoteBaseCoinRoomConfig={
   }
 }
 //MOVE TO SHARABLE FILE END
+
+
+export interface PlayerTransformState extends ClockState{
+  position:Vector3State//optional, if set its the exact spot
+  rotation?:Quaternion3State//optional, if set its the exact rotation
+}

@@ -1,57 +1,67 @@
-import * as utils from "@dcl/ecs-scene-utils";
+import * as utils from '@dcl-sdk/utils'
 import {
-  createTextShape,
-  getEntityByName,
+  //createTextShape,
+  //getEntityByName,
   isNull,
   notNull,
-  removeFromEngine,
+  //removeFromEngine,
 } from "../utils";
 
 import PlayFab from "./playfab_sdk/PlayFabClientApi";
 
-import { GAME_STATE } from "src/state";
+import { GAME_STATE } from "../state";
 import { refreshUserData } from "./login-flow";
-import { CONFIG } from "src/config";
-import { NFTUIDataPriceType } from "src/store/types";
+import { CONFIG } from "../config";
+import { NFTUIDataPriceType } from "../store/types";
+import { TranformConstructorArgs, engineTweenStartScaling, log } from "../back-ports/backPorts";
+import { Color3, Vector3 } from '@dcl/sdk/math';
+import { AudioSource, ColliderLayer, Entity, GltfContainer, PBAudioSource, PBGltfContainer, Transform, engine } from '@dcl/sdk/ecs';
+import { cameraOnlyTrigger } from '../sdk7-utils/cameraOnlyTrigger';
 
-const collectCoinClip = new AudioClip("sounds/collect-coin.mp3");
+const collectCoinClip:PBAudioSource = {audioClipUrl:"sounds/collect-coin.mp3",loop:false,volume:0.4,playing:false};
 
-export const collectCoinSparkle = new GLTFShape("models/collect-sparkle.glb");
-collectCoinSparkle.withCollisions = false;
+export const collectCoinSparkle:PBGltfContainer = {src:"models/collect-sparkle.glb"}; // Includes the spinning animation
+export const coinShape:PBGltfContainer = {src:"models/coin.glb"};
+export const coinShapeBZ:PBGltfContainer = {src:"models/VCNMaterials/BronzeCoin.glb"}; // Includes the spinning animation
+export const material1Shape:PBGltfContainer = {src:"models/materialA.glb"}; 
+export const material2Shape:PBGltfContainer = {src:"models/materialB.glb"}; 
+export const material3Shape:PBGltfContainer = {src:"models/materialC.glb"}; 
+export const coinShapeVB:PBGltfContainer = {src:"models/VOXBUX.glb"}; // Includes the spinning animation
+export const coinShapeMC:PBGltfContainer = {src:"models/coin-mc.glb"}; // Includes the spinning animation
 
-export const coinShape = new GLTFShape("models/coin.glb"); // Includes the spinning animation
-coinShape.withCollisions = false;
+export const coinShapeAC:PBGltfContainer = {src:"models/VOXBUX.glb"}; // 
+export const coinShapeZC:PBGltfContainer = {src:"models/VOXBUX.glb"}; // 
+export const coinShapeRC:PBGltfContainer = {src:"models/VOXBUX.glb"}; // 
 
-export const coinShapeBZ = new GLTFShape("models/VCNMaterials/BronzeCoin.glb"); // Includes the spinning animation
-coinShapeBZ.withCollisions = false;
+const CLASSNAME = "coin.ts"
 
-
-export const material1Shape = new GLTFShape("models/materialA.glb"); 
-material1Shape.withCollisions = false;
-
-export const material2Shape = new GLTFShape("models/materialB.glb"); 
-material2Shape.withCollisions = false;
-
-export const material3Shape = new GLTFShape("models/materialC.glb"); 
-material3Shape.withCollisions = false;
-
-export const coinShapeVB = new GLTFShape("models/VOXBUX.glb"); // Includes the spinning animation
-coinShape.withCollisions = false;
-
-export const coinShapeMC = new GLTFShape("models/coin-mc.glb"); // Includes the spinning animation
-coinShapeMC.withCollisions = false;
+//update no colliders
+const noColliderShapes:PBGltfContainer[] = [coinShape,coinShapeBZ,coinShapeMC,coinShapeVB,material1Shape,material2Shape,material3Shape,collectCoinSparkle];
+for(const p of noColliderShapes){
+  p.invisibleMeshesCollisionMask = ColliderLayer.CL_NONE
+  p.visibleMeshesCollisionMask = ColliderLayer.CL_NONE
+}
 
 //current size of y:1 and position 1.6 (center of head) seems to work well as
 //default camera size is 2 meters.  it does not cause high coins on spiral to be collected by the feet
-const coinTriggerShape = new utils.TriggerBoxShape(
+const coinTriggerShape_Size = Vector3.create(0.6, 0.6, 0.6)
+const coinTriggerShape_Pos = Vector3.create(0, 0, 0)
+/*const coinTriggerShape = new utils.TriggerBoxShape(
   new Vector3(0.6, 0.6, 0.6), // custom trigger shape
   new Vector3(0, 0, 0) // custom trigger shape
   //for default 2x2 trigger shape
   //new Vector3(.6, 1, .6), // size 1.8 is a little bigger than standing 1.6
   //new Vector3(0, 1.6, 0) // position place so walking the camera hits it and jumping camera hits its (feet on avatar)
-);
+);*/
 
 //tracks spawned so end level remove them
+
+const utilsTriggers = cameraOnlyTrigger //utils.triggers //
+
+function _removeFromEngine(wrapper: {entity:Entity,name:string|undefined}, time:number) {
+  console.log(CLASSNAME,"_removeFromEngine for ",wrapper,"ignoring right now since no way to just add back, need new way to add remove or dont")
+  //engine.removeEntity(entity);
+}
 
 export type SpawnCoinArgType = {
   id: string;
@@ -99,16 +109,19 @@ export type RewardNotification={
 function testCoinPlacement(){
     coins.forEach((coin, key)=> {
         spawnCoin(`coin-${key}-placement`, coin[0], coin[1]-0.44, coin[2],5,(id)=>{ 
-            log("touche test coin") 
+            log(CLASSNAME,"touche test coin") 
         })
     })
 }
 */
 
+function ensureAlive(entity: Entity) {
+  //TODO
+}
 export class CoinManager {
   coinsSpawned: Record<string, Coin> = {};
   coinPool: Record<string, Coin> = {};
-
+  //map:Map<string,Coin> = new Map<string,Coin>()
   maxCount: number;
 
   constructor(_coinCount: number) {
@@ -117,11 +130,18 @@ export class CoinManager {
     //engine.addSystem(this.ballSystem)
   }
 
+  _getEntityByName(id:string){
+    console.log(CLASSNAME,"_getEntityByName for ",id)
+    return this.coinPool[id]
+  }
   getCoinById(id: string): Coin {
     let coin: Coin = this.coinPool[id];
     if (coin === undefined) {
+      console.log(CLASSNAME,"getCoinById","WARNING","failed to find id in coinPool",id)
       //non optimized way
-      coin = getEntityByName(id) as Coin; //TODO optimize
+      //TODO store as map
+      //should we ever get here????
+      coin = this._getEntityByName(id) as Coin; //TODO optimize
     }
     return coin;
   }
@@ -132,29 +152,33 @@ export class CoinManager {
       this.removeCoinFromScene(coin);
     }
   }
-  removeFromCoinsSpawned(entity: Entity) {
-    //log("removeFromCoinsSpawned ENTRY")
+  removeFromCoinsSpawned(entity: Coin) {
+    //log(CLASSNAME,"removeFromCoinsSpawned ENTRY")
     const name = entity.name;
     if (name !== null) {
       const key = name != null ? name : "id";
       delete this.coinsSpawned[key];
     }
   }
-  removeCoinFromScene(entity: Entity) {
-    //log("removeFromScene ENTRY")
-    //TODO do a  better remove
+  removeCoinFromScene(entity: Coin) {
+    //log(CLASSNAME,"removeFromScene ENTRY")
+    //TODO do a  better remove, should we remove from engine?
+    entity.hide()
+
     //entity.getComponent(Transform).position.y = entity.getComponent(Transform).position.y + 1
     //entity.getComponent(Transform).scale.y = .2
     //removeFrom
 
     // call this as side affect? removeFromCoinsSpawned(entity)
 
-    if (entity.alive) engine.removeEntity(entity);
+    //TODO what will remove from scene do?
+    //if (entity.alive) engine.removeEntity(entity);
   }
   spawnCoin(
     spawnCoinArg: SpawnCoinArgType,
     onTouchBlock?: (id: string) => void
   ): Coin {
+    const METHOD_NAME = "spawnCoin"; 
     let id = spawnCoinArg.id;
     let x = spawnCoinArg.x;
     let y = spawnCoinArg.y;
@@ -164,6 +188,7 @@ export class CoinManager {
 
     //START TODO MOVE THIS INTO ITS OWN COIN CLASS
     // create the entity
+    log(CLASSNAME,METHOD_NAME,"ENTRY",id,coinType,value,"x",x,"y",y,"z",z)
 
     const newCoin = isNull(this.coinPool[id]);
 
@@ -174,15 +199,13 @@ export class CoinManager {
     this.coinsSpawned[id] = coin;
 
     // add a transform to the entity
-    coin.addComponentOrReplace(
-      new Transform({
-        position: new Vector3(x, y, z),
-        scale: new Vector3(0.6, 0.6, 0.6),
-      })
-    );
+    Transform.createOrReplace(coin.entity, {
+      position: Vector3.create(x, y, z),
+      scale: Vector3.create(0.6, 0.6, 0.6),
+    })
 
     if (newCoin) {
-      //log("spawn making coin " + id)
+      //log(CLASSNAME,"spawn making coin " + id)
       // add a shape to the entity
       //const coin = new CoinShape();
       //coin.withCollisions = false;
@@ -200,10 +223,23 @@ export class CoinManager {
       //TODO MOVE TO CONSTANTS
       // trigger configurations (Took from https://github.com/decentraland-scenes/switchboard-platforms/)
 
+
+      utilsTriggers.addTrigger(coin.entity, utils.NO_LAYERS, utils.LAYER_1, 
+        [{type: "sphere",position: coinTriggerShape_Pos , radius: coinTriggerShape_Size.x}],
+        ()=>{ 
+          if (onTouchBlock !== null && onTouchBlock !== undefined)
+              onTouchBlock(id);
+        },
+        ()=>{ 
+        },
+        Color3.Blue()
+      )
+
       coin.setCollectable(true);
       coin.setCoinType(coinType);
       // Button triggers
-      coin.addComponent(
+
+      /*coin.addComponent(
         new utils.TriggerComponent(coinTriggerShape, {
           onCameraEnter: () => {
             if (onTouchBlock !== null && onTouchBlock !== undefined)
@@ -211,7 +247,7 @@ export class CoinManager {
           },
           enableDebug: false,
         })
-      );
+      );*/
 
       //const coinValue = new Entity(id+"-coin-value")
       //coinValue.setParent(coin)
@@ -229,7 +265,7 @@ export class CoinManager {
             clickAudioSource.playOnce();*/
       //END TODO MOVE THIS INTO ITS OWN COIN CLASS
     } else {
-      log("spawn cache hit for coin " + id);
+      log(CLASSNAME,"spawn cache hit for coin " + id);
 
       coin.setCoinType(coinType);
 
@@ -238,18 +274,22 @@ export class CoinManager {
       coin.show();
 
       //update trigger
-      coin.getComponent(utils.TriggerComponent).onCameraEnter = () => {
+      utilsTriggers.setOnEnterCallback(coin.entity,  () => {
         onTouchBlock!(id);
-      };
+      } )
+      /*coin.getComponent(utils.TriggerComponent).onCameraEnter = () => {
+        onTouchBlock!(id);
+      };*/
     }
 
     // add the entity to the engine
-    if (!coin.alive) engine.addEntity(coin);
+    //if (!coin.alive) engine.addEntity(coin);
+    ensureAlive(coin.entity)
 
     return coin;
   }
   preloadCoins(qty: number, transformArgs: TranformConstructorArgs) {
-    log("preloadCoins called");
+    log(CLASSNAME,"preloadCoins called");
     //DO NOT CHANGE PREFIX "block-" UNLESS YOU UPDATE SCENE SIDE TOO - caching by id
     for (let x = 0; x < qty; x++) {
       let coinType = CONFIG.GAME_COIN_TYPE_GC;
@@ -274,7 +314,7 @@ export class CoinManager {
   }
 
   loadCoins(coins: SpawnCoinArgType[]) {
-    log("preloadCoins called");
+    log(CLASSNAME,"preloadCoins called");
     //DO NOT CHANGE PREFIX "block-" UNLESS YOU UPDATE SCENE SIDE TOO - caching by id
     for (const p in coins) {
       const coinArg = coins[p];
@@ -293,14 +333,15 @@ export class SparkleManager {
     this.maxCount = _ballCount;
   }
 
-  spawnSparkle(transform: Transform, visible: boolean): Sparkle {
+  spawnSparkle(transform: TranformConstructorArgs, visible: boolean): Sparkle {
     let retVal: Sparkle;
 
     if (this.balls.length < this.maxCount) {
       //TODO make sparkle manager
       let sparkle = new Sparkle("sparkle-" + this.balls.length);
-      sparkle.addComponent(collectCoinSparkle);
-      sparkle.addComponentOrReplace(transform);
+      
+      GltfContainer.create(sparkle.entity, collectCoinSparkle);
+      Transform.createOrReplace(sparkle.entity, transform);
       sparkle.setVisible(visible);
 
       this.balls.push(sparkle);
@@ -309,7 +350,7 @@ export class SparkleManager {
     } else {
       let instance = this.balls.shift();
       if (instance !== undefined) {
-        instance.addComponentOrReplace(transform);
+        Transform.createOrReplace(instance.entity, transform);
         instance.setVisible(visible);
 
         this.balls.push(instance); //push it to the end
@@ -317,24 +358,25 @@ export class SparkleManager {
       } else {
         //should never enter here!!!
         //done to make compiler happy
-        log("spawnSparkle never enter here!!!");
+        log(CLASSNAME,"spawnSparkle never enter here!!!");
         retVal = new Sparkle();
       }
     }
 
-    if (!retVal.alive) engine.addEntity(retVal);
+    //if (!retVal.alive) engine.addEntity(retVal);
+    ensureAlive(retVal.entity)
 
-    //log("spawning sparkle: ", retVal);
+    //log(CLASSNAME,"spawning sparkle: ", retVal);
 
     return retVal;
   }
 
   preloadSparkle(qty: number, transformArgs: TranformConstructorArgs) {
-    log("preloadSparkle called");
+    log(CLASSNAME,"preloadSparkle called");
     //DO NOT CHANGE PREFIX "block-" UNLESS YOU UPDATE SCENE SIDE TOO - caching by id
     for (let x = 0; x < qty; x++) {
       
-      const spark = this.spawnSparkle(new Transform(transformArgs), true);
+      const spark = this.spawnSparkle(transformArgs, true);
       spark.hide();
     }
   }
@@ -343,20 +385,22 @@ export class SparkleManager {
 export const COIN_MANAGER: CoinManager = new CoinManager(400);
 export const SPARKLE_MANAGER: SparkleManager = new SparkleManager(10);
 
-export class Sparkle extends Entity {
-  sound: AudioSource;
+export class Sparkle  {
+  //sound: AudioSource;
   showScale: Vector3;
   visible: boolean = false;
+  entity: Entity;
+  name:string|undefined;
+  delayId?: number
 
   constructor(name?: string) {
-    super(name);
+    this.name = name;
+    this.entity = engine.addEntity()
 
-    this.sound = new AudioSource(collectCoinClip);
-    this.sound.volume = 0.4;
-    this.addComponentOrReplace(this.sound);
+    AudioSource.createOrReplace(this.entity, collectCoinClip)
 
     const scaleMult = 1; // + value/5
-    this.showScale = new Vector3(scaleMult, scaleMult, scaleMult);
+    this.showScale = Vector3.create(scaleMult, scaleMult, scaleMult);
   }
 
   setVisible(val: boolean) {
@@ -367,104 +411,124 @@ export class Sparkle extends Entity {
     }
   }
   hide() {
-    //log(this.name + ".hide called")
+    //log(CLASSNAME,this.name + ".hide called")
     this.visible = false;
-    this.addComponentOrReplace(
-      new utils.ScaleTransformComponent(this.showScale, Vector3.Zero(), 0.2)
-    );
+    
+    engineTweenStartScaling(
+    //utils.tweens.startScaling(
+      this.entity, this.showScale, Vector3.Zero(), 0.2 * 1000
+      )
   }
   show(duration?: number) {
-    log(this.name + ".show called");
+    log(CLASSNAME,this.name + ".show called");
     this.visible = true;
-    this.addComponentOrReplace(
-      new utils.ScaleTransformComponent(Vector3.Zero(), this.showScale, 0.2)
-    );
+    
+    engineTweenStartScaling(
+    //utils.tweens.startScaling(
+      this.entity, Vector3.Zero(), this.showScale, 0.2 * 1000
+      )
+     
+    if(this.delayId) {
+      utils.timers.clearTimeout(this.delayId)
+      this.delayId = undefined
+    }
+    this.delayId = undefined//clear it
 
     const delayVal = duration !== undefined ? duration : -1;
     if (delayVal > 0) {
-      this.addComponentOrReplace(
+      this.delayId = utils.timers.setTimeout(() => {
+        this.hide();
+        _removeFromEngine(this, 0);
+      }, delayVal);
+
+      /*this.addComponentOrReplace(
         new utils.Delay(delayVal, () => {
           this.hide();
           removeFromEngine(this, 0);
         })
-      );
+      );*/
     } else {
-      removeFromEngine(this, 0);
+      _removeFromEngine(this, 0);
     }
   }
   playSound() {
-    this.sound.playOnce();
+    AudioSource.getMutable(this.entity).playing=true
   }
 }
 
-export class Coin extends Entity {
+export class Coin  {
   coinType?: string;
   coinModelEntity: Entity;
   value?: number;
   showScale: Vector3;
   visible: boolean = false;
   collectable: boolean = false;
+  entity: Entity;
+  name:string|undefined;
 
   constructor(name?: string) {
-    super(name);
+    this.name = name;
+    this.entity = engine.addEntity()
 
-    this.coinModelEntity = new Entity(this.name + "-coin-model");
-    this.coinModelEntity.setParent(this);
+    this.coinModelEntity = engine.addEntity()//new Entity(this.name + "-coin-model");
+    //this.coinModelEntity.setParent(this);
+    Transform.create(this.coinModelEntity, {
+      position: Vector3.Zero(),
+      parent: this.entity,
+    });
 
     const scaleMult = 1; // + value/5
-    this.showScale = new Vector3(scaleMult, scaleMult, scaleMult);
+    this.showScale = Vector3.create(scaleMult, scaleMult, scaleMult);
   }
   show(speed?: number) {
     this.visible = true;
     if (speed == undefined || speed < 0) {
       //now
-      this.getComponent(Transform).scale = this.showScale;
+      Transform.getMutable(this.entity).scale = this.showScale;
     } else {
-      this.addComponentOrReplace(
-        new utils.ScaleTransformComponent(
-          Vector3.Zero(),
-          this.showScale,
-          speed !== undefined ? speed : 0.2
+      engineTweenStartScaling(
+      //utils.tweens.startScaling(
+        this.entity, Vector3.Zero(), this.showScale, speed !== undefined ? speed * 1000 : 0.2 * 1000
         )
-      );
     }
   }
   hide(speed?: number) {
     this.visible = false;
     if (speed == undefined || speed < 0) {
       //now
-      this.getComponent(Transform).scale = Vector3.Zero();
+      Transform.getMutable(this.entity).scale = Vector3.Zero();
     } else {
-      this.addComponentOrReplace(
-        new utils.ScaleTransformComponent(
-          this.showScale,
-          Vector3.Zero(),
-          speed !== undefined ? speed : 0.2
+      //TODO consider visible true false
+      engineTweenStartScaling(
+        //utils.tweens.startScaling(
+        this.entity, this.showScale, Vector3.Zero(), speed !== undefined ? speed * 1000 : 0.2 * 1000
         )
-      );
     }
   }
 
   setCollectable(val: boolean) {
     this.collectable = val;
+    //TODO split this apart from triggerable but for now
+    //make same, help with performance on checks
+    utilsTriggers.enableTrigger(this.entity, val);
   }
 
   collect() {
     if (this.collectable == false) {
-      log("already collected. returnined " + this.name);
+      log(CLASSNAME,"already collected. returnined " + this.name);
       return;
     }
     this.setCollectable(false);
 
     //start where the coin was
-    const sparklePos = this.getComponent(Transform).position.clone();
+    let sparklePos:Vector3.MutableVector3 = {...Transform.get(this.entity).position}//this.getComponent(Transform).position.clone();
     sparklePos.y -= 1;
 
     const sparkle = SPARKLE_MANAGER.spawnSparkle(
-      new Transform({
+      {
         position: sparklePos,
-        scale: new Vector3(1, 1, 1),
-      }),
+        scale: Vector3.One(),
+      },
       false
     );
 
@@ -476,27 +540,37 @@ export class Coin extends Entity {
 
     //zero it out so can still play sound etc
     this.hide();
-    removeFromEngine(this, 0);
+    _removeFromEngine(this, 0);
   }
 
   setCoinType(coinType: string) {
     this.coinType = coinType;
 
+    let shape:PBGltfContainer
     if (coinType == CONFIG.GAME_COIN_TYPE_MC) {
-      this.coinModelEntity.addComponentOrReplace(coinShapeMC);
+      shape = coinShapeMC
     } else if (coinType == CONFIG.GAME_COIN_TYPE_VB) {
-      this.coinModelEntity.addComponentOrReplace(coinShapeVB);
+      shape = coinShapeVB
+    } else if (coinType == CONFIG.GAME_COIN_TYPE_VB) {
+      shape = coinShapeVB
+    } else if (coinType == CONFIG.GAME_COIN_TYPE_AC) {
+      shape = coinShapeAC
+    } else if (coinType == CONFIG.GAME_COIN_TYPE_ZC) {
+      shape = coinShapeZC
+    } else if (coinType == CONFIG.GAME_COIN_TYPE_RC) {
+      shape = coinShapeRC
     } else if (coinType == CONFIG.GAME_COIN_TYPE_BZ) {
-      this.coinModelEntity.addComponentOrReplace(coinShapeBZ);
+      shape = coinShapeBZ
     } else if (coinType == CONFIG.GAME_COIN_TYPE_MATERIAL_1) {
-      this.coinModelEntity.addComponentOrReplace(material1Shape);
+      shape = material1Shape
     } else if (coinType == CONFIG.GAME_COIN_TYPE_MATERIAL_2) {
-      this.coinModelEntity.addComponentOrReplace(material2Shape);
+      shape = material2Shape;
     } else if (coinType == CONFIG.GAME_COIN_TYPE_MATERIAL_3) {
-      this.coinModelEntity.addComponentOrReplace(material3Shape);
+      shape = material3Shape;
     } else {
-      this.coinModelEntity.addComponentOrReplace(coinShape);
+      shape = coinShape;
     }
+    GltfContainer.createOrReplace(this.coinModelEntity, shape);
   }
 }
 

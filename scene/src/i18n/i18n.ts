@@ -3,6 +3,7 @@ import i18next from "./i18next/i18next"
 import { namespaces } from "./i18n.constants";
 import { languages } from "./i18n.constants";
 import { es, en, tr, de, it, sa, zh, ko, jp, br, ir } from "./i18n.translations";
+import { log } from "../back-ports/backPorts";
 
 const greeting = format("Hello {0}, you have {1} unread messages", ["Robert", 12])
 const greeting2 = format("Hello {name}, you have {num} unread messages", {
@@ -27,12 +28,15 @@ const createI18n = (language: string): i18nInstance => {
   
 export const i18n = createI18n(languages.es);
 */
-  
+export let i18n = i18next
+
+export function initI18nInst(){
+    
 const language = languages.en
 i18next.init({
     lng: language,
     ns: [namespaces.common,namespaces.pages.hello,namespaces.ui.staminaPanel],
-    //fallbackLng: languages.en,
+    fallbackLng: languages.en,//comment out too test language settings//X
     //defaultNS: namespaces.pages.hello,
     fallbackNS: namespaces.common,
     resources: {
@@ -61,6 +65,7 @@ i18next.init({
             }
         }
     }*/
+    
 })
 
 const greeting11 = format("Hello {0}, you have {1} unread messages", ["Robert", 12])
@@ -80,7 +85,24 @@ log("i18n",i18next.t("deep.look"))
 log("i18n",i18next.t("deep.look",{ns:namespaces.ui.staminaPanel}))
 log("i18n",i18next.t("deep.look2"))
 
-export const i18n = i18next
+i18n = i18next
+
+i18n.on('languageChanged', function(lng:string) {
+    log("i18n","languageChanged",lng,"i18n.language",i18n.language)
+    //notify all listeners
+    for(const fn of langChangeListeners){
+        log("i18n","languageChanged","langChangeListeners calling listener",fn)
+        fn(lng)
+    } 
+    for(const id in langChangeListenersById){
+        const fn = langChangeListenersById[id]
+        log("i18n","languageChanged","langChangeListenersById calling listener",fn)
+        fn(lng)
+    }
+})
+
+}//end init initI18nInst
+
 
 const langChangeListeners:((lng:string)=>void)[] = []
 const langChangeListenersById:Record<string,((lng:string)=>void)> = {}
@@ -98,16 +120,3 @@ export function i18nOnLanguageChangedAddReplace(id:string,callback:(lng:string)=
     langChangeListenersById[id] = callback
     log("i18n","i18nOnLanguageChangedAddReplace","id",id,"callback",callback,"old",old)
 }
-i18n.on('languageChanged', function(lng:string) {
-    log("i18n","languageChanged",lng,"i18n.language",i18n.language)
-    //notify all listeners
-    for(const fn of langChangeListeners){
-        log("i18n","languageChanged","langChangeListeners calling listener",fn)
-        fn(lng)
-    }
-    for(const id in langChangeListenersById){
-        const fn = langChangeListenersById[id]
-        log("i18n","languageChanged","langChangeListenersById calling listener",fn)
-        fn(lng)
-    }
-})

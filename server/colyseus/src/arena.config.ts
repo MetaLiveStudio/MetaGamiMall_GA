@@ -4,6 +4,7 @@ import { matchMaker } from 'colyseus'
 import basicAuth from "express-basic-auth";
 import express from 'express';
 import path from 'path';
+import cors from "cors";
 
 /**
  * Import your Room files
@@ -17,6 +18,15 @@ import { RacingRoom } from "./racing_room/RacingRoom";
 
 import { checkMultiplier, CheckMultiplierResultType, fetchWearableData, nftCheckDogeHeadMultiplier, nftCheckMultiplier, nftDogeHeadCheckCall, nftMetaDogeCheckCall } from "./utils/nftCheck";
 import { WearablesByOwnerData } from "./racing_room/state/server-state";
+import { getLatestStatVersionsAsync, StatVersionCheckResult } from "./utils/playFabCheckDailyStatsStatus";
+import { UnifinedScene } from "./mall_rooms/UnifiedSceneRoom";
+import { getCoinCap, getLevelFromXp } from "./utils/leveling/levelingUtils";
+import { CONFIG } from "./mall_rooms/config";
+import { PXRandomSceneRoom } from "./mall_rooms/PXRandomSceneRoom";
+import { UnifinedSceneV2 } from "./mall_rooms/UnifiedSceneRoomV2";
+
+const CLASSNAME = "arena.config"
+
 
 export default Arena({
     getId: () => "Your Colyseus App",
@@ -28,7 +38,7 @@ export default Arena({
         //deprecated
         gameServer
             .define('my_room', PadSurfer)
-            .filterBy(['realm','playerId']);
+            .filterBy(['playerId']);
         
         //future names
         //level_ufo_elevetors
@@ -36,37 +46,118 @@ export default Arena({
         //level_pad_surfer
         gameServer
         .define('level_pad_surfer', PadSurfer)
-        .filterBy(['realm','playerId']);
+        .filterBy(['playerId']);
 
         gameServer
         .define('level_pad_surfer_infin', PadSurferInfin)
-        .filterBy(['realm','playerId']);
+        .filterBy(['playerId']);
 
         gameServer
         .define('level_random_ground_float', RandomPlacementRoom)
-        .filterBy(['realm','playerId']);
+        .filterBy(['playerId']);
         
         gameServer
         .define('level_random_ground_float_few', RandomPlacementChaseRoom)
-        .filterBy(['realm','playerId']);
+        .filterBy(['playerId']);
 
         gameServer
         .define('vox_board_park', VoxBoardParkRoom)
-        .filterBy(['realm','playerId']);
+        .filterBy(['playerId']);
 
         // Define "state_handler" room
         gameServer.define("racing_room", RacingRoom)
             .filterBy(['env','titleId','raceDataOptions.levelId',"raceDataOptions.maxPlayers","raceDataOptions.customRoomId"])
             .enableRealtimeListing();
 
+        gameServer
+          .define('unified_scene', UnifinedScene)
+          .filterBy(['playerId']);
+        
+        gameServer
+          .define('unified_scene_v2', UnifinedSceneV2)
+          .filterBy(['playerId']);
+
+        gameServer
+          .define('px_random_spawn', PXRandomSceneRoom)
+          .filterBy(['playerId']);
     },
 
     initializeExpress: (app) => {
         /**
          * Bind your custom express routes here:
          */
-        app.get("/", (req, res) => {
+        app.use(cors({
+          origin: true //TODO pass a config to control this
+        }));
+        
+        /**
+         * Bind your custom express routes here:
+         */
+         app.get("/", (req, res) => {
             res.send("It's time to kick ass and chew bubblegum!");
+        });
+        //health check 
+        app.get("/health/live", (req, res) => {
+            res.send("It's time to kick ass and chew bubblegum!");
+        });
+        //health check 
+        app.get("/info", (req, res) => {
+          res.send( JSON.stringify( {
+            appId: process.env.APP_ID,
+            instanceId: process.env.INSTANCE_ID,
+            sha: process.env.GIT_SHORT_SHA
+            //provider: process.env.PROVIDER,
+            //region: process.env.REGION,
+          } ) );
+        });
+
+
+        //health check 
+        app.get("/memory", (req, res) => {
+          res.send( JSON.stringify( {
+            appId: process.env.APP_ID,
+            instanceId: process.env.INSTANCE_ID,
+            memory: (process.memoryUsage())
+            //provider: process.env.PROVIDER,
+            //region: process.env.REGION,
+          } ) );
+        });
+
+
+        //health check 
+        app.get("/env", (req, res) => {
+            const whiteList:Record<string,string> = {}
+            whiteList["stackName"]="y"
+            whiteList["environment"]="y"
+            whiteList["PROVIDER"]="y"
+            whiteList["REGION"]="y"
+            whiteList["INSTANCE_ID"]="y"
+            whiteList["APP_ID"]="y"
+            
+            whiteList["cors.origin"]="y"
+            whiteList["info_deploy_time"]="y"
+            whiteList["info_deploy_timeGMT"]="y"
+            
+            
+          
+            const outputMap:Record<string,string> = {}
+          
+            for(const p in process.env){
+              const val = process.env[p]
+              outputMap[p] = val !== undefined ? "****" : ""
+              
+              if(whiteList[p] !== undefined && val !== undefined){
+                outputMap[p] = val
+              }
+            }
+          
+            res.send(
+              {
+                body: {
+                  config: outputMap
+                }
+              }
+            );
         });
 
         //serveIndex prevents POST
@@ -76,8 +167,8 @@ export default Arena({
         const basicAuthMiddleware = basicAuth({
             // list of users and passwords
             users: {
-                "admin": process.env.ACL_ADMIN_PW !== undefined ? process.env.ACL_ADMIN_PW : "admin",
-                "metastudio": "admin",
+                "admin": process.env.ACL_ADMIN_PW !== undefined ? process.env.ACL_ADMIN_PW : "admin",//YWRtaW46YWRtaW4=
+                "metastudio": "admin",//bWV0YXN0dWRpbzphZG1pbg==
             },
             // sends WWW-Authenticate header, which will prompt the user to fill
             // credentials in
@@ -127,10 +218,34 @@ export default Arena({
             matchMaker.presence.publish('announce', jsonContents)
             res.send('sent announcement:'+JSON.stringify(jsonContents))
           })
+          //is check-daily-rollover still used?
+        app.get('/check-daily-rollover', async (req, res) => {
+          const METHOD_NAME = "/check-daily-rollover"
 
+          matchMaker.presence.publish('daily-roll-over-event', {})
+          
+          try{
+            const result:StatVersionCheckResult= await getLatestStatVersionsAsync()
+
+            console.log(CLASSNAME,METHOD_NAME,"ROLLOVER CHECK - getLatestStatVersionsAsync",result ? result?.result?.StatisticVersions?.length : 'undefined')
+            if(result !== undefined && result.result){
+              //host.lastStatVersionResult = result
+              matchMaker.presence.publish('daily-roll-over-event', result)
+            }else{
+            //nothing 
+            }
+            res.send('getLatestStatVersionsAsync:'+JSON.stringify(result))
+          }catch(e){
+            console.log(CLASSNAME,METHOD_NAME,"ROLLOVER CHECK - getLatestStatVersionsAsync","FAILED!!!",e)
+            res.send('getLatestStatVersionsAsync FAILED:'+JSON.stringify(e))
+          }
+          
+        })
         app.get('/check-multiplier', async (req, res) => {
             const METHOD_NAME = "/check-multiplier"
             let address:any = req.query.address
+            let version:any = req.query.version
+            let userDataStr:any = req.query.userData
       
             if (!address || address.length === 0) {
               console.log('address msg incomplete ', address)
@@ -139,7 +254,7 @@ export default Arena({
             }
       
             const promises = []
-            const wearablePromise = checkMultiplier("/check-multiplier",address)
+            const wearablePromise = checkMultiplier("/check-multiplier",version,address,undefined,undefined)
             promises.push(wearablePromise)
 
             wearablePromise.then((result:CheckMultiplierResultType)=>{
@@ -175,3 +290,24 @@ export default Arena({
          */
     }
 });
+
+/*
+function testXPandCoinCap(){
+  let totalCoins = 0
+
+  console.log("testXPandCoinCap")
+  console.log("==================")
+  
+  for(let x=0;x<150;x++){
+    totalCoins += x*500
+    const level = getLevelFromXp(totalCoins,CONFIG.GAME_LEVELING_FORMULA_CONST)
+    const maxCoinsPerLevel = getCoinCap( Math.floor(level),CONFIG.GAME_DAILY_COIN_MAX_FORMULA_CONST)
+
+    console.log("testXPandCoinCap,","coins:\t",totalCoins,"\tlevel:\t",level,"\tmaxCoins:\t",maxCoinsPerLevel)
+
+  }
+  
+}
+
+testXPandCoinCap()
+*/

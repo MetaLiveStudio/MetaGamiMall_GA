@@ -34,7 +34,19 @@ const c = (resolve:any, reject:any) => {
       }
   }
 }
- 
+
+export const GetPlayerStatisticVersions = (request:PlayFabServerModels.GetPlayerStatisticVersionsRequest):Promise<PlayFabServerModels.GetPlayerStatisticVersionsResult> => {
+  return new Promise((resolve, reject)=>{
+    PlayFabServer.GetPlayerStatisticVersions( request, c(resolve, reject)) 
+  })
+};
+
+export const GetTime = (request:PlayFabServerModels.GetTimeRequest):Promise<PlayFabServerModels.GetTimeResult> => {
+  return new Promise((resolve, reject)=>{
+    PlayFabServer.GetTime( request, c(resolve, reject)) 
+  })
+};
+
 export const GetEntityToken = (request:PlayFabAuthenticationModels.GetEntityTokenRequest):Promise<PlayFabAuthenticationModels.ValidateEntityTokenResponse> => {
       return new Promise((resolve, reject)=>{
         PlayFabAuthentication.GetEntityToken( request, c(resolve, reject)) 
@@ -132,7 +144,7 @@ export const EndLevelGivePlayerUpdatePlayerStats = async (updateStats:EndLevelUp
     // Whether to get player profile. Defaults to false. Has no effect for a new player.
     GetPlayerProfile: false,
     // Whether to get player statistics. Defaults to false.
-    GetPlayerStatistics: false,
+    GetPlayerStatistics: true,
     // Whether to get title data. Defaults to false.
     GetTitleData: false,
     // Whether to get the player's account Info. Defaults to false

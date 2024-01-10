@@ -1,3 +1,4 @@
+/*
 export class ThumbnailPlane extends Entity {
   public material: Material;
   public planeShape: PlaneShape;
@@ -41,3 +42,4 @@ export class ThumbnailPlane extends Entity {
     this.material.albedoTexture = texture;
   }
 }
+*/

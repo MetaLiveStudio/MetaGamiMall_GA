@@ -32,45 +32,9 @@ export function logChangeListenerEntry(
   if (key == "countDownTimerValue") {
     return;
   }
-  log(method, key, " ", newVal, " ", oldVal);
+  console.log(method, key, " ", newVal, " ", oldVal);
 }
 
-export function jsonStringifyActions(
-  action: Action<any>,
-  includeValues?: boolean,
-  includeValueArrays?: boolean
-) {
-  let str =
-    "Action[actionId:" +
-    action.sender +
-    ";actionId:" +
-    action.actionId +
-    ";" +
-    "entityName:" +
-    action.entityName;
-  if (includeValues) {
-    str += ";" + "values:";
-    if (action.values) {
-      str += "[";
-      for (const p in action.values) {
-        str += " " + p + ":" + action.values[p];
-      }
-      str += "]";
-    } else {
-      str += "null";
-    }
-  }
-  str += "]";
-  return str;
-}
-
-export function jsonStringifyActionsFull(
-  action: Action<any>,
-  includeValues?: boolean,
-  includeValueArrays?: boolean
-) {
-  return jsonStringifyActions(action, true, true);
-}
 export class Logger {
   name: string;
   contextData: LoggerContextData;
@@ -108,7 +72,7 @@ export class Logger {
       contextStr += "]";
     }
 
-    log(
+    console.log(
       level +
         contextStr +
         " " +

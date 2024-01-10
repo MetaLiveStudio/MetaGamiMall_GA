@@ -1,6 +1,9 @@
-import { CONFIG, initConfig } from "src/config";
+import { Entity } from "@dcl/sdk/ecs";
+import { log } from "../back-ports/backPorts";
+import { CONFIG, initConfig } from "../config";
 
-initConfig()
+//TODO MAKE AN INIT LEADERBOARD OBJS
+//initConfig()
 
 export type PlayerLeaderboardEntryType = {
   /** Title-specific display name of the user for this leaderboard entry. */
@@ -24,7 +27,35 @@ export interface ILeaderboardItem {
 
   updateUI():void
 }
+const REPEAT_CHAR_CACHE = new Map()
+function clearRepeatStrCache(){
+  REPEAT_CHAR_CACHE.clear()
+}
+function repeatStr(char:string,times:number,stringToPrepend?:string){
+  let str = ""
 
+  let _times = times;
+  if(stringToPrepend){
+    //TODO account for non mono space length, shorter need a little more
+    if(stringToPrepend.length < times && stringToPrepend.length < 10){
+      _times = times - (stringToPrepend.length * .3)
+    }else{ 
+      _times = times - stringToPrepend.length
+    }
+  }
+
+  const key = char + "."+_times
+  if(REPEAT_CHAR_CACHE.has(key)){
+    str = REPEAT_CHAR_CACHE.get(key)
+  }else{
+    for(let x=0;x<_times;x++){
+      str += "."
+    }
+    REPEAT_CHAR_CACHE.set(key,str)
+  }
+
+  return str;
+}
 export function createLeaderBoardPanelText(board:ILeaderboardItem, startIndex:number, pageSize:number,formatterCallback?: (text: string|number) => string){
   log("createLeaderBoardPanelText",startIndex,pageSize)
   let leaderBoardPlaceHolderText = "";
@@ -40,7 +71,7 @@ export function createLeaderBoardPanelText(board:ILeaderboardItem, startIndex:nu
           1 +
           " " +
           item.DisplayName +
-          "......" +
+          "..." +//repeatStr(".",30,item.DisplayName ) +
           (formatterCallback ? formatterCallback(item.StatValue) : item.StatValue) +
           "\n";
 
@@ -62,16 +93,22 @@ export function createLeaderBoardPanelText(board:ILeaderboardItem, startIndex:nu
       leaderBoardPlaceHolderText +=
         "\n" +
         board.currentPlayer.DisplayName +
-        "......" +
+        "..." +//repeatStr(".",30,board.currentPlayer.DisplayName ) +
         playerFmtVal
     }
+
+    clearRepeatStrCache()
+
   return leaderBoardPlaceHolderText
 }
 
 export class LeaderboardItem implements ILeaderboardItem {
+  
   host?: Entity;
-  textHeaderShape?: TextShape;
-  text?: TextShape;
+
+  //TODO BRING BACK!
+  //textHeaderShape?: TextShape;
+  //text?: TextShape;
   playerEntries?: PlayerLeaderboardEntryType[];
   currentPlayer?: PlayerLeaderboardEntryType;
   formatterCallback?: (text: string|number) => string;
@@ -88,9 +125,10 @@ export class LeaderboardItem implements ILeaderboardItem {
 
   updateUI() {
     const leaderBoardPlaceHolderText = createLeaderBoardPanelText(this,this.startIndex,this.pageSize,this.formatterCallback)
-    if (this.text) {
-      this.text!.value = leaderBoardPlaceHolderText;
-    }
+    //TODO BRING BACK!
+    //if (this.text) {
+    //  this.text!.value = leaderBoardPlaceHolderText;
+    //}
   }
   setFormatterCallback(callback: (text: string|number) => string): void {
     this.formatterCallback = callback
@@ -99,18 +137,29 @@ export class LeaderboardItem implements ILeaderboardItem {
 
 
 export class LeaderboardRegistry {
-  daily?: ILeaderboardItem[]=[];
-  weekly?: ILeaderboardItem[]=[];
-  hourly?: ILeaderboardItem[]=[];
-  epoch?: ILeaderboardItem[]=[];
+  daily: ILeaderboardItem[]=[];
+  weekly: ILeaderboardItem[]=[];
+  hourly: ILeaderboardItem[]=[];
+  epoch: ILeaderboardItem[]=[];
+  raffleCoinBag: ILeaderboardItem[]=[];
 
-  dailyVoxSkate?: LeaderboardItem;
-  weeklyVoxSkate?: LeaderboardItem;
-  hourlyVoxSkate?: LeaderboardItem;
+
+  //dailyVoxSkate?: LeaderboardItem;
+  //weeklyVoxSkate?: LeaderboardItem;
+  //hourlyVoxSkate?: LeaderboardItem;
 }
 
-export const LEADERBOARD_REGISTRY = new LeaderboardRegistry();
+let LEADERBOARD_REGISTRY:LeaderboardRegistry
 
+export function getLeaderboardRegistry(){
+  if(LEADERBOARD_REGISTRY===undefined){
+    LEADERBOARD_REGISTRY = new LeaderboardRegistry();
+  }
+  return LEADERBOARD_REGISTRY
+}
+export function initLeaderboardRegistry() {
+  getLeaderboardRegistry()
+}
 
 export function updateLeaderboard(playerNames: string[]) {
   /*
@@ -137,7 +186,9 @@ export const leaderBoardsConfigs = [
     epoch: () => {
       return LEADERBOARD_REGISTRY.epoch;
     },
-    
+    raffleCoinBag: () => {
+      return LEADERBOARD_REGISTRY.raffleCoinBag;
+    },
   }/*,
   {
     prefix: "VB_",
