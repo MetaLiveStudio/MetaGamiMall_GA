@@ -6,6 +6,7 @@ import { makeLeaderboard } from '../gamimall/leaderboard';
 import { PlayerLeaderboardEntryType, getLeaderboardRegistry } from '../gamimall/leaderboard-utils';
 import { CONFIG, SCENE_TYPE_GAMIMALL } from '../config';
 import { log } from '../back-ports/backPorts';
+import { REGISTRY } from '../registry';
 
 const CLASSNAME = "leaderBoards3d.ts"
 
@@ -107,7 +108,7 @@ export function initLeaderboards3D(_scene:Entity){
 
   LEADERBOARD_REG.hourly.push(makeLeaderboard(
     leaderboardBigHourly,
-    undefined /*script18.model*/,
+    "plane" /*script18.model*/,
     undefined /*"Leaderboard (Hourly)"*/,
     LEADER_BOARD_SUPER_DOGIO_TITLE,
     leaderBoardPlaceHolderText,// + "HOUR",
@@ -119,12 +120,17 @@ export function initLeaderboards3D(_scene:Entity){
       position: Vector3.create(0, 1.28, -0.02),
       scale: LEADERBOARD_SUPER_DOGIO_TEXT_SCALE,
     },
-    LEADERBOARD_SUPER_DOGIO_FONT_COLOR
+    LEADERBOARD_SUPER_DOGIO_FONT_COLOR,
+    { //onclick
+      fn: ()=>{ REGISTRY.ui.openLeaderboardHourly() },
+      hoverText : "Hourly Results Details",
+      maxDistance: 12
+    }
   ));
 
   LEADERBOARD_REG.daily.push(makeLeaderboard(
     leaderboardBigDaily,
-    undefined /*script18.model*/,
+    "plane" /*script18.model*/,
     undefined /*"Leaderboard (Daily)"*/,
     LEADER_BOARD_SUPER_DOGIO_TITLE,
     leaderBoardPlaceHolderText,// + "DAILY",
@@ -136,12 +142,17 @@ export function initLeaderboards3D(_scene:Entity){
       position: Vector3.create(0, 1.28, -0.02),
       scale: LEADERBOARD_SUPER_DOGIO_TEXT_SCALE,
     },
-    LEADERBOARD_SUPER_DOGIO_FONT_COLOR
+    LEADERBOARD_SUPER_DOGIO_FONT_COLOR,
+    { //onclick
+      fn: ()=>{ REGISTRY.ui.openLeaderboardDaily() },
+      hoverText : "Daily Results Details",
+      maxDistance: 12
+    }
   ));
 
   LEADERBOARD_REG.weekly.push(makeLeaderboard(
     leaderboardBigWeekly,
-    undefined /*script18.model*/,
+    "plane" /*script18.model*/,
     undefined /*"Leaderboard (Weekly)"*/,
     LEADER_BOARD_SUPER_DOGIO_TITLE,
     leaderBoardPlaceHolderText,// + "WEEK",
@@ -153,7 +164,12 @@ export function initLeaderboards3D(_scene:Entity){
       position: Vector3.create(0, 1.28, -0.02),
       scale: LEADERBOARD_SUPER_DOGIO_TEXT_SCALE,
     },
-    LEADERBOARD_SUPER_DOGIO_FONT_COLOR
+    LEADERBOARD_SUPER_DOGIO_FONT_COLOR,
+    { //onclick
+      fn: ()=>{ REGISTRY.ui.openLeaderboardWeekly() },
+      hoverText : "Weekly Results Details",
+      maxDistance: 12
+    }
   ));
 
 }

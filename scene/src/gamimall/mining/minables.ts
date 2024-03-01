@@ -17,8 +17,8 @@ import { PickAxe, PICK_AXE_MANAGER } from "./pickAxeMgr";
 import { IntervalUtil } from "../../meta-decentrally/modules/interval-util";
 import * as PlayFabSDK from "../playfab_sdk/index";
 import { GetLeaderboardResult } from "../playfab_sdk/playfab.types";
-import { updateLeaderBoard } from "../leaderboard";
-import { leaderBoardsConfigs } from "../leaderboard-utils";
+import { setLeaderboardLoading, updateLeaderBoard } from "../leaderboard";
+import { getLeaderboardRegistry, leaderBoardsConfigs, leaderBoardsConfigsType } from "../leaderboard-utils";
 import { CustomClaimPrompt } from "../../ui/claimModals";
 import { engineTweenStartScaling, log } from "../../back-ports/backPorts";
 import { Quaternion, Vector3 } from '@dcl/sdk/math';
@@ -271,7 +271,7 @@ class Block {
             this.activateTime = trackFeat.activateTime
         }  
         if(trackFeat.position !== undefined){
-            log(MODULE,METHOD_NAME,this.id,"update position",trackFeat.position)
+            log(MODULE,METHOD_NAME,this.id,"update position",trackFeat.status)
             //const tf = this.entity.getComponent(Transform)
             if(trackFeat.status !== 'active'){
                 
@@ -442,20 +442,20 @@ class Block {
                 StartPosition: 0,
                 MaxResultsCount: CONFIG.GAME_LEADEBOARD_RAFFLE_MAX_RESULTS,
             };
+
+            leaderBoardsConfigs.filter((p)=>{ return p.prefix === prefix }).forEach((p)=>{  
+                setLeaderboardLoading(p.raffleCoinBag(),true)
+            })
+            
             PlayFabSDK.GetLeaderboard(getLeaderboardLevelEpoch).then(
                 (result: GetLeaderboardResult) => {
                     //hande manager it here
-                    for (const p in leaderBoardsConfigs) {
-                        const leaderBoardConfig = leaderBoardsConfigs[p];
-                        
-                        if(leaderBoardConfig.prefix === prefix){
+                    leaderBoardsConfigs.filter((p)=>{ return p.prefix === prefix }).forEach((p)=>{  
                             updateLeaderBoard(getLeaderboardLevelEpoch.StatisticName
-                                ,leaderBoardConfig.raffleCoinBag()
+                                ,p.raffleCoinBag()
                                 ,result.Leaderboard ? result.Leaderboard : []
                                 ,CONFIG.GAME_LEADEBOARD_RAFFLE_MAX_RESULTS)
-                        }
-                    }
-                    
+                        })
                 }
             );
             
@@ -567,14 +567,13 @@ class Block {
 
         const tf = Transform.getMutable(this.entity)//this.entity.getComponent(Transform)
         if(this.serverState.position &&this.serverState.position.position){
-            log(MODULE,METHOD_NAME,this.id,"set.position",this.serverState.position.position)
             if(!this.transformArgs.position) this.transformArgs.position = {x:0,y:0,z:0}
             Vector3.copyFrom(this.serverState.position.position,this.transformArgs.position)
             //this.transformArgs.position.x = this.serverState.position.position.x
             //this.transformArgs.position.y = this.serverState.position.position.y
             //this.transformArgs.position.z = this.serverState.position.position.z
         }else{
-            log(MODULE,METHOD_NAME,this.id,"set.position","has no position, not setting")
+            log(MODULE,METHOD_NAME,this.id,"has no position, not setting")
             //debugger
         }
         //if(!tf.position) tf.position = {x:0,y:0,z:0}
@@ -670,19 +669,10 @@ class Block {
 
 
         //const tf = this.entity.getComponent(Transform)
-        const targetScale = this.transformArgs.scale ? this.transformArgs.scale : Vector3.One()
         engineTweenStartScaling(this.entity, SCALE_HIDDEN
         //utils.tweens.startScaling(this.entity, SCALE_HIDDEN
-            ,targetScale
-            , 1 * 1000,undefined,()=>{
-                const tf  = Transform.get(this.entity)
-                log(MODULE,METHOD_NAME,this.id,"scaleup.finished","targetScale",targetScale,"vs real:",tf)
-                if(!Vector3.equalsWithEpsilon(targetScale,tf!.scale,0.01)){
-                    Vector3.copyFrom(targetScale,Transform.getMutable(this.entity).position)
-                    log(MODULE,METHOD_NAME,this.id,"scaleup.finished","scale is same as target, EXPLICITLY setting",Transform.get(this.entity))
-                    return
-                }
-            })
+            ,this.transformArgs.scale ? this.transformArgs.scale : Vector3.One()
+            , 1 * 1000)
         //this.entity.addComponentOrReplace(new utils.ScaleTransformComponent(SCALE_HIDDEN,this.transformArgs.scale,1,()=>{
             /////*if(tf.position.y != this.centerPos.y){
             ////    tf.position.y = this.centerPos.y

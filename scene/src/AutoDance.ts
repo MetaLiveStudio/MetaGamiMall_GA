@@ -5,10 +5,10 @@ import { triggerEmote, triggerSceneEmote } from '~system/RestrictedActions'
 import { cameraOnlyTrigger } from './sdk7-utils/cameraOnlyTrigger'
 
 const basicEmotesToTrigger = [
-  'robot',
+  //'robot',
   'HANDS_AIR',
-  'money',
-  'DISCO'
+  //'money',
+  //'DISCO'
   // ...more emotes
 ]
 

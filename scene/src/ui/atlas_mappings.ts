@@ -566,6 +566,13 @@ export default {
       sourceTop : 2414,
       sourceHeight : 140,
       atlasHeight: atlasHeight, atlasWidth: atlasWidth
+    },
+    monthlyLeaderboardBtn:{
+      sourceWidth: 837,
+      sourceHeight: 232,
+      sourceLeft: 3052,
+      sourceTop: 3713,
+      atlasHeight: atlasHeight, atlasWidth: atlasWidth
     }
   }
 };

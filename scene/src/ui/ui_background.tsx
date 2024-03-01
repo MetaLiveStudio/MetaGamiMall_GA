@@ -13,6 +13,8 @@ import { PromptText } from 'dcl-ui-toolkit/dist/ui-entities/prompts/Prompt/compo
 import { PromptButton } from 'dcl-ui-toolkit/dist/ui-entities/prompts/Prompt/components/Button'
 import { Prompt } from 'dcl-ui-toolkit/dist/ui-entities/prompts/Prompt'
 import { CenterLabel } from './ext/CenterLabel'
+import { MediumCenterIcon } from './ext/MediumCenterIcon'
+
 import { wordWrap } from '../utils/helperFunctions'
 import { i18n, i18nOnLanguageChangedAdd, i18nOnLanguageChangedAddReplace } from '../i18n/i18n'
 import { _openExternalURL, _teleportTo, log } from '../back-ports/backPorts'
@@ -35,6 +37,7 @@ import { strLPad } from '../utils'
 import { onCanvasInfoChangedObservable } from './ui_engineInfo'
 import { teleportTo } from '~system/RestrictedActions'
 import { getAndSetRealmDataIfNull } from '../userData'
+import { leaderBoardsConfigs } from '../gamimall/leaderboard-utils'
 
 const MASTER_SCALE = 1.2;
 
@@ -454,6 +457,69 @@ export class StaminaPanel implements Modal {
   }
 }
 
+export class GameToolsLowerScreen implements Modal{
+  
+  socialMediaPanel: SocialMediaPanel;
+
+  monthlyLeaderBoardBtn: MediumCenterIcon
+
+  screenType:number = DEFAULT_SCREEN_TYPE
+  
+  constructor() {
+    //width?: number*: Image width on screen in pixels. 
+    //Default value depends on icon's type (32 for SmallIcon, 64 for MediumIcon and 128 for LargeIcon).
+
+    this.socialMediaPanel = new SocialMediaPanel();
+    
+    if(true){ 
+      //lower center
+      this.monthlyLeaderBoardBtn = ui.createComponent(MediumCenterIcon, 
+        { 
+          image: CUSTOM_ATLAS, startHidden:false, 
+          //yOffset: 40,
+          section: atlas_mappings.buttons.monthlyLeaderboardBtn
+        }
+      ) 
+      this.monthlyLeaderBoardBtn.imageElement.onMouseDown = ()=>{
+        if(REGISTRY.ui.openLeaderboardMonthly){
+          REGISTRY.ui.openLeaderboardMonthly()
+        }else{ 
+          log("ShowMonthlyLeaderboardPanel","ERROR!!! REGISTRY.ui.openLeaderboardMonthly is undefined")
+        }
+      }
+    }
+ 
+    
+  }
+  applyUIScaling() {
+    let SCREEN_TYPE = this.screenType
+
+    if(true && this.monthlyLeaderBoardBtn){
+      //TODO MOVE THIS TO "center-bottom"
+      let _scale = 1
+      
+      if(SCREEN_TYPE == SCREEN_STANDARD){
+        this.monthlyLeaderBoardBtn.xOffset = "40%" as any  
+        this.monthlyLeaderBoardBtn.yOffset = 40
+      }else{
+        _scale = 1.8
+        this.monthlyLeaderBoardBtn.yOffset = 20
+        this.monthlyLeaderBoardBtn.xOffset = "38%" as any
+        //this.monthlyLeaderBoardBtn.height = "40%" as any
+      }
+      this.monthlyLeaderBoardBtn.height = 110 * _scale
+      this.monthlyLeaderBoardBtn.width = 320 * _scale
+    }
+  }
+  show(): void {
+    this.socialMediaPanel.show()
+  }
+  hide(): void {
+    this.socialMediaPanel.hide()
+  }
+
+}
+
 export class SocialMediaPanel implements Modal{
   twitterButton: ui.MediumIcon
   discordButton: ui.MediumIcon;
@@ -528,8 +594,8 @@ export class GameToolsPanel implements Modal {
   avatarSwapPanel: AvatarSwapPanel;
   /*locationPanel: LocationPanel;
   startEndGamePanel: StartEndGamePanel;*/
-  socialMediaPanel: SocialMediaPanel;
-
+  gameToolsLowerScreen: GameToolsLowerScreen
+  
   
   //visitMetaGamiMall: VisitGamiMallPanel;
 
@@ -539,6 +605,7 @@ export class GameToolsPanel implements Modal {
   ReloginPanel
   RefreshPanel
   leaderBoardPanel:ShowLeaderboardPanel
+  monthlyLeaderBoardPanel:ShowMonthlyLeaderboardPanel
   languagePanel:LanguagePanel
 
   subPanels: TogglePanelButton[] = [];
@@ -590,8 +657,8 @@ export class GameToolsPanel implements Modal {
     this.gimagebutton.height = 60;
     */
     
-    this.socialMediaPanel = new SocialMediaPanel();
- 
+    this.gameToolsLowerScreen = new GameToolsLowerScreen();
+    
     
     //this.petPanel = new SummonPetRobotPanel();
     //this.avatarSwapPanel = new AvatarSwapPanel(this.prompt);
@@ -606,9 +673,10 @@ export class GameToolsPanel implements Modal {
     //this.visitMetaGamiMall = new VisitGamiMallPanel(this.prompt);
     this.leaderBoardPanel = new ShowLeaderboardPanel(this.prompt)
     if(CONFIG.SIDE_BAR_LANGUAGE_PICKER_ENABLED) this.languagePanel = new LanguagePanel(this.prompt)
-    
+
+    //this.monthlyLeaderBoardPanel = new ShowMonthlyLeaderboardPanel(this.prompt)
    
-    if(this.socialMediaPanel) this.socialMediaPanel.show();
+    if(this.gameToolsLowerScreen) this.gameToolsLowerScreen.show();
  
     
     //this.subPanels.push(this.avatarSwapPanel);
@@ -622,6 +690,7 @@ export class GameToolsPanel implements Modal {
     this.subPanels.push(this.ReloginPanel);
     this.subPanels.push(this.RefreshPanel);
     if(this.leaderBoardPanel) this.subPanels.push(this.leaderBoardPanel);
+    if(this.monthlyLeaderBoardPanel) this.subPanels.push(this.monthlyLeaderBoardPanel);
     if(this.languagePanel) this.subPanels.push(this.languagePanel);
     //this.subPanels.push(this.visitMetaGamiMall)
     
@@ -666,6 +735,10 @@ export class GameToolsPanel implements Modal {
     */
    this.applyUIScaling()
   }
+  setScreenType(type:number){
+    this.screenType=type
+    this.gameToolsLowerScreen.screenType = type
+  }
   applyUIScaling(){
     let SCREEN_TYPE = this.screenType
 
@@ -694,8 +767,8 @@ export class GameToolsPanel implements Modal {
       this.subPanels[p].applyUIScaling()
     }
     this.updateSubPanelPositions()
-    
 
+    this.gameToolsLowerScreen.applyUIScaling()
   }
   updateSubPanelPositions(){
     let SCREEN_TYPE = this.screenType
@@ -742,13 +815,13 @@ export class GameToolsPanel implements Modal {
     if(this.header) this.header.show()
     
     this.setSubPanelsVisible(true)
-    if(this.socialMediaPanel) this.socialMediaPanel.show()
+    if(this.gameToolsLowerScreen) this.gameToolsLowerScreen.show()
   }
   hide(): void {
     this.prompt.hide()
     if(this.header) this.header.hide()
     
-    if(this.socialMediaPanel) this.socialMediaPanel.hide()
+    if(this.gameToolsLowerScreen) this.gameToolsLowerScreen.hide()
 
     this.setSubPanelsVisible(false)
   }
@@ -1151,6 +1224,29 @@ export class RefreshPanel extends TogglePanelButton {
 }
 
 
+export class ShowMonthlyLeaderboardPanel extends TogglePanelButton {
+  constructor(parent: PromptWrapper<ui.CustomPrompt>) {
+    super(
+      parent,
+      {key:"showMonthLeaderBoard", params:{ns:namespaces.ui.sideButton}},
+      -18,
+      () => {
+        log("clicked ShowMonthlyLeaderboardPanel ");
+        //open modal, fetch data
+        //TODO is this needed for PX
+        if(REGISTRY.ui.openLeaderboardMonthly){
+          REGISTRY.ui.openLeaderboardMonthly()
+        }else{ 
+          log("ShowMonthlyLeaderboardPanel","ERROR!!! REGISTRY.ui.openLeaderboardMonthly is undefined")
+        }
+      },
+      {
+        activeIconImageSection: atlas_mappings.icons.LeaderBoardicon_on,
+        inActiveIconImageSection: atlas_mappings.icons.LeaderBoardicon_off,
+      }
+    );
+  }
+}
 export class ShowLeaderboardPanel extends TogglePanelButton {
   constructor(parent: PromptWrapper<ui.CustomPrompt>) {
     super(
@@ -1236,13 +1332,35 @@ export function initUIBGModals(){
 
     if(scale > 1){
       staminaPanel.screenType = SCREEN_RETINA
-      gameTools.screenType = SCREEN_RETINA
+      gameTools.setScreenType(SCREEN_RETINA)
+      leaderBoardsConfigs.forEach((config)=>{
+        config.daily().forEach((item)=>{ item.setScreenType(SCREEN_RETINA) })
+        config.weekly().forEach((item)=>{ item.setScreenType(SCREEN_RETINA) })
+        config.hourly().forEach((item)=>{ item.setScreenType(SCREEN_RETINA) })
+        config.monthly().forEach((item)=>{ item.setScreenType(SCREEN_RETINA) })
+        config.raffleCoinBag().forEach((item)=>{ item.setScreenType(SCREEN_RETINA) })
+      })
     }else{
       staminaPanel.screenType = SCREEN_STANDARD
-      gameTools.screenType = SCREEN_STANDARD
+      gameTools.setScreenType(SCREEN_STANDARD )
+      leaderBoardsConfigs.forEach((config)=>{
+        config.daily().forEach((item)=>{ item.setScreenType(SCREEN_STANDARD) })
+        config.weekly().forEach((item)=>{ item.setScreenType(SCREEN_STANDARD) })
+        config.hourly().forEach((item)=>{ item.setScreenType(SCREEN_STANDARD) })
+        config.monthly().forEach((item)=>{ item.setScreenType(SCREEN_STANDARD) })
+        config.raffleCoinBag().forEach((item)=>{ item.setScreenType(SCREEN_STANDARD) })
+      })
     }
     log("staminaPanel.onCanvasInfoChangedObservable",info,"scale",scale,"screenType",staminaPanel.screenType)
 
+    
+    leaderBoardsConfigs.forEach((config)=>{
+      config.daily().forEach((item)=>{ item.applyUIScaling()})
+      config.weekly().forEach((item)=>{ item.applyUIScaling() })
+      config.hourly().forEach((item)=>{ item.applyUIScaling() })
+      config.monthly().forEach((item)=>{ item.applyUIScaling() })
+      config.raffleCoinBag().forEach((item)=>{ item.applyUIScaling() })
+    })
     staminaPanel.applyUIScaling() 
     gameTools.applyUIScaling() 
   })

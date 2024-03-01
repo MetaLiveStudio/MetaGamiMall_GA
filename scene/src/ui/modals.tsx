@@ -360,7 +360,6 @@ export class CustomOkPrompt implements Modal {
     
   }
   setTextValue(text:string){
-    log("CustomOkPrompt","setTextValue",text)
     let textToUse = wordWrap(text, 48, 4) 
     this.text.value = textToUse
   }

@@ -111,6 +111,7 @@ class LeaderboardState {
   weeklyLeaderboard?: PlayFabClientModels.GetLeaderboardResult;
   dailyLeaderboard?: PlayFabClientModels.GetLeaderboardResult;
   hourlyLeaderboard?: PlayFabClientModels.GetLeaderboardResult;
+  monthlyLeaderboard?: PlayFabClientModels.GetLeaderboardResult;
 
   levelEpochLeaderboardRecord: Record<
     string,
@@ -128,7 +129,11 @@ class LeaderboardState {
     string,
     PlayFabClientModels.GetLeaderboardResult
   > = {};
-
+  monthlyLeaderboardRecord: Record<
+    string,
+    PlayFabClientModels.GetLeaderboardResult
+  > = {};
+  
   setHourlyLeaderBoard(
     val: PlayFabClientModels.GetLeaderboardResult,
     prefix: string = ""
@@ -141,6 +146,21 @@ class LeaderboardState {
       this.hourlyLeaderboard = val;
     }
     this.notifyOnChange(prefix + "hourlyLeaderboard", val, oldVal);
+  }
+
+
+  setMonthlyLeaderBoard(
+    val: PlayFabClientModels.GetLeaderboardResult,
+    prefix: string = ""
+  ) {
+    const oldVal = this.hourlyLeaderboard;
+
+    if (prefix && prefix !== "") {
+      this.monthlyLeaderboardRecord[prefix] = val;
+    } else {
+      this.monthlyLeaderboard = val;
+    }
+    this.notifyOnChange(prefix + "monthlyLeaderboard", val, oldVal);
   }
   
   setLevelEpocLeaderBoard(

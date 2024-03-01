@@ -3,7 +3,8 @@
     "allowJs": true,
     "strict": true,
     "strictPropertyInitialization": false,
-    "removeComments": true
+    "removeComments": true,
+    "skipLibCheck": true
   },
   "include": [
     "src/**/*.ts",

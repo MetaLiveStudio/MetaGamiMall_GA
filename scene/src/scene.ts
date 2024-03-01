@@ -66,7 +66,12 @@ function initGamiMallScene(_scene:Entity){
     })
 
     //Making VLM
-    VLM.init() 
+    try{
+      VLM.init() 
+    }catch(e){
+      log(CLASSNAME,METHOD_NAME,"VLM.init() FAILED",e)
+      log(CLASSNAME,METHOD_NAME,"VLM.init() FAILED",e)
+    }
 
      //making adsshop model
      const adsshop = engine.addEntity()
@@ -122,7 +127,7 @@ function initGamiMallScene(_scene:Entity){
 
          
          //making squares model
-         const squares = engine.addEntity()
+         /*const squares = engine.addEntity()
          Transform.create(squares,{
              position: Vector3.create(48, 0, 40),
              rotation: Quaternion.create(0, 0, 0, 1),
@@ -132,7 +137,7 @@ function initGamiMallScene(_scene:Entity){
      
          GltfContainer.create(squares,{
              src:"models/mains/squares.glb"
-         })
+         })*/
 
            
          //making DAOAlchemist model

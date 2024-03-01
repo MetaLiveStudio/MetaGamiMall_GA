@@ -1,4 +1,4 @@
-import ReactEcs, { Button, Label, ReactEcsRenderer, UiEntity } from '@dcl/sdk/react-ecs'
+import ReactEcs, { Button, Label, PositionUnit, ReactEcsRenderer, UiEntity } from '@dcl/sdk/react-ecs'
 import { CornerLabel } from 'dcl-ui-toolkit'
 //import { EntityPropTypes } from '@dcl/react-ecs/dist/components/types'
 //import { UiLabelProps } from '@dcl/react-ecs/dist/components/Label/types'
@@ -36,7 +36,7 @@ export class CenterLabel extends CornerLabel {
         uiTransform={{
           ...this.textElement.uiTransform,
           display: this.visible ? 'flex' : 'none',
-          position: { bottom: this.yOffset, left: "50%" },
+          position: { bottom: this.yOffset, left: this.xOffset },
         }}
       />
     )

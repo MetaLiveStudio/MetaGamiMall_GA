@@ -62,26 +62,11 @@ export function engineTweenStartScaling(
     easingFunction: interpolationType ? interpolationType : EasingFunction.EF_LINEAR,
   })
 
-  //clear out any previous timer
-  let timerId = TWEEN_SCALE_CALLBACK_MAP.get(entity)
-  if(timerId !== undefined) utils.timers.clearTimeout(timerId)
-
-  //if has new callback register it
-  if(onFinish){
-    timerId = utils.timers.setTimeout(()=>{
-      //console.log("engineTweenStartScaling","finished")
-      //clear out timer
-      TWEEN_SCALE_CALLBACK_MAP.delete(entity);
-
-      onFinish()
-
-    },duration/1000)
-    TWEEN_SCALE_CALLBACK_MAP.set(entity,timerId) 
-  }*/
-  
+  */
+ //as of v1.2.3 tween component under hood is used https://github.com/decentraland/sdk7-utils/releases/tag/1.2.3
    //WORKAROUND FALLBACK, Tween.Mode.Scale buggy as of sdk 7.3.30
    //the position is getting altered, size not matching up :(
-   utils.tweens.startScaling(entity,start,end,duration/1000,undefined,onFinish)
+    utils.tweens.startScaling(entity,start,end,duration/1000,undefined,onFinish)
   
 
   //on timer end, enforce state incase engine does not match up? or trust engine and just fire?

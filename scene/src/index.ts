@@ -34,6 +34,7 @@ import { initOnCameraModeChangedObservable } from './back-ports/onCameraModeChan
 import { createBasicDanceArea } from './AutoDance'
 import { Vector3 } from '@dcl/sdk/math'
 import { initAvatarSwap } from './modules/avatar-swap/arissa';
+import { log } from './back-ports/backPorts';
 
 // export all the functions required to make the scene work
 export * from '@dcl/sdk'
@@ -120,7 +121,7 @@ export function main(){
         try{
           initPad(_scene)
         }catch(e){
-          debugger
+          log("ERROR","index.ts","initPad FAILED",e)
         }
 
         /*if(!GAME_STATE.playerState.loginSuccess){
