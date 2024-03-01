@@ -38,6 +38,8 @@ import { executeTask } from "@dcl/sdk/ecs";
 import { signedFetch } from "~system/SignedFetch";
 import { Color4 } from "@dcl/sdk/math";
 import * as ui from 'dcl-ui-toolkit'
+import { leaderBoardsConfigs } from './leaderboard-utils';
+import { setLeaderboardLoading } from './leaderboard';
 
 //initRegistry()
 //initConfig()
@@ -595,6 +597,20 @@ export function fetchLeaderboardInfo(prefix: string = "") {
     StartPosition: 0,
     MaxResultsCount: CONFIG.GAME_LEADEBOARD_MAX_RESULTS,
   };
+
+  var getLeaderboardMonthly: PlayFabClientModels.GetLeaderboardRequest = {
+    StatisticName: prefix + CONFIG.GAME_LEADERBOARDS.COINS.MONTHLY.name,
+    StartPosition: 0,
+    MaxResultsCount: CONFIG.GAME_LEADERBOARDS.COINS.MONTHLY.defaultPageSize,
+  };
+
+  leaderBoardsConfigs.filter((p)=>{ return p.prefix === prefix }).forEach((p)=>{  
+    setLeaderboardLoading(p.monthly(),true)
+    setLeaderboardLoading(p.hourly(),true)
+    setLeaderboardLoading(p.weekly(),true)
+    setLeaderboardLoading(p.daily(),true)
+})
+
   PlayFabSDK.GetLeaderboard(getLeaderboardHourly).then(
     (result: GetLeaderboardResult) => {
       GAME_STATE.leaderboardState.setHourlyLeaderBoard(result, prefix);
@@ -613,6 +629,11 @@ export function fetchLeaderboardInfo(prefix: string = "") {
   PlayFabSDK.GetLeaderboard(getLeaderboardLevelEpoch).then(
     (result: GetLeaderboardResult) => {
       GAME_STATE.leaderboardState.setLevelEpocLeaderBoard(result, prefix);
+    }
+  );
+  PlayFabSDK.GetLeaderboard(getLeaderboardMonthly).then(
+    (result: GetLeaderboardResult) => {
+      GAME_STATE.leaderboardState.setMonthlyLeaderBoard(result, prefix);
     }
   );
 }

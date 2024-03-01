@@ -3153,6 +3153,427 @@ if (true) {
       });
     } 
     //END MAKING REWARD CoinsBag
+
+       //START MAKING REWARD Music Stage Left
+       if (true) {
+        //block scope
+        const transformArgs =
+          {
+            position: Vector3.create(48, 0, 40),
+            rotation: Quaternion.create(0, 0, 0, 1),
+            scale: Vector3.create(1, 1, 1),
+          };
+      
+        wearableArr.push({
+          sceneId: "gamimall",
+          contract: "0x80e0c106f4fe576bdbbe7818b61df6e8456ab65d",
+          itemId: "0",
+          options: {
+            type: "2D-UI",
+            featuredEntityData: {
+              parent: _scene,
+              entityName: "ent4",
+              shapeName: "models/Rewards/Xmas2023/L.glb",
+              hoverText: "BTFD Denim Jacket",
+              transform: transformArgs,
+              lazyLoading:{
+                enabled: false,
+                debugEnabled:false, 
+                placeHolder:{
+                  enabled:true,
+                  shapeName:"",  
+                  positionType: 'featureEnt', 
+                  //position: Vector3.create(34.7,0.8,30.7)
+                }, 
+                trigger: { 
+                  debugEnabled:false,
+                  positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
+                  size: Vector3.create(18,1,18),
+                  position: Vector3.create(57,10,52)//where to put the trigger, triggerPositionType affects its relative offset
+                } 
+              },
+              motionData: {
+                rotationVelocity: ROTATE_VELOCITY_OFF,
+                moveVelocity: MOVE_VELOCITY,
+                moveInterval: MOVE_INTERVAL,
+              },
+            },
+            nftUIData: {
+              style: "version20Modal",
+              type: "MetaDoge",
+              image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x80e0c106f4fe576bdbbe7818b61df6e8456ab65d:0/thumbnail",
+              imageWidth: 256,
+              imageHeight: 256,
+              detailsFontSize: 12,
+              
+              detailsInfo: "BTFD Denim Jacket",
+              directLink: "https://market.decentraland.org/",
+              directLinkFontSize: 10,
+              title: "BTFD Denim Jacket",
+              detailsTitle: "HIGHLIGHTS!",
+              cost: [
+                {
+                  price: 999999, 
+                  type: "VirtualCurrency",
+                  id: "GC",
+                  label: "Coins",
+                },
+                {
+                  price: 999999, 
+                  type: "VirtualCurrency",
+                  id: "MC",
+                  label: "Coins"
+                }
+              ],
+              showStockQty:true,//defaults to true
+              qtyCurrent: -2,
+              qtyTotal: 100,
+              claimWindowEnabled:true,//defaults to true
+              checkLatestMarketPrices: true,
+              claimStartMS:  -1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+              claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
+            },
+          },
+        });
+      } 
+      //END MAKING REWARD Music Stage Left
+
+         //START MAKING REWARD Music Stage Middle
+         if (true) {
+          //block scope
+          const transformArgs =
+            {
+              position: Vector3.create(48, 0, 40),
+              rotation: Quaternion.create(0, 0, 0, 1),
+              scale: Vector3.create(1, 1, 1),
+            };
+        
+          wearableArr.push({
+            sceneId: "gamimall",
+            contract: "0xf744E1e1c75CeB37B54b96cBEDb94B3c137E9FC0",
+            itemId: "0",
+            options: {
+              type: "2D-UI",
+              featuredEntityData: {
+                parent: _scene,
+                entityName: "ent4",
+                shapeName: "models/Rewards/Xmas2023/M.glb",
+                hoverText: "Wanna be a Diamond Hand? ",
+                transform: transformArgs,
+                lazyLoading:{
+                  enabled: false,
+                  debugEnabled:false, 
+                  placeHolder:{
+                    enabled:true,
+                    shapeName:"",  
+                    positionType: 'featureEnt', 
+                    //position: Vector3.create(34.7,0.8,30.7)
+                  }, 
+                  trigger: { 
+                    debugEnabled:false,
+                    positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
+                    size: Vector3.create(18,1,18),
+                    position: Vector3.create(57,10,52)//where to put the trigger, triggerPositionType affects its relative offset
+                  } 
+                },
+                motionData: {
+                  rotationVelocity: ROTATE_VELOCITY_OFF,
+                  moveVelocity: MOVE_VELOCITY,
+                  moveInterval: MOVE_INTERVAL,
+                },
+              },
+              nftUIData: {
+                style: "version20Modal",
+                type: "MetaDoge",
+                image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0xf744E1e1c75CeB37B54b96cBEDb94B3c137E9FC0:0/thumbnail",
+                imageWidth: 256,
+                imageHeight: 256,
+                detailsFontSize: 12,
+                
+                detailsInfo: "Wanna be a Diamond Hand?",
+                directLink: "https://market.decentraland.org/",
+                directLinkFontSize: 10,
+                title: "BTFD Diamond Hands",
+                detailsTitle: "HIGHLIGHTS!",
+                cost: [
+                  {
+                    price: 999999, 
+                    type: "VirtualCurrency",
+                    id: "GC",
+                    label: "Coins",
+                  },
+                  {
+                    price: 999999, 
+                    type: "VirtualCurrency",
+                    id: "MC",
+                    label: "Coins"
+                  }
+                ],
+                showStockQty:true,//defaults to true
+                qtyCurrent: -2,
+                qtyTotal: 5,
+                claimWindowEnabled:true,//defaults to true
+                checkLatestMarketPrices: true,
+                claimStartMS: -1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+                claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
+              },
+            },
+          });
+        } 
+        //END MAKING REWARD Music Stage Middle
+
+         //START MAKING REWARD Music Stage Right
+         if (true) {
+          //block scope
+          const transformArgs =
+            {
+              position: Vector3.create(48, 0, 40),
+              rotation: Quaternion.create(0, 0, 0, 1),
+              scale: Vector3.create(1, 1, 1),
+            };
+        
+          wearableArr.push({
+            sceneId: "gamimall",
+            contract: "0x17de223fb3df3221bffe384dc65706934cfc28a8",
+            itemId: "0",
+            options: {
+              type: "2D-UI",
+              featuredEntityData: {
+                parent: _scene,
+                entityName: "ent4",
+                shapeName: "models/Rewards/Xmas2023/R.glb",
+                hoverText: "Wonder Wall Crew - 23",
+                transform: transformArgs,
+                lazyLoading:{
+                  enabled: false,
+                  debugEnabled:false, 
+                  placeHolder:{
+                    enabled:true,
+                    shapeName:"",  
+                    positionType: 'featureEnt', 
+                    //position: Vector3.create(34.7,0.8,30.7)
+                  }, 
+                  trigger: { 
+                    debugEnabled:false,
+                    positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
+                    size: Vector3.create(18,1,18),
+                    position: Vector3.create(57,10,52)//where to put the trigger, triggerPositionType affects its relative offset
+                  } 
+                },
+                motionData: {
+                  rotationVelocity: ROTATE_VELOCITY_OFF,
+                  moveVelocity: MOVE_VELOCITY,
+                  moveInterval: MOVE_INTERVAL,
+                },
+              },
+              nftUIData: {
+                style: "version20Modal",
+                type: "MetaDoge",
+                image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x17de223fb3df3221bffe384dc65706934cfc28a8:0/thumbnail",
+                imageWidth: 256,
+                imageHeight: 256,
+                detailsFontSize: 12,
+                
+                detailsInfo: "Wonder Wall Crew - 23'",
+                directLink: "https://market.decentraland.org/",
+                directLinkFontSize: 10,
+                title: "Wonder Wall Crew - 23'",
+                detailsTitle: "HIGHLIGHTS!",
+                cost: [
+                  {
+                    price: 999999, 
+                    type: "VirtualCurrency",
+                    id: "GC",
+                    label: "Coins",
+                  },
+                  {
+                    price: 999999, 
+                    type: "VirtualCurrency",
+                    id: "MC",
+                    label: "Coins"
+                  }
+                ],
+                showStockQty:true,//defaults to true
+                qtyCurrent: -2,
+                qtyTotal: 50,
+                claimWindowEnabled:true,//defaults to true
+                checkLatestMarketPrices: true,
+                claimStartMS: -1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+                claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
+              },
+            },
+          });
+        } 
+        //END MAKING REWARD Music Stage Right
+
+         //START MAKING REWARD Music Stage Pool
+         if (true) {
+          //block scope
+          const transformArgs =
+            {
+              position: Vector3.create(48, 0, 40),
+              rotation: Quaternion.create(0, 0, 0, 1),
+              scale: Vector3.create(1, 1, 1),
+            };
+        
+          wearableArr.push({
+            sceneId: "gamimall",
+            contract: "0x7d87bbb0746de9a602058715afaa84449de3a9f1",
+            itemId: "0",
+            options: {
+              type: "2D-UI",
+              featuredEntityData: {
+                parent: _scene,
+                entityName: "ent4",
+                shapeName: "models/Rewards/Xmas2023/Pool.glb",
+                hoverText: "VTATV BROADCASTER",
+                transform: transformArgs,
+                lazyLoading:{
+                  enabled: false,
+                  debugEnabled:false, 
+                  placeHolder:{
+                    enabled:true,
+                    shapeName:"",  
+                    positionType: 'featureEnt', 
+                    //position: Vector3.create(34.7,0.8,30.7)
+                  }, 
+                  trigger: { 
+                    debugEnabled:false,
+                    positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
+                    size: Vector3.create(18,1,18),
+                    position: Vector3.create(57,10,52)//where to put the trigger, triggerPositionType affects its relative offset
+                  } 
+                },
+                motionData: {
+                  rotationVelocity: ROTATE_VELOCITY_OFF,
+                  moveVelocity: MOVE_VELOCITY,
+                  moveInterval: MOVE_INTERVAL,
+                },
+              },
+              nftUIData: {
+                style: "version20Modal",
+                type: "MetaDoge",
+                image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x7d87bbb0746de9a602058715afaa84449de3a9f1:0/thumbnail",
+                imageWidth: 256,
+                imageHeight: 256,
+                detailsFontSize: 12,
+                
+                detailsInfo: "Watch TV broadcast with this smart wearable!",
+                directLink: "https://market.decentraland.org/",
+                directLinkFontSize: 10,
+                title: "VTATV BROADCAST VIEWER",
+                detailsTitle: "HIGHLIGHTS!",
+                cost: [
+                  {
+                    price: 999999, 
+                    type: "VirtualCurrency",
+                    id: "GC",
+                    label: "Coins",
+                  },
+                  {
+                    price: 999999, 
+                    type: "VirtualCurrency",
+                    id: "MC",
+                    label: "Coins"
+                  }
+                ],
+                showStockQty:true,//defaults to true
+                qtyCurrent: -2,
+                qtyTotal: 5,
+                claimWindowEnabled:true,//defaults to true
+                checkLatestMarketPrices: true,
+                claimStartMS: -1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+                claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
+              },
+            },
+          });
+        } 
+        //END MAKING REWARD Music Stage Pool
+
+         //START MAKING REWARD Metaroost
+         if (true) {
+          //block scope
+          const transformArgs =
+            {
+              position: Vector3.create(48, 0, 40),
+              rotation: Quaternion.create(0, 0, 0, 1),
+              scale: Vector3.create(1, 1, 1),
+            };
+        
+          wearableArr.push({
+            sceneId: "gamimall",
+            contract: "0xefdc35e6c832495ce84d3b38bfad1880dbee42a9",
+            itemId: "0",
+            options: {
+              type: "2D-UI",
+              featuredEntityData: {
+                parent: _scene,
+                entityName: "ent4",
+                shapeName: "models/Rewards/ChickenHead.glb",
+                hoverText: "Metaroost",
+                transform: transformArgs,
+                lazyLoading:{
+                  enabled: false,
+                  debugEnabled:false, 
+                  placeHolder:{
+                    enabled:true,
+                    shapeName:"",  
+                    positionType: 'featureEnt', 
+                    //position: Vector3.create(34.7,0.8,30.7)
+                  }, 
+                  trigger: { 
+                    debugEnabled:false,
+                    positionType: 'absolute',//if parented to featuredEntityData object or not absolute scene position
+                    size: Vector3.create(18,1,18),
+                    position: Vector3.create(57,10,52)//where to put the trigger, triggerPositionType affects its relative offset
+                  } 
+                },
+                motionData: {
+                  rotationVelocity: ROTATE_VELOCITY_OFF,
+                  moveVelocity: MOVE_VELOCITY,
+                  moveInterval: MOVE_INTERVAL,
+                },
+              },
+              nftUIData: {
+                style: "version20Modal",
+                type: "MetaDoge",
+                image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0xefdc35e6c832495ce84d3b38bfad1880dbee42a9:0/thumbnail",
+                imageWidth: 256,
+                imageHeight: 256,
+                detailsFontSize: 12,
+                
+                detailsInfo: "Want to have a chicken head?",
+                directLink: "https://market.decentraland.org/",
+                directLinkFontSize: 10,
+                title: "Metaroost",
+                detailsTitle: "HIGHLIGHTS!",
+                cost: [
+                  {
+                    price: 999999, 
+                    type: "VirtualCurrency",
+                    id: "GC",
+                    label: "Coins",
+                  },
+                  {
+                    price: 999999, 
+                    type: "VirtualCurrency",
+                    id: "MC",
+                    label: "Coins"
+                  }
+                ],
+                showStockQty:true,//defaults to true
+                qtyCurrent: -2,
+                qtyTotal: 25,
+                claimWindowEnabled:true,//defaults to true
+                checkLatestMarketPrices: true,
+                claimStartMS: -1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+                claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
+              },
+            },
+          });
+        } 
+        //END MAKING REWARD Metaroost
+    
     
 
   //OTHERS

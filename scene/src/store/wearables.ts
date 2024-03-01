@@ -368,7 +368,6 @@ export class WearableBoothManager {
       }
 
       if (cardData.motionData && cardData.motionData.rotationVelocity) {
-        //USE TWEEN???
         utils.perpetualMotions.startRotation(args.featureEntity, cardData.motionData.rotationVelocity)
         /*args.featureEntity.addComponent(
           new utils.KeepRotatingComponent(cardData.motionData.rotationVelocity)

@@ -258,7 +258,18 @@ export class Config {
   GAME_EPOCH_SIZE_MILLIS = 24 * 60 * 60 * 1000;
   GAME_LEADEBOARD_BILLBOARD_MAX_RESULTS = 14; //current leaderboard max
   GAME_LEADEBOARD_2DUI_MAX_RESULTS = 14;
-  GAME_LEADEBOARD_MAX_RESULTS = 16;
+  //fetching 100 so 2dUI can show more
+
+  GAME_LEADERBOARDS = {
+    COINS:{
+      MONTHLY:{
+        name:"coinsCollectedMonthly",
+        defaultPageSize:100
+      }
+    }
+  };
+
+  GAME_LEADEBOARD_MAX_RESULTS = 100//16;
   GAME_LEADEBOARD_LVL_MAX_RESULTS = 100;
   GAME_LEADEBOARD_RAFFLE_MAX_RESULTS = 20;
   GAME_ROOM_DATA: GameLevelData[] = [

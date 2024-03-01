@@ -99,7 +99,9 @@ export class Registry2dUI {
   gameTools!: GameToolsPanel;
     
   openLeaderboardHourly!: () => void;
+  openLeaderboardDaily!: () => void;
   openLeaderboardWeekly!: () => void;
+  openLeaderboardMonthly!: () => void;
   openLeaderboardLevelEpoch!: () => void;
   openRaffleCoinBagEntries!: () => void;
 }

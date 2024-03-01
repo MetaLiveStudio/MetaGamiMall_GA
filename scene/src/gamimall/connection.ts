@@ -102,17 +102,21 @@ export async function connect(roomName: string, options: any = {}) {
     }
 }*/
 
+const CONNECTION_MSG_LEFT_POS = "80%"
+const CONNECTION_MSG_Y_OFFSET_BASE = 37 //70 is default
 const message: CenterLabel = ui.createComponent(CenterLabel
-        , { value: 'Connection status', size: 18 })
+        , { value: 'Connection status', size: 18,yOffset: CONNECTION_MSG_Y_OFFSET_BASE})
 message.color = Color4.Green()
+message.xOffset = CONNECTION_MSG_LEFT_POS as any
 message.show()
 
 
 
 const debugMessageUI: CenterLabel = ui.createComponent(CenterLabel
-    , { value: '...', size: 15, yOffset:50 })
+    , { value: '...', size: 15, yOffset:CONNECTION_MSG_Y_OFFSET_BASE-20})
     debugMessageUI.color = Color4.White()
-    debugMessageUI.show() 
+    debugMessageUI.show()
+debugMessageUI.xOffset = CONNECTION_MSG_LEFT_POS as any
 
 function getErrorMsg(e:any){
     if(e.code){

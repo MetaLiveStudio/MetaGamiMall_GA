@@ -69,6 +69,7 @@ export const en = {
     refreshSave: "Refresh&Save", //T,
     gameTool: "Game Tools", //T,
     showLvlLeaderBoard: "Levelboard", //T,
+    showMonthLeaderBoard: "Monthly Coins\nLeaderboard", //T,
     language: "Language", //T,
   },
   [namespaces.ui.locationButton]: {

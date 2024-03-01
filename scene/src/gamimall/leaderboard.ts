@@ -8,11 +8,13 @@ import { getUserDisplayName } from "./player-utils";
 //import { LeaderBoardPrompt } from "../ui/modals";
 import { REGISTRY } from "../registry";
 import { getLevelFromXp } from "../modules/leveling/levelingUtils";
-import { ILeaderboardItem, PlayerLeaderboardEntryType, createLeaderBoardPanelText, getLeaderboardRegistry, leaderBoardsConfigs } from "./leaderboard-utils";
+import { ILeaderboardItem, PlayerLeaderboardEntryType, createLeaderBoardPanelText, getLeaderboardRegistry, leaderBoardsConfigs, leaderBoardsConfigsType } from "./leaderboard-utils";
 import { log } from "../back-ports/backPorts";
 import { LeaderBoardPrompt } from "../ui/leaderBoardModal";
-import { Entity, Font, GltfContainer, PBGltfContainer, TextAlignMode, TextShape, Transform, TransformTypeWithOptionals, engine } from "@dcl/sdk/ecs";
-import { Color3, Color4, Quaternion, Vector3 } from "@dcl/sdk/math";
+import { Entity, Font, GltfContainer, InputAction, MeshCollider, MeshRenderer, PBGltfContainer, TextAlignMode, TextShape, Transform, TransformTypeWithOptionals, engine, pointerEventsSystem } from "@dcl/sdk/ecs";
+import { Color3, Color4, Plane, Quaternion, Vector3 } from "@dcl/sdk/math";
+import { GetLeaderboardResult } from "./playfab_sdk/playfab.types";
+import * as PlayFabSDK from "./playfab_sdk/index";
 
 //TODO MAKE AN INIT LEADERBOARD OBJS
 //initGameState()
@@ -28,6 +30,7 @@ export class LeaderboardItem implements ILeaderboardItem {
   entity: Entity;
   textHeaderShape?: Entity;
   textEntity?: Entity;
+  loading:boolean
   playerEntries?: PlayerLeaderboardEntryType[];
   currentPlayer?: PlayerLeaderboardEntryType;
   formatterCallback?: (text: string|number) => string;
@@ -40,6 +43,9 @@ export class LeaderboardItem implements ILeaderboardItem {
   }
   setCurrentPlayer(arr: PlayerLeaderboardEntryType) {
     this.currentPlayer = arr;
+  }
+  setLoading(_loading:boolean){
+    this.loading = true
   }
 
   updateUI() {
@@ -54,12 +60,18 @@ export class LeaderboardItem implements ILeaderboardItem {
   setFormatterCallback(callback: (text: string|number) => string): void {
     this.formatterCallback = callback
   }
+  setScreenType(type:number){
+    
+  }
+  applyUIScaling() {
+    //nothing to do for 3d
+  }
 }
 
 
 export function makeLeaderboard(
   host: Entity,
-  model: PBGltfContainer | undefined | null,
+  model: PBGltfContainer | undefined | null | string,
   title: string | undefined | null,
   title2: string | undefined | null,
   text: string,
@@ -68,7 +80,12 @@ export function makeLeaderboard(
   textHeaderTransform?: TransformTypeWithOptionals,
   textHeaderTransform2?: TransformTypeWithOptionals,
   textTransform?: TransformTypeWithOptionals,
-  fontColor?: Color4
+  fontColor?: Color4,
+  onClick?:{
+    fn:()=>void
+    hoverText:string
+    maxDistance?:number
+  }
 ): LeaderboardItem {
   const sign = engine.addEntity()//new Entity(host.name + "-sign");
   //sign.setParent(host);
@@ -84,8 +101,35 @@ export function makeLeaderboard(
   //);
 
   if (model) {
+    //ADD POINTERDOWN
+    const modelEnt = engine.addEntity()
+
+    if(onClick){
+      pointerEventsSystem.onPointerDown(
+        {
+          entity:modelEnt,
+          opts: {hoverText: onClick.hoverText, maxDistance: onClick.maxDistance ? onClick.maxDistance : 6, button: InputAction.IA_POINTER }
+        },
+        (e) => {
+          onClick.fn()
+        }
+      )
+    }
+    
+    Transform.createOrReplace(modelEnt,{
+      //position: Vector3.create(.5, 1, -.15),
+      position: Vector3.create(.5, 1, -1.15),
+      rotation: Quaternion.fromEulerDegrees(0, 0, 0),
+      scale: Vector3.create(1.35, 2.5, 1.5),
+      parent: host
+    })
     //sign.addComponent(model);
-    GltfContainer.createOrReplace(sign,model)
+    if(typeof model === "string"){
+      //MeshRenderer.setPlane(modelEnt)
+      MeshCollider.setPlane(modelEnt)
+    }else{ 
+      GltfContainer.createOrReplace(modelEnt,model)
+    }
 
     //TODO BRING BACK!!!
     /*let signBackground = new Entity(host.name + "-sign-background");
@@ -288,6 +332,19 @@ export function createLeaderBoardUI(){
   );
 
   //hourlyLeaderBoard.show()
+  
+  const dailyLeaderboard = new LeaderBoardPrompt(
+    "Daily Leaderboard",
+    leaderBoardPlaceHolderText,
+    "OK",
+    () => {},
+    {
+      //textPositionY: -30,
+      //modalHeight: 500,
+      height: LEADERBOARD_PROMPT_HEIGHT,
+      width: LEADERBOARD_PROMPT_WIDTH,
+    }
+  );
 
   const weeklyLeaderboard = new LeaderBoardPrompt(
     "Weekly Leaderboard",
@@ -302,6 +359,22 @@ export function createLeaderBoardUI(){
     }
   );
 
+
+  const monthlyLeaderboard = new LeaderBoardPrompt(
+    "Monthly Leaderboard",
+    leaderBoardPlaceHolderText,
+    "OK",
+    () => {},
+    {
+      //textPositionY: -30,
+      //modalHeight: 500,
+      height: LEADERBOARD_PROMPT_HEIGHT,
+      width: LEADERBOARD_PROMPT_WIDTH,
+    }
+  );
+
+
+  
 
   const levelLeaderboard = new LeaderBoardPrompt(
     "Level Leaderboard",
@@ -345,14 +418,25 @@ export function createLeaderBoardUI(){
   //levelLeaderboard.show()
 
 
+  //TODO on open do deeper fetch. Or just fetch 100 up front now instead of 16??
+  //when hit max path and has full patch, fetch more?
+
   REGISTRY.ui.openLeaderboardHourly = ()=> { hourlyLeaderBoard.show() }
+  REGISTRY.ui.openLeaderboardDaily = ()=> { dailyLeaderboard.show() }
   REGISTRY.ui.openLeaderboardWeekly = ()=> { weeklyLeaderboard.show() }
+  REGISTRY.ui.openLeaderboardMonthly = ()=> { 
+    //TODO on open refresh?  trick is must save and refresh
+    //or what is is in players stat menu wont match server for rankings
+    monthlyLeaderboard.show() 
+  }
   REGISTRY.ui.openLeaderboardLevelEpoch = ()=> { levelLeaderboard.show() }
   REGISTRY.ui.openRaffleCoinBagEntries = ()=> { coinBagRaffleLeaderboard.show() }
 
   const LEADERBOARD_REG = getLeaderboardRegistry()
   LEADERBOARD_REG.hourly.push(hourlyLeaderBoard)
   LEADERBOARD_REG.weekly.push(weeklyLeaderboard)
+  LEADERBOARD_REG.monthly.push(monthlyLeaderboard)
+  LEADERBOARD_REG.daily.push(dailyLeaderboard)
   LEADERBOARD_REG.epoch.push(levelLeaderboard)
   LEADERBOARD_REG.raffleCoinBag.push(coinBagRaffleLeaderboard)
 
@@ -396,6 +480,14 @@ export function createLeaderBoardUI(){
         ) {
           leaderBoardItem = leaderBoardConfig.weekly();
           leaderArr = newVal.Leaderboard;
+          break;
+        } else if (
+          leaderBoardConfig.monthly() &&
+          key == leaderBoardConfig.prefix + "monthlyLeaderboard"
+        ) {
+          leaderBoardItem = leaderBoardConfig.monthly();
+          leaderArr = newVal.Leaderboard;
+          maxResults = CONFIG.GAME_LEADERBOARDS.COINS.MONTHLY.defaultPageSize
           break;
         } else if (
           leaderBoardConfig.epoch() &&
@@ -451,6 +543,7 @@ export function createLeaderBoardUI(){
             let coinCollectingEpochStat: PlayFabClientModels.StatisticValue;
             let coinCollectingDailyStat: PlayFabClientModels.StatisticValue;
             let coinCollectingWeeklyStat: PlayFabClientModels.StatisticValue;
+            let coinCollectingMonthyStat: PlayFabClientModels.StatisticValue;
             let coinCollectingHourlyStat: PlayFabClientModels.StatisticValue;
 
             let playerFabUserInfo:
@@ -488,6 +581,11 @@ export function createLeaderBoardUI(){
                     leaderBoardConfig.prefix + "raffle_coin_bag"
                   ) {
                     raffleCoinBagStat = stat;
+                  } else if (
+                    stat.StatisticName ==
+                    leaderBoardConfig.prefix + CONFIG.GAME_LEADERBOARDS.COINS.MONTHLY.name
+                  ) {
+                    coinCollectingMonthyStat = stat;
                   }
                   
                 }
@@ -543,6 +641,14 @@ export function createLeaderBoardUI(){
                     : -1,
                 })
               }));
+
+              leaderBoardConfig.monthly()?.forEach((p=>{
+                p.setCurrentPlayer({
+                  DisplayName: playerName + "",
+                  Position: -1,
+                  StatValue:coinCollectingMonthyStat! ? coinCollectingMonthyStat.Value : -1,
+                })
+              }));
             }
             //}
             break;
@@ -579,6 +685,18 @@ export function createLeaderBoardUI(){
   });
 }//end createLeaderBoardUI()
 
+export function setLeaderboardLoading(leaderBoardItem: ILeaderboardItem[] | undefined,loading:boolean){
+  //UPDATE set loading
+  if(leaderBoardItem){
+    for(const p of leaderBoardItem){
+      if (p !== undefined) {
+        log("addChangeListener to update loading ",loading);
+        p.setLoading(loading)
+        p.updateUI()
+      }
+    }
+  }
+}
 export function updateLeaderBoard(key:string,leaderBoardItem: ILeaderboardItem[] | undefined,leaderArr: PlayFabClientModels.PlayerLeaderboardEntry[],maxResults:number){
   //if(key === "raffle_coin_bag") debugger
 
@@ -605,7 +723,9 @@ export function updateLeaderBoard(key:string,leaderBoardItem: ILeaderboardItem[]
     for(const p of leaderBoardItem){
       if (p !== undefined) {
         log("addChangeListener to update for " + key);
+        //UPDATE not loading
         p.setPlayerEntries(playerArr);
+        p.setLoading(false)
         p.updateUI();
       } else {
         log("addChangeListener failed to update for " + key);

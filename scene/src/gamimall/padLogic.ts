@@ -94,7 +94,7 @@ export function initPad(_scene:Entity){
         clip: animClipName,
         playing: false,
         loop: true,
-        speed: 0.35
+        speed: 0.48
       }
     ]
   })
@@ -161,7 +161,7 @@ export function initPad(_scene:Entity){
     }
   )
 
-  let rayEntity:Entity|undefined = undefined
+  
 
 
   const MAX_DISTANCE = 3.5
@@ -176,6 +176,7 @@ export function initPad(_scene:Entity){
   //WORKAROUND - adding to ray cast over and over breaks and ray casts stop resolving even if i make a new object, no idea why
   //for now do continuous seems most reliable
   const CONTIUOUS_CAST = false 
+  let USE_NEW_ENT_EACH_TIME = false
   let lastResultTicketNumber = -1
   let retryCounter = 0
 
@@ -184,22 +185,52 @@ export function initPad(_scene:Entity){
 
   const enableDebug = false
  
+
+  //WORKAROUND bounce between 2 entities for raycast
+  let rayCastUsedIdx = 0
+  const rayEnts:Entity[] = []
+
+  rayEnts.push(createEntity());
+  rayEnts.push(createEntity());
+  rayEnts.push(createEntity());
+  rayEnts.push(createEntity());
+  
+  let rayEntity:Entity|undefined = rayEnts[0]
+   
+
   function workaroundClearRayEntity(){
     //workaround, ray cast does not do well with resubmissions of ray cast with same entity
     //so must make a new one:(
     if(!CONTIUOUS_CAST && rayEntity){
-      engine.removeEntity(rayEntity)
-      rayEntity = undefined
+      if(USE_NEW_ENT_EACH_TIME){
+        engine.removeEntity(rayEntity)
+        rayEntity = undefined
+        if(enableDebug) log(CLASSNAME,METHOD_NAME,"workaroundClearRayEntity","rayResult","rayEntity",rayEntity,"all new each time")
+      }else{
+        //this seems to have worked
+        RaycastResult.deleteFrom(rayEntity)
+        Raycast.deleteFrom(rayEntity)
+
+        rayEntity = rayEnts[rayCastUsedIdx++]
+        if(rayCastUsedIdx >= rayEnts.length){
+          rayCastUsedIdx = 0
+        } 
+        if(enableDebug) log(CLASSNAME,METHOD_NAME,"workaroundClearRayEntity","rayResult","rayEntity",rayEntity,rayCastUsedIdx,"reusing pool")
+      }
+      
     } 
   }
   function createRayCastEntityIfNeeded(){
     if(rayEntity === undefined){
-      rayEntity = engine.addEntity()
-      if(enableDebug) MeshRenderer.setBox(rayEntity)
-      //TODO consider AvatarAnchorPointType.AAPT_POSITION
-      AvatarAttach.create(rayEntity,{anchorPointId:AvatarAnchorPointType.AAPT_NAME_TAG});
-      
+      rayEntity = createEntity()
     }
+    return rayEntity
+  }
+  function createEntity(){ 
+    const rayEntity = engine.addEntity()
+    if(enableDebug) MeshRenderer.setBox(rayEntity)
+    //TODO consider AvatarAnchorPointType.AAPT_POSITION
+    AvatarAttach.create(rayEntity,{anchorPointId:AvatarAnchorPointType.AAPT_NAME_TAG});
     return rayEntity
   }
   function handleResult(rayResult:PBRaycastResult) {
@@ -266,6 +297,8 @@ export function initPad(_scene:Entity){
       if(enableDebug) log(CLASSNAME,METHOD_NAME,"system","register ray cast","rayEntity",rayEntity,dt,checkInterval.elapsedTime,checkInterval.targetTime)
       
       if(retryCounter > 2){
+        //revert to known working way if something bugs out
+        USE_NEW_ENT_EACH_TIME = true
         if(enableDebug) log(CLASSNAME,METHOD_NAME,"system","FORCING register ray cast","rayEntity",rayEntity,dt,checkInterval.elapsedTime,checkInterval.targetTime)
         workaroundClearRayEntity()
         rayEntity = createRayCastEntityIfNeeded()
@@ -318,7 +351,7 @@ export function initPad(_scene:Entity){
     if(isIdle){
       //send player to pad //with cooldown
       if(!onPad){
-        summonPad()
+       // summonPad()
       }else{
         log(CLASSNAME,"onIdleStateChangedObservable","player idle data is ", isIdle,"but already on pad",onPad)
       }

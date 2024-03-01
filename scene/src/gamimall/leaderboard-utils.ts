@@ -24,6 +24,9 @@ export interface ILeaderboardItem {
 
   setPlayerEntries(arr: PlayerLeaderboardEntryType[]):void;
   setCurrentPlayer(arr: PlayerLeaderboardEntryType):void;
+  setLoading(_loading:boolean):void;
+  applyUIScaling():void
+  setScreenType(type:number):void
 
   updateUI():void
 }
@@ -102,43 +105,10 @@ export function createLeaderBoardPanelText(board:ILeaderboardItem, startIndex:nu
   return leaderBoardPlaceHolderText
 }
 
-export class LeaderboardItem implements ILeaderboardItem {
-  
-  host?: Entity;
-
-  //TODO BRING BACK!
-  //textHeaderShape?: TextShape;
-  //text?: TextShape;
-  playerEntries?: PlayerLeaderboardEntryType[];
-  currentPlayer?: PlayerLeaderboardEntryType;
-  formatterCallback?: (text: string|number) => string;
-  startIndex:number = 0;
-  pageSize:number = CONFIG.GAME_LEADEBOARD_BILLBOARD_MAX_RESULTS
-  
-  setPlayerEntries(arr: PlayerLeaderboardEntryType[]) {
-    this.startIndex = 0
-    this.playerEntries = arr;
-  }
-  setCurrentPlayer(arr: PlayerLeaderboardEntryType) {
-    this.currentPlayer = arr;
-  }
-
-  updateUI() {
-    const leaderBoardPlaceHolderText = createLeaderBoardPanelText(this,this.startIndex,this.pageSize,this.formatterCallback)
-    //TODO BRING BACK!
-    //if (this.text) {
-    //  this.text!.value = leaderBoardPlaceHolderText;
-    //}
-  }
-  setFormatterCallback(callback: (text: string|number) => string): void {
-    this.formatterCallback = callback
-  }
-}
-
-
 export class LeaderboardRegistry {
   daily: ILeaderboardItem[]=[];
   weekly: ILeaderboardItem[]=[];
+  monthly: ILeaderboardItem[]=[];
   hourly: ILeaderboardItem[]=[];
   epoch: ILeaderboardItem[]=[];
   raffleCoinBag: ILeaderboardItem[]=[];
@@ -170,8 +140,16 @@ export function updateLeaderboard(playerNames: string[]) {
     leaderboard.value = `Leaderboard:\n\n${playerNames.join("\n")}`;
     */
 }
-
-export const leaderBoardsConfigs = [
+export type leaderBoardsConfigsType = {
+  prefix: string,
+    hourly: () => ILeaderboardItem[],
+    daily: () => ILeaderboardItem[],
+    weekly: () => ILeaderboardItem[],
+    monthly: () => ILeaderboardItem[],
+    epoch: () => ILeaderboardItem[],
+    raffleCoinBag: () => ILeaderboardItem[]
+}
+export const leaderBoardsConfigs:leaderBoardsConfigsType[] = [
   {
     prefix: "",
     hourly: () => {
@@ -182,6 +160,9 @@ export const leaderBoardsConfigs = [
     },
     weekly: () => {
       return LEADERBOARD_REGISTRY.weekly;
+    },
+    monthly: () => {
+      return LEADERBOARD_REGISTRY.monthly;
     },
     epoch: () => {
       return LEADERBOARD_REGISTRY.epoch;
