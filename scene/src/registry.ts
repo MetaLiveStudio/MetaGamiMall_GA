@@ -104,6 +104,7 @@ export class Registry2dUI {
   openLeaderboardMonthly!: () => void;
   openLeaderboardLevelEpoch!: () => void;
   openRaffleCoinBagEntries!: () => void;
+  openLeaderboardPointsMonthly!: () => void;
 }
 
 export class RegistryToggles {

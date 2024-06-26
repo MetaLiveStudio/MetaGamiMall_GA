@@ -11,7 +11,7 @@ import { getAndSetUserDataIfNull } from "../userData";
 import { GAME_STATE } from "../state";
 import { CONFIG, SCENE_TYPE_GAMIMALL } from "../config";
 import { UserData } from "~system/Players"
-import { RealmInfo } from "~system/Runtime";
+import { PBRealmInfo } from "~system/Runtime";
 
 const CLASSNAME = "fetch-utils.ts"
 
@@ -30,7 +30,7 @@ const CLASSNAME = "fetch-utils.ts"
   function isInvalidPublicKey(publicKey:string){
     return (publicKey === undefined || publicKey === null || publicKey == '' || publicKey == 'null')
   }
-  export async function fetchMultiplier(realm?:RealmInfo|null){
+  export async function fetchMultiplier(realm?:PBRealmInfo|null){
     const METHOD_NAME = "fetchMultiplier";
     log(METHOD_NAME,"ENTRY")
 
@@ -115,15 +115,16 @@ const CLASSNAME = "fetch-utils.ts"
     //return result
 }
   //if pass contractId it fetches actual price but can only do at a time
-  export async function fetchNFTData(contractId?:string){
+  export async function fetchNFTData(contractId?:string,args?:{withMetadata:boolean}){
       const METHOD_NAME = "fetchNFTData";
-      log(METHOD_NAME,"ENTRY",contractId)
+      log(METHOD_NAME,"ENTRY",contractId,args)
       //const result = await executeTask(async () => {
         let response = null;
         //docs https://github.com/MetaLiveStudio/metadoge#apiwallet
         const callUrl =
           "https://www.metadoge.art/api/wallet?ownerAddress="+CONFIG.REWARD_SERVER_WAREHOUSE_WALLET+"&chain=137&withMetadata=false"
           + (contractId !== undefined && contractId !== '' ? "&contractAddress="+contractId : "")
+          + (args ? "&withMetadata="+args.withMetadata : "")
           "&_unique=" +
           new Date().getTime();
    
@@ -296,7 +297,7 @@ const CLASSNAME = "fetch-utils.ts"
       log(CLASSNAME,METHOD_NAME,"DISABLED FOR SCENE TYPE",CONFIG.SCENE_TYPE)
       return
     }
-    const result = await fetchNFTData()
+    const result = await fetchNFTData(undefined,{withMetadata:false})
 
     //https://www.metadoge.art/api/wallet?ownerAddress=0x00512814cC77feb2855f842484E0f54F890AA554&contractAddress=0x879051feb8c2e0169ffae9e66b022e7136870574&chain=137
     //update the qty

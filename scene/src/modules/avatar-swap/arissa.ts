@@ -6,6 +6,7 @@ import { Color4, Vector3 } from "@dcl/sdk/math";
 import { Animator, AvatarAnchorPointType, AvatarAttach, Entity, GltfContainer, Material, MeshCollider, MeshRenderer, PBGltfContainer, Transform, TransformTypeWithOptionals, VisibilityComponent, engine, executeTask } from "@dcl/sdk/ecs";
 import { IntervalUtil } from "../../meta-decentrally/modules/interval-util";
 import { REGISTRY } from "../../registry";
+import { TransformSafeWrapper } from "../../back-ports/workarounds";
 
 const CLASSNAME = "arrisa.ts"
 const OFFSET: Vector3 = Vector3.create(-2, -2.01, 0)//Vector3.create(0, -0.8, 0); // = [0]
@@ -20,7 +21,7 @@ function createAvatarSwapCharacter(): AvatarSwap {
   })
 
   //handle offset
-  Transform.create(entity, {
+  TransformSafeWrapper.create(entity, {
     position: OFFSET,
     scale: Vector3.create(1, 1, 1),
     parent: parentEntity

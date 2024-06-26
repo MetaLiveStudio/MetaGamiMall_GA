@@ -598,17 +598,18 @@ export function fetchLeaderboardInfo(prefix: string = "") {
     MaxResultsCount: CONFIG.GAME_LEADEBOARD_MAX_RESULTS,
   };
 
-  var getLeaderboardMonthly: PlayFabClientModels.GetLeaderboardRequest = {
-    StatisticName: prefix + CONFIG.GAME_LEADERBOARDS.COINS.MONTHLY.name,
+  var getLeaderboardPointsMonthly: PlayFabClientModels.GetLeaderboardRequest = {
+    StatisticName: prefix + CONFIG.GAME_LEADERBOARDS.POINTS.MONTHLY.name,
     StartPosition: 0,
-    MaxResultsCount: CONFIG.GAME_LEADERBOARDS.COINS.MONTHLY.defaultPageSize,
+    MaxResultsCount: CONFIG.GAME_LEADERBOARDS.POINTS.MONTHLY.defaultPageSize,
   };
 
   leaderBoardsConfigs.filter((p)=>{ return p.prefix === prefix }).forEach((p)=>{  
-    setLeaderboardLoading(p.monthly(),true)
+    //setLeaderboardLoading(p.monthly(),true)
     setLeaderboardLoading(p.hourly(),true)
     setLeaderboardLoading(p.weekly(),true)
     setLeaderboardLoading(p.daily(),true)
+    setLeaderboardLoading(p.pointsMonthly(),true)
 })
 
   PlayFabSDK.GetLeaderboard(getLeaderboardHourly).then(
@@ -631,9 +632,9 @@ export function fetchLeaderboardInfo(prefix: string = "") {
       GAME_STATE.leaderboardState.setLevelEpocLeaderBoard(result, prefix);
     }
   );
-  PlayFabSDK.GetLeaderboard(getLeaderboardMonthly).then(
+  PlayFabSDK.GetLeaderboard(getLeaderboardPointsMonthly).then(
     (result: GetLeaderboardResult) => {
-      GAME_STATE.leaderboardState.setMonthlyLeaderBoard(result, prefix);
+      GAME_STATE.leaderboardState.setPointsMonthlyLeaderBoard(result, prefix);
     }
   );
 }

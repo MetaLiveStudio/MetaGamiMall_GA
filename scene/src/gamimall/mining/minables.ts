@@ -22,11 +22,12 @@ import { getLeaderboardRegistry, leaderBoardsConfigs, leaderBoardsConfigsType } 
 import { CustomClaimPrompt } from "../../ui/claimModals";
 import { engineTweenStartScaling, log } from "../../back-ports/backPorts";
 import { Quaternion, Vector3 } from '@dcl/sdk/math';
-import { ColliderLayer, Entity, GltfContainer, InputAction, PBGltfContainer, PointerEvents, Transform, TransformTypeWithOptionals, engine, pointerEventsSystem } from '@dcl/sdk/ecs';
+import { Animator, ColliderLayer, Entity, GltfContainer, InputAction, PBGltfContainer, PointerEventType, PointerEvents, Transform, TransformTypeWithOptionals, VisibilityComponent, engine, pointerEventsSystem } from '@dcl/sdk/ecs';
 import { i18n, i18nOnLanguageChangedAddReplace } from '../../i18n/i18n';
 import { namespaces } from '../../i18n/i18n.constants';
 import { lookAt } from '../../utils4Game';
 import { ReadOnlyVector3 } from '~system/EngineApi';
+import { TransformSafeWrapper } from '../../back-ports/workarounds';
 //import * as clientState from "src/gamimall/state/client-state-spec";
 
 /*const respawner = new Entity()
@@ -50,7 +51,7 @@ const tileShape2 = tileShape
 
 const MODULE = "minables"
 
-const SCALE_HIDDEN = Vector3.create(0,0,0)
+const SCALE_HIDDEN = Vector3.create(.2,.2,.2)
 
 let rewardOpts = { 
     height: 550,
@@ -100,6 +101,26 @@ const notEnoughClaimPromptBasic = new CustomOkPrompt(
   ////REGISTRY.ui.endGameConfirmPrompt = endGameConfirmPrompt20;
 
 //TODO add translation!!!
+const maxOutWheelPromptBasic = new CustomOkPrompt(
+    "Notice",
+    "Sorry. You already have maxed your\n spins for today.\n\nCome back tomorrow for another spin!",
+    "OK",
+    () => {}
+    ,{width:500,height:450}
+  );
+
+  //maxOutWheelPromptBasic.show()
+
+const maxOutPromptBasic = new CustomOkPrompt(
+    "Notice",
+    "Sorry. You already have maxed out\ninteractions/claims for today.\n\nCome back later for more!",
+    "OK",
+    () => {}
+    ,{width:500,height:450} 
+  );
+
+ // maxOutPromptBasic.show()
+
 const maxInventoryPromptBasic = new CustomOkPrompt(
     "Notice",
     "Sorry. You already have maxed out this item",
@@ -111,6 +132,7 @@ const maxInventoryPromptBasic = new CustomOkPrompt(
 
 
 const DEFAULT_DEBOUNCE_TIME = 7500
+
 class Block {
     
     blockShape:PBGltfContainer =  tileShape
@@ -119,6 +141,10 @@ class Block {
     health:number
     maxHealth:number = 1
     id:string
+    //hitAtLeastOncetrack first hit, workaround to debounceInterval waiting 
+    //for first round of the clock to allow click
+    hitAtLeastOnce = false
+    //TODO add to interval util way to let first click thru, init the lapse time to target time?
     debounceInterval:IntervalUtil = new IntervalUtil(DEFAULT_DEBOUNCE_TIME,'abs-time')
 
     transformArgs:TransformTypeWithOptionals
@@ -141,13 +167,15 @@ class Block {
 
     constructor(_id:string,type:string){
         this.id = _id
-        this.transformArgs = {position:Vector3.One(),scale:Vector3.One()}
+        this.transformArgs = {position:Vector3.One(),scale:Vector3.One(),rotation:Quaternion.Zero()}
         
         this.entity = engine.addEntity()//new Entity(this.id)
         GltfContainer.create(this.entity,this.blockShape)
         //this.entity.addComponent(this.blockShape)      
         ////this.entity.addComponent(SOUNDS.woodExplodeSource)
-        Transform.create(this.entity)//,this.transformArgs)
+        //had to pass in the default arts so that position,scale,rotation were set initially
+        //otherwise setting rotation later was not working idk why??
+        TransformSafeWrapper.create(this.entity,this.transformArgs)
 
         //this.entity.addComponent(new Transform(  
         //))
@@ -156,7 +184,7 @@ class Block {
 
     }
     startMining() {
-        log("startMining","ENTRY")
+        log(MODULE,"startMining","ENTRY",this.id)
         //compute object center then offset it
         const objectPos = this.transformArgs.position ? this.transformArgs.position : Vector3.Zero()
         //TODO do we need feet pos???
@@ -201,6 +229,7 @@ class Block {
 
     }
     endMining() {
+        log(MODULE,"Block","endMining","ENTRY",this.id)
         if(this.tool !== undefined){
             const toolHideDelay = this.serverState?._featureDef?.ui?.tool?.onHideDelayMS
             
@@ -271,7 +300,7 @@ class Block {
             this.activateTime = trackFeat.activateTime
         }  
         if(trackFeat.position !== undefined){
-            log(MODULE,METHOD_NAME,this.id,"update position",trackFeat.status)
+            log(MODULE,METHOD_NAME,this.id,"update position",trackFeat.position)
             //const tf = this.entity.getComponent(Transform)
             if(trackFeat.status !== 'active'){
                 
@@ -467,10 +496,14 @@ class Block {
         log(MODULE,"block hit",this.id,"damage",damage,"this.health",this.health) 
 
         //TODO debounce clicking too many times?
-        if(!this.debounceInterval.update()){
+        if(this.hitAtLeastOnce && !this.debounceInterval.update()){
             log(MODULE,"block hit",this.id,"debounced click!!") 
             return;
         }
+        if(!this.hitAtLeastOnce){
+            log(MODULE,"block hit",this.id,"first click, no debounce click!!") 
+        }
+        this.hitAtLeastOnce = true
 
         this.makeClickable(false)
         //store clicked and prevent calling again till reset?
@@ -501,16 +534,35 @@ class Block {
    
         const _tf = Transform.get(this.entity)//this.entity.getComponent(Transform)
         
+        log(MODULE,METHOD_NAME,this.id,"hide starting")
         engineTweenStartScaling(this.entity, _tf.scale,SCALE_HIDDEN
         //utils.tweens.startScaling(this.entity, _tf.scale,SCALE_HIDDEN
             , 1 * 1000, undefined, ()=>{
                 ////this.hidden = true
                 const hidePos = -20
+                log(MODULE,METHOD_NAME,this.id,"hide finished")
                 
                 const tf = Transform.getMutable(this.entity)
-                if(tf.position.y != hidePos){
-                    tf.position.y = hidePos
+
+                //make sure hidden, tween bug leaves it visible
+                //overall a good idea to make sure its hidden
+                VisibilityComponent.createOrReplace(this.entity, { visible: false })
+
+                //should not be needed anymore
+                //something is wrong here, values are not target values???
+                if(!Vector3.equalsWithEpsilon(SCALE_HIDDEN,tf!.scale,0.01)){
+                    log(MODULE,METHOD_NAME,this.id,"scaleup.finished","scale is same as target, PRE-EXPLICITLY setting",Transform.get(this.entity))
+                    Vector3.copyFrom(SCALE_HIDDEN,Transform.getMutable(this.entity).scale)
+                    
+                    log(MODULE,METHOD_NAME,this.id,"scaleup.finished","scale is same as target, POST-EXPLICITLY setting",Transform.get(this.entity))
+                    return
                 }
+                if(tf.position.y != hidePos){
+                    log(MODULE,METHOD_NAME,this.id,"HIDE_POS: sending to hide pos",tf.position,hidePos)
+                    tf.position.y = hidePos
+                    log(MODULE,METHOD_NAME,this.id,"HIDE_POS: sent ",tf.position)
+                }
+                
             })
         /*this.entity.addComponentOrReplace(new utils.ScaleTransformComponent(_tf.scale,SCALE_HIDDEN,1,()=>{
             
@@ -567,13 +619,14 @@ class Block {
 
         const tf = Transform.getMutable(this.entity)//this.entity.getComponent(Transform)
         if(this.serverState.position &&this.serverState.position.position){
+            log(MODULE,METHOD_NAME,this.id,"set.position",this.serverState.position.position)
             if(!this.transformArgs.position) this.transformArgs.position = {x:0,y:0,z:0}
             Vector3.copyFrom(this.serverState.position.position,this.transformArgs.position)
             //this.transformArgs.position.x = this.serverState.position.position.x
             //this.transformArgs.position.y = this.serverState.position.position.y
             //this.transformArgs.position.z = this.serverState.position.position.z
         }else{
-            log(MODULE,METHOD_NAME,this.id,"has no position, not setting")
+            log(MODULE,METHOD_NAME,this.id,"set.position","has no position, not setting")
             //debugger
         }
         //if(!tf.position) tf.position = {x:0,y:0,z:0}
@@ -584,6 +637,7 @@ class Block {
         //tf.position.copyFrom(this.transformArgs.position)
 
         if(this.serverState.position.scale){ 
+            log(MODULE,METHOD_NAME,this.id,"set.scale",this.serverState.position.rotation)
             if(!this.transformArgs.scale) this.transformArgs.scale = {x:0,y:0,z:0}
             Vector3.copyFrom(this.serverState.position.scale,this.transformArgs.scale)
             //this.transformArgs.scale.x = this.serverState.position.scale.x
@@ -592,6 +646,18 @@ class Block {
             ////tf.scale.copyFrom(this.transformArgs.scale) //let show hide handle this
         }else{
             log(MODULE,METHOD_NAME,this.id,"has no scale, not setting")
+        }
+        if(this.serverState.position.rotation){ 
+            log(MODULE,METHOD_NAME,this.id,"set.rotation",this.serverState.position.rotation)
+            if(!this.transformArgs.rotation) this.transformArgs.rotation = Quaternion.Zero()
+            Vector3.copyFrom(this.serverState.position.rotation,this.transformArgs.rotation)
+            this.transformArgs.rotation.w = this.serverState.position.rotation.w
+        }else{
+            log(MODULE,METHOD_NAME,this.id,"has no rotation, not setting")
+        }
+        if(this.transformArgs.rotation){
+            Vector3.copyFrom(this.transformArgs.rotation,this.transformArgs.rotation)
+            tf.rotation.w = this.transformArgs.rotation.w
         }
 
 
@@ -648,7 +714,7 @@ class Block {
     }
     show(){
         const METHOD_NAME = "show"
-        log(MODULE,METHOD_NAME,this.id,"ENTRY")
+        log(MODULE,"Block",METHOD_NAME,this.id,"ENTRY")
         //log(MODULE,METHOD_NAME,this.id,"ENTRY")
         if(this.visible) {
             log(MODULE,METHOD_NAME,this.id,"already visible skipping")
@@ -664,15 +730,34 @@ class Block {
         log(MODULE,METHOD_NAME,this.id,"this.debounceInterval.targetTime",_targetTime)
         this.debounceInterval.targetTime = _targetTime
          
+        VisibilityComponent.createOrReplace(this.entity, { visible: true })
         
         //const tf = Transform.get(this.entity)//this.entity.getComponent(Transform)
 
 
         //const tf = this.entity.getComponent(Transform)
+        const targetScale = this.transformArgs.scale ? this.transformArgs.scale : Vector3.One()
         engineTweenStartScaling(this.entity, SCALE_HIDDEN
         //utils.tweens.startScaling(this.entity, SCALE_HIDDEN
-            ,this.transformArgs.scale ? this.transformArgs.scale : Vector3.One()
-            , 1 * 1000)
+            ,targetScale
+            , 1 * 1000,undefined,()=>{
+                
+                    const tf  = Transform.get(this.entity)
+                    log(MODULE,METHOD_NAME,this.id,"scaleup.finished","targetScale",targetScale,"vs real:",tf)
+                    //explicitly set its end position to ensure its there, when testing tween
+                    //should not be needed anymore
+                    //something is wrong here, values are not target values???
+                    if(!Vector3.equalsWithEpsilon(targetScale,tf!.scale,0.01)){
+                        log(MODULE,METHOD_NAME,this.id,"scaleup.finished","scale is same as target, PRE-EXPLICITLY setting",Transform.get(this.entity))
+                        Vector3.copyFrom(targetScale,Transform.getMutable(this.entity).scale)
+                        /*utils.timers.setTimeout(()=>{
+                            log(MODULE,METHOD_NAME,this.id,"scaleup.finished","scale is same as target, POST-TIMER-EXPLICITLY setting",Transform.get(this.entity))
+                        },1040)*/
+                        //log(MODULE,METHOD_NAME,this.id,"scaleup.finished","scale is same as target, EXPLICITLY setting",Transform.get(this.entity))
+                        return
+                    }
+                
+            })
         //this.entity.addComponentOrReplace(new utils.ScaleTransformComponent(SCALE_HIDDEN,this.transformArgs.scale,1,()=>{
             /////*if(tf.position.y != this.centerPos.y){
             ////    tf.position.y = this.centerPos.y
@@ -695,6 +780,68 @@ class Block {
 
     }
 }
+class LuckyWheelBlock extends Block {
+    updateFromServer(trackFeat: serverStateSpec.ITrackFeatureState): void {
+        super.updateFromServer(trackFeat)
+
+        //setup the animation
+        Animator.createOrReplace(this.entity, {
+            states: [
+              {
+                clip: 'FortunewheelAction',
+                playing: false,
+                loop: true,//loop forever, continue where left off, will hardstop for now
+              },
+            ],
+          })
+        //this.updateStateUI()
+    }
+    startMining() {
+        log(MODULE,"LuckyWheelBlock","startMining","ENTRY",this.id)
+        //super.startMining()
+        //Transform.getMutable(this.entity).position.y += 2
+        //const swimAnim = Animator.getClip(this.entity, 'FortunewheelAction')
+        //for now not resesting animation, will hard stop playing at end of mining
+        Animator.playSingleAnimation(this.entity, 'FortunewheelAction', false)
+    }
+    endMining() {
+        log(MODULE,"LuckyWheelBlock","endMining","ENTRY",this.id)
+        //super.endMining()
+        //Transform.getMutable(this.entity).position.y -= 2
+        Animator.stopAllAnimations(this.entity)
+    }
+    hide(){
+        const METHOD_NAME = "hide"
+        log(MODULE,"LuckyWheelBlock",METHOD_NAME,this.id,"ENTRY")
+
+        //wheel does not hide, just goes disabled
+        
+        //super.hide()
+        this.makeClickable(false)
+        
+        this.visible = false
+
+
+        /*PointerEvents.createOrReplace(this.entity, { pointerEvents: [
+            {
+              eventType: PointerEventType.PET_DOWN,
+              eventInfo: {
+                button: InputAction.IA_POINTER,
+                showFeedback: true,
+                hoverText:"Currently Disabled"
+              }
+            }
+          ]})*/
+    }
+    show(){
+        const METHOD_NAME = "show"
+        log(MODULE,"LuckyWheelBlock",METHOD_NAME,this.id,"ENTRY")
+
+        this.makeClickable(true)
+
+        this.visible = true;
+    }
+}
 
 
 class MinableController {
@@ -712,7 +859,31 @@ class MinableController {
     initBlocks(){
         
     }
-    
+    //TODO let controller handle speicifc message? based on instance replying???
+    showUIMaxedOutWheel(val:boolean,result?:RewardNotification){
+        if(val){
+            //ui.displayAnnouncement("not enough funds to mine:"+result.sourceObjectId)
+            maxOutWheelPromptBasic.show()
+            
+        }else{
+            maxOutWheelPromptBasic.hide()
+        }
+        
+        
+        this.updateClickable(val,result)
+    }
+    showUIMaxedOut(val:boolean,result?:RewardNotification){
+        if(val){
+            //ui.displayAnnouncement("not enough funds to mine:"+result.sourceObjectId)
+            maxOutPromptBasic.show()
+            
+        }else{
+            maxOutPromptBasic.hide()
+        }
+        
+        
+        this.updateClickable(val,result)
+    }
     showUIMaxedOutInventory(val:boolean,result?:RewardNotification){
         if(val){
             //ui.displayAnnouncement("not enough funds to mine:"+result.sourceObjectId)
@@ -902,15 +1073,35 @@ class MinableController {
     }
     
     createMinableFromState(trackFeat:serverStateSpec.ITrackFeatureState){
-        const METHOD_NAME = "addRemoveTrackFeature" 
-        log(MODULE,METHOD_NAME,"ENTRY",trackFeat);
+        const METHOD_NAME = "createMinableFromState" 
+        log(MODULE,METHOD_NAME,"ENTRY","this.blocks.length",this.blocks.length,"trackFeat",trackFeat);
 
-        const block = new Block(trackFeat.id,trackFeat.type)
-        
-        block.updateFromServer(trackFeat)
+        //create based on type for custom animations
+        let block
 
-        this.blocksMap[block.id] = block
-        this.blocks.push(block)
+        //lookup before recreating from nothing
+
+        if(!this.blocksMap[trackFeat.id]){
+            log(MODULE,METHOD_NAME,"cache MISS for minable " + trackFeat.id);
+            switch(trackFeat.type){
+                case 'buyable.item.lucky.wheel':
+                    block = new LuckyWheelBlock(trackFeat.id,trackFeat.type)
+                    break;
+                default:
+                    block = new Block(trackFeat.id,trackFeat.type)
+            }
+            
+            block.updateFromServer(trackFeat)
+
+            this.blocksMap[block.id] = block
+            this.blocks.push(block)
+        }else{
+            log(MODULE,METHOD_NAME,"cache HIT for minable " + trackFeat.id);
+
+            block = this.blocksMap[trackFeat.id]
+             
+            block.updateFromServer(trackFeat)
+        }
   
         return block
     
@@ -922,6 +1113,8 @@ class MinableController {
     }
 
     hideAllBlocks(){
+        const METHOD_NAME = "resetAllBlocks" 
+        log(MODULE,METHOD_NAME,"ENTRY","this.blocks.length",this.blocks.length);
         for(let i=0; i< this.blocks.length; i++){
             this.blocks[i].hide()
         }
@@ -929,6 +1122,8 @@ class MinableController {
     }
 
     resetAllBlocks(){
+        const METHOD_NAME = "resetAllBlocks" 
+        log(MODULE,METHOD_NAME,"ENTRY","this.blocks.length",this.blocks.length);
         for(let i=0; i< this.blocks.length; i++){
             this.blocks[i].reset()        
         }   

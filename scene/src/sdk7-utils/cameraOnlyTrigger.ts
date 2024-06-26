@@ -2,6 +2,7 @@ import { getWorldPosition, getWorldRotation } from '@dcl-sdk/utils'
 import { areAABBIntersecting, areAABBSphereIntersecting, areSpheresIntersecting } from '@dcl-sdk/utils/dist/math'
 import { engine, Entity, IEngine, MeshRenderer, Schemas, Transform, Material, DeepReadonly, EntityState } from '@dcl/sdk/ecs'
 import { Vector3, Color4, Color3 } from '@dcl/sdk/math'
+import * as utils from '@dcl-sdk/utils'
 
 //CUSTOMIZED FROM https://github.com/decentraland/sdk7-utils/blob/main/src/trigger.ts
 //only checks the camera to other entities. 
@@ -481,10 +482,11 @@ function createTriggers(targetEngine: IEngine) {
 
   triggersInterface.addTrigger(
     targetEngine.PlayerEntity, LAYER_1, NO_LAYERS,
+    //(1.92/2) accounts that the player position is now at the feet, not the head
     [{
-      type: 'box',
-      scale: {x: 0.65, y: 1.92, z: 0.65},
-      position: {x: 0, y: 0.15, z: 0}
+			type: 'box',
+			scale: { x: 0.65, y: 1.92, z: 0.65 },
+			position: { x: 0, y: (1.92/2), z: 0 }
     }],
     undefined, undefined, Color3.Green()
   )
@@ -492,4 +494,7 @@ function createTriggers(targetEngine: IEngine) {
   return triggersInterface
 }
 
-export const cameraOnlyTrigger = createTriggers(engine)
+//export const cameraOnlyTrigger = createTriggers(engine)
+//switching back to the sdk7-utils version for now, keep this reference
+//like this in case we need to switch back
+export const cameraOnlyTrigger = utils.triggers

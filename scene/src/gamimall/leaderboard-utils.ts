@@ -112,8 +112,8 @@ export class LeaderboardRegistry {
   hourly: ILeaderboardItem[]=[];
   epoch: ILeaderboardItem[]=[];
   raffleCoinBag: ILeaderboardItem[]=[];
-
-
+  pointsMonthly: ILeaderboardItem[]=[];
+  pointsEpoch: ILeaderboardItem[]=[];
   //dailyVoxSkate?: LeaderboardItem;
   //weeklyVoxSkate?: LeaderboardItem;
   //hourlyVoxSkate?: LeaderboardItem;
@@ -148,6 +148,8 @@ export type leaderBoardsConfigsType = {
     monthly: () => ILeaderboardItem[],
     epoch: () => ILeaderboardItem[],
     raffleCoinBag: () => ILeaderboardItem[]
+    pointsMonthly: () => ILeaderboardItem[]
+    pointsEpoch: () => ILeaderboardItem[]
 }
 export const leaderBoardsConfigs:leaderBoardsConfigsType[] = [
   {
@@ -169,6 +171,12 @@ export const leaderBoardsConfigs:leaderBoardsConfigsType[] = [
     },
     raffleCoinBag: () => {
       return LEADERBOARD_REGISTRY.raffleCoinBag;
+    },
+    pointsMonthly: () => {
+      return LEADERBOARD_REGISTRY.pointsMonthly;
+    },
+    pointsEpoch: () => {
+      return LEADERBOARD_REGISTRY.pointsEpoch;
     },
   }/*,
   {

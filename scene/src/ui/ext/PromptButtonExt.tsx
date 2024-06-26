@@ -109,6 +109,7 @@ export class PromptButtonExt extends PromptButton {
         <Label
           {...this.labelElement}
           value={String(this.text)}
+          textWrap='nowrap'
           color={
             _btnExt._disabled ? _btnExt._labelDisabledColor : this.labelElement.color || _btnExt._labelColor
           }
@@ -116,6 +117,7 @@ export class PromptButtonExt extends PromptButton {
         <Label 
           {...this.subTextElement}
           value={String(this.subText)}
+          textWrap='nowrap'
           color={
             _btnExt._disabled ? _btnExt._labelDisabledColor : this.labelElement.color || _btnExt._labelColor
           }

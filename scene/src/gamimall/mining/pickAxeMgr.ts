@@ -14,12 +14,15 @@ import { collectCoinSparkle } from "../coin";
 import { Vector3 } from "@dcl/sdk/math";
 import { engineTweenStartScaling, log } from "../../back-ports/backPorts";
 import { AudioSource, Entity, GltfContainer, PBAudioSource, PBGltfContainer, Transform, TransformTypeWithOptionals, VisibilityComponent, engine } from '@dcl/sdk/ecs';
+import { TransformSafeWrapper } from '../../back-ports/workarounds';
 
 //const collectCoinClip = new AudioClip("sounds/collect-coin.mp3");
 const collectCoinClip:PBAudioSource = {audioClipUrl:"sounds/collect-coin.mp3",loop:false,volume:0.4,playing:false};
 
 const pickAxeShape:PBGltfContainer = {src:"models/MineGame/Pickaxe.glb"}; //new GLTFShape("models/MineGame/Pickaxe.glb"); 
 //pickAxeShape.withCollisions = false;
+
+const MODULE = "pickAxeMgr"
 
 const sparklesShape = collectCoinSparkle
 //sparklesShape.withCollisions = false;
@@ -156,7 +159,7 @@ export class PickAxe /*extends Entity*/ {
     this.entity = engine.addEntity()
 
     this.modelEntity = engine.addEntity()//new Entity(name+".model");
-    Transform.create(this.modelEntity, {
+    TransformSafeWrapper.create(this.modelEntity, {
       parent: this.entity
     })
 
@@ -174,12 +177,25 @@ export class PickAxe /*extends Entity*/ {
     }
   }
   hide() {
+    const METHOD_NAME = "hide"
     //log(this.name + ".hide called")
     this.visible = false;
 
     engineTweenStartScaling(
     //utils.tweens.startScaling(
-      this.entity, this.showScale, Vector3.Zero(), 0.2 * 1000
+      this.entity, this.showScale, Vector3.Zero(), 0.2 * 1000, undefined, ()=>{
+        const hidePos = -20
+        log(MODULE,METHOD_NAME,this.name,this.entity,"hide finished")
+        
+            // utils.timers.setTimeout(()=>{
+            const tf = Transform.getMutable(this.entity)
+            if(tf.position.y != hidePos){
+                log(MODULE,METHOD_NAME,this.name,this.entity,"HIDE_POS: sending to hide pos",tf.position,hidePos)
+                tf.position.y = hidePos
+                log(MODULE,METHOD_NAME,this.name,this.entity,"HIDE_POS: sent ",tf.position)
+            }
+            //},100)
+      }
       )
     //this.addComponentOrReplace(
     //  new utils.ScaleTransformComponent(this.showScale, Vector3.Zero(), 0.2)
@@ -223,7 +239,7 @@ export function initPickAxeManager() {
   for(const p of [pickAxeShape,sparklesShape]){
     const ent = engine.addEntity()
     GltfContainer.create(ent,p)
-    Transform.create(ent,{position:Vector3.create(3,-10,3), scale: Vector3.create(0.7, 0.7, 0.7)})//underground
+    TransformSafeWrapper.create(ent,{position:Vector3.create(3,-10,3), scale: Vector3.create(0.7, 0.7, 0.7)})//underground
 
 
     utils.timers.setTimeout(()=>{

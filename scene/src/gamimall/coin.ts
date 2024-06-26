@@ -17,6 +17,7 @@ import { TranformConstructorArgs, engineTweenStartScaling, log } from "../back-p
 import { Color3, Vector3 } from '@dcl/sdk/math';
 import { AudioSource, ColliderLayer, Entity, GltfContainer, PBAudioSource, PBGltfContainer, Transform, engine } from '@dcl/sdk/ecs';
 import { cameraOnlyTrigger } from '../sdk7-utils/cameraOnlyTrigger';
+import { TransformSafeWrapper } from '../back-ports/workarounds';
 
 const collectCoinClip:PBAudioSource = {audioClipUrl:"sounds/collect-coin.mp3",loop:false,volume:0.4,playing:false};
 
@@ -205,6 +206,7 @@ export class CoinManager {
     })
 
     if (newCoin) {
+      log(CLASSNAME,METHOD_NAME,id,"cache MISS for coin ", id);
       //log(CLASSNAME,"spawn making coin " + id)
       // add a shape to the entity
       //const coin = new CoinShape();
@@ -265,7 +267,7 @@ export class CoinManager {
             clickAudioSource.playOnce();*/
       //END TODO MOVE THIS INTO ITS OWN COIN CLASS
     } else {
-      log(CLASSNAME,"spawn cache hit for coin " + id);
+      log(CLASSNAME,METHOD_NAME,id,"spawn cache HIT for coin ", id);
 
       coin.setCoinType(coinType);
 
@@ -452,7 +454,12 @@ export class Sparkle  {
     }
   }
   playSound() {
-    AudioSource.getMutable(this.entity).playing=true
+    const audio = AudioSource.getMutableOrNull(this.entity)
+    if(audio){
+      audio.playing=true
+    }else{
+      log(CLASSNAME,"playSound",this.name,this.entity,"WARNING missing audio!!! ");
+    }
   }
 }
 
@@ -470,12 +477,14 @@ export class Coin  {
     this.name = name;
     this.entity = engine.addEntity()
 
+    TransformSafeWrapper.create(this.entity, {scale:Vector3.One()},this.name)
+
     this.coinModelEntity = engine.addEntity()//new Entity(this.name + "-coin-model");
     //this.coinModelEntity.setParent(this);
-    Transform.create(this.coinModelEntity, {
+    TransformSafeWrapper.create(this.coinModelEntity, {
       position: Vector3.Zero(),
       parent: this.entity,
-    });
+    },this.name+"-coinModelEntity");
 
     const scaleMult = 1; // + value/5
     this.showScale = Vector3.create(scaleMult, scaleMult, scaleMult);
@@ -483,7 +492,7 @@ export class Coin  {
   show(speed?: number) {
     this.visible = true;
     if (speed == undefined || speed < 0) {
-      //now
+      //no
       Transform.getMutable(this.entity).scale = this.showScale;
     } else {
       engineTweenStartScaling(
@@ -515,7 +524,7 @@ export class Coin  {
 
   collect() {
     if (this.collectable == false) {
-      log(CLASSNAME,"already collected. returnined " + this.name);
+      log(CLASSNAME,"collect",this.name,this.entity,"already collected. returnined ", this.name);
       return;
     }
     this.setCollectable(false);

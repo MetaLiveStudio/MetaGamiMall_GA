@@ -73,7 +73,7 @@ export class LeaderBoardPrompt extends CustomOkPrompt implements ILeaderboardIte
       },
       ui.ButtonStyles.ROUNDBLACK
     ));
-    
+
     this.applyUIScaling()
   }
 
@@ -88,37 +88,36 @@ export class LeaderBoardPrompt extends CustomOkPrompt implements ILeaderboardIte
     //making small height so is not cursor blocking
     this.prompt._prompt.height = SCREEN_TYPE == SCREEN_STANDARD ? 700 : 990
 
-    
     if(SCREEN_TYPE == SCREEN_STANDARD){
       this.title.size = 20
-      this.title.xPosition = 70
-      this.title.yPosition = 100
+      this.title.xPosition = 70 * -.9
+      this.title.yPosition = 100 * 1.1
 
       this.button.yPosition = -265
-      
-      this.prevBtn.xPosition = -250
-      this.nextBtn.xPosition = 120
-
+      //due to parent calling its, have to defend against null AKA not init yet
+      if(this.prevBtn) this.prevBtn.xPosition = -250 
+      if(this.nextBtn) this.nextBtn.xPosition = 120
+  
       this.text.size = 15
       this.text.xPosition = -140 
       this.text.yPosition = 70
     }else{
       //this.title.textElement.uiTransform?.position = 100
       this.title.size = 33
-      this.title.xPosition = 110
-      this.title.yPosition = 140
+      this.title.xPosition = 110 * -1
+      this.title.yPosition = 140 * 1.1 
 
       this.button.yPosition = -370
 
-      this.prevBtn.xPosition = -330
-      this.nextBtn.xPosition = 210
+      if(this.prevBtn) this.prevBtn.xPosition = -330
+      if(this.nextBtn) this.nextBtn.xPosition = 210
 
       this.text.size = 22
       this.text.xPosition = -200
       this.text.yPosition = 100
     }
-    applyButtonStyle(this.nextBtn)
-    applyButtonStyle(this.prevBtn)
+    if(this.nextBtn) applyButtonStyle(this.nextBtn)
+    if(this.prevBtn) applyButtonStyle(this.prevBtn)
     //TODO ADD BACK
     
     //nextBtn.label.width = 40
@@ -135,11 +134,13 @@ export class LeaderBoardPrompt extends CustomOkPrompt implements ILeaderboardIte
     
     
     
-    setButtonDim(this.prevBtn,40,35)
-    setButtonDim(this.nextBtn,40,35)
+    if(this.prevBtn){ 
+      setButtonDim(this.prevBtn,40,35)
+      setButtonDim(this.nextBtn,40,35)
 
-    this.prevBtn.yPosition = -50
-    this.nextBtn.yPosition = -50
+      this.prevBtn.yPosition = -50
+      this.nextBtn.yPosition = -50
+    }
 
 
   }

@@ -4,7 +4,8 @@ import { Color4, Quaternion, Vector3 } from '@dcl/sdk/math';
 import { movePlayerTo,openExternalUrl } from '~system/RestrictedActions'
 import { CONFIG, SCENE_TYPE_GAMIMALL, SCENE_TYPE_UNIFIED_SCENE } from './config';
 import { log } from './back-ports/backPorts';
-import VLM from 'vlm-dcl'
+import { TransformSafeWrapper } from './back-ports/workarounds';
+//import VLM from 'vlm-dcl'
 
 const CLASSNAME = "scene.ts"
 //
@@ -45,7 +46,7 @@ function initGamiMallScene(_scene:Entity){
   log(CLASSNAME,METHOD_NAME,"ENTRY")
   try{
     
-    Transform.create(_scene,{
+    TransformSafeWrapper.create(_scene,{
         position: Vector3.create(5 * 16, 0, 0), //-6*16
         //rotation: new Quaternion(0, 0, 0, 1),
         rotation: Quaternion.fromEulerDegrees(0, -90, 0),
@@ -54,7 +55,7 @@ function initGamiMallScene(_scene:Entity){
 
     //making main model
     const main = engine.addEntity()
-    Transform.create(main,{
+    TransformSafeWrapper.create(main,{
         position: Vector3.create(48, 0, 40),
         rotation: Quaternion.create(0, 0, 0, 1),
         scale: Vector3.create(1, 1, 1),
@@ -64,18 +65,31 @@ function initGamiMallScene(_scene:Entity){
     GltfContainer.create(main,{
         src:"models/mains/main.glb"
     })
-
+/*
+     //making paintings model
+     const paintings = engine.addEntity()
+     TransformSafeWrapper.create(paintings,{
+         position: Vector3.create(48, 0, 40),
+         rotation: Quaternion.create(0, 0, 0, 1),
+         scale: Vector3.create(1, 1, 1),
+         parent: _scene
+     }); 
+ 
+     GltfContainer.create(paintings,{
+         src:"models/mains/paintings.glb"
+     })
+*/
     //Making VLM
-    try{
+    /*try{
       VLM.init() 
     }catch(e){
       log(CLASSNAME,METHOD_NAME,"VLM.init() FAILED",e)
       log(CLASSNAME,METHOD_NAME,"VLM.init() FAILED",e)
-    }
-
+    }*/
+/* 
      //making adsshop model
      const adsshop = engine.addEntity()
-     Transform.create(adsshop,{
+     TransformSafeWrapper.create(adsshop,{
          position: Vector3.create(48, 0, 40),
          rotation: Quaternion.create(0, 0, 0, 1),
          scale: Vector3.create(1, 1, 1),
@@ -84,10 +98,10 @@ function initGamiMallScene(_scene:Entity){
  
      GltfContainer.create(adsshop,{
          src:"models/mains/adsshops.glb"
-     })
-        //making ExchangeCenter model
+     })*/
+       //making ExchangeCenter model
         const ExchangeCenter = engine.addEntity()
-        Transform.create(ExchangeCenter,{
+        TransformSafeWrapper.create(ExchangeCenter,{
             position: Vector3.create(48, 0, 40),
             rotation: Quaternion.create(0, 0, 0, 1),
             scale: Vector3.create(1, 1, 1),
@@ -101,7 +115,7 @@ function initGamiMallScene(_scene:Entity){
         
          //making Plant model
          const plants = engine.addEntity()
-         Transform.create(plants,{
+         TransformSafeWrapper.create(plants,{
              position: Vector3.create(48, 0, 40),
              rotation: Quaternion.create(0, 0, 0, 1),
              scale: Vector3.create(1, 1, 1),
@@ -114,7 +128,7 @@ function initGamiMallScene(_scene:Entity){
 
          //making musclesquareupdownpad model
          const musclesquareupdownpad = engine.addEntity()
-         Transform.create(musclesquareupdownpad,{
+         TransformSafeWrapper.create(musclesquareupdownpad,{
              position: Vector3.create(48, 0, 40),
              rotation: Quaternion.create(0, 0, 0, 1),
              scale: Vector3.create(1, 1, 1),
@@ -128,7 +142,7 @@ function initGamiMallScene(_scene:Entity){
          
          //making squares model
          /*const squares = engine.addEntity()
-         Transform.create(squares,{
+         TransformSafeCreate.create(squares,{
              position: Vector3.create(48, 0, 40),
              rotation: Quaternion.create(0, 0, 0, 1),
              scale: Vector3.create(1, 1, 1),
@@ -139,10 +153,10 @@ function initGamiMallScene(_scene:Entity){
              src:"models/mains/squares.glb"
          })*/
 
-           
+         /*  
          //making DAOAlchemist model
          const DAOAlchemist = engine.addEntity()
-         Transform.create(DAOAlchemist,{
+         TransformSafeWrapper.create(DAOAlchemist,{
              position: Vector3.create(48, 0, 40),
              rotation: Quaternion.create(0, 0, 0, 1),
              scale: Vector3.create(1, 1, 1),
@@ -151,11 +165,26 @@ function initGamiMallScene(_scene:Entity){
      
          GltfContainer.create(DAOAlchemist,{
              src:"models/mains/DAOAlchemist.glb"
+         }) */
+
+         //making wheel of fortune
+         //wheel of fortune moved to setupMinables
+         //now tracked as id buyable.item.lucky.wheel
+         /*const fortunewheel = engine.addEntity()
+         TransformSafeWrapper.create(fortunewheel,{
+             position: Vector3.create(48, 0, 40),
+             rotation: Quaternion.create(0, 0, 0, 1),
+             scale: Vector3.create(1, 1, 1),
+             parent: _scene
+         }); 
+     
+         GltfContainer.create(fortunewheel,{
+             src:"models/fortunewheel.glb"
          })
 
           //making Adsboxes Goldtier model
           const Goldtier = engine.addEntity()
-          Transform.create(Goldtier,{
+          TransformSafeWrapper.create(Goldtier,{
               position: Vector3.create(48, 0, 40),
               rotation: Quaternion.create(0, 0, 0, 1),
               scale: Vector3.create(1, 1, 1),
@@ -168,7 +197,7 @@ function initGamiMallScene(_scene:Entity){
 
           //making Adsboxes Silvertier model
           const Silvertier = engine.addEntity()
-          Transform.create(Silvertier,{
+          TransformSafeWrapper.create(Silvertier,{
               position: Vector3.create(48, 0, 40),
               rotation: Quaternion.create(0, 0, 0, 1),
               scale: Vector3.create(1, 1, 1),
@@ -177,11 +206,11 @@ function initGamiMallScene(_scene:Entity){
       
           GltfContainer.create(Silvertier,{
               src:"models/mains/Silvertier.glb"
-          })
+          })*/
 
            //making MineField Teleporter
            const MineFieldTeleporter = engine.addEntity()
-           Transform.create(MineFieldTeleporter,{
+           TransformSafeWrapper.create(MineFieldTeleporter,{
                position: Vector3.create(48, 0, 40),
                rotation: Quaternion.create(0, 0, 0, 1),
                scale: Vector3.create(1, 1, 1),
@@ -208,7 +237,7 @@ function initGamiMallScene(_scene:Entity){
            
            //making Guidebook model
            const Guidebook = engine.addEntity()
-           Transform.create(Guidebook,{
+           TransformSafeWrapper.create(Guidebook,{
                position: Vector3.create(48, 0, 40),
                rotation: Quaternion.create(0, 0, 0, 1),
                scale: Vector3.create(1, 1, 1),
@@ -228,9 +257,31 @@ function initGamiMallScene(_scene:Entity){
             }
           )
 
+          //making Poster
+          const Poster = engine.addEntity()
+          TransformSafeWrapper.create(Poster,{
+              position: Vector3.create(50, -0.5, 40),
+              rotation: Quaternion.create(0, 0, 0, 1),
+              scale: Vector3.create(1, 1, 1),
+              parent: _scene          
+          }); 
+          GltfContainer.create(Poster,{
+              src:"models/Poster.glb"
+          })
+
+          pointerEventsSystem.onPointerDown(
+           {
+             entity: Poster,
+             opts: { button: InputAction.IA_POINTER, hoverText: 'Check this out' },
+           },
+           function () {
+           openExternalUrl({url: "https://vipe.io/explore/assets/avatars/8453/0xa94c652c16525e6b7cac82a34eab18b5174ad23c/600"})
+           }
+         ) 
+
             //making MetaDoge model// Check the position, it is post edited
             const MetaDoge = engine.addEntity()
-            Transform.create(MetaDoge,{
+            TransformSafeWrapper.create(MetaDoge,{
                 position: Vector3.create(83.5, 0, 40),
                 rotation: Quaternion.create(0, 0, 0, 1),
                 scale: Vector3.create(1, 1, 1),
@@ -254,7 +305,7 @@ function initGamiMallScene(_scene:Entity){
 
           //making teleportermuscle model
            const teleportermuscle = engine.addEntity()
-           Transform.create(teleportermuscle,{
+           TransformSafeWrapper.create(teleportermuscle,{
                position: Vector3.create(48, 0, 40),
                rotation: Quaternion.create(0, 0, 0, 1),
                scale: Vector3.create(1, 1, 1),
@@ -281,7 +332,7 @@ function initGamiMallScene(_scene:Entity){
        
            //making teleportermoon model
            const teleportermoon = engine.addEntity()
-           Transform.create(teleportermoon,{
+           TransformSafeWrapper.create(teleportermoon,{
                position: Vector3.create(48, 0, 40),
                rotation: Quaternion.create(0, 0, 0, 1),
                scale: Vector3.create(1, 1, 1),
@@ -308,7 +359,7 @@ function initGamiMallScene(_scene:Entity){
 
            //making teleportermars model
            const teleportermars = engine.addEntity()
-           Transform.create(teleportermars,{
+           TransformSafeWrapper.create(teleportermars,{
                position: Vector3.create(48, 0, 40),
                rotation: Quaternion.create(0, 0, 0, 1),
                scale: Vector3.create(1, 1, 1),
@@ -336,7 +387,7 @@ function initGamiMallScene(_scene:Entity){
         
              //making teleporterheaven model
              const teleporterheaven = engine.addEntity()
-             Transform.create(teleporterheaven,{
+             TransformSafeWrapper.create(teleporterheaven,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -366,7 +417,7 @@ function initGamiMallScene(_scene:Entity){
 
             //Add TwitterL1 
              const TwitterL1 = engine.addEntity()
-             Transform.create(TwitterL1,{
+             TransformSafeWrapper.create(TwitterL1,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -383,13 +434,13 @@ function initGamiMallScene(_scene:Entity){
                   opts: { button: InputAction.IA_POINTER, hoverText: 'Check Brand Twitter' },
                 },
                 function () {
-                openExternalUrl({url: "https://twitter.com/SX_Bet?ref_src=twsrc%5Egoogle%7Ctwcamp%5Eserp%7Ctwgr%5Eauthor"})
+                openExternalUrl({url: "https://x.com/Natfishes"})
                 }
               )
 
               //Add DiscordL1 
              const DiscordL1 = engine.addEntity()
-             Transform.create(DiscordL1,{
+             TransformSafeWrapper.create(DiscordL1,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -403,16 +454,16 @@ function initGamiMallScene(_scene:Entity){
             pointerEventsSystem.onPointerDown(
                 {
                   entity: DiscordL1,
-                  opts: { button: InputAction.IA_POINTER, hoverText: 'Check Brand Website' },
+                  opts: { button: InputAction.IA_POINTER, hoverText: 'Check Brand Discord' },
                 },
                 function () {
-                openExternalUrl({url: "https://sx.bet/"})
+                openExternalUrl({url: "https://discord.gg/6bcKZewsyj"})
                 }
               )
 
               //Add TwitterL2 
              const TwitterL2 = engine.addEntity()
-             Transform.create(TwitterL2,{
+             TransformSafeWrapper.create(TwitterL2,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -429,13 +480,13 @@ function initGamiMallScene(_scene:Entity){
                   opts: { button: InputAction.IA_POINTER, hoverText: 'Check Brand Twitter' },
                 },
                 function () {
-                openExternalUrl({url: "https://twitter.com/meta_viu"})
+                openExternalUrl({url: "https://twitter.com/soulmagicnft"})
                 }
               )
 
               //Add DiscordL2 
              const DiscordL2 = engine.addEntity()
-             Transform.create(DiscordL2,{
+             TransformSafeWrapper.create(DiscordL2,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -452,13 +503,13 @@ function initGamiMallScene(_scene:Entity){
                   opts: { button: InputAction.IA_POINTER, hoverText: 'Check Brand Discord' },
                 },
                 function () {
-                openExternalUrl({url: "https://t.co/WZOH6K7k68"})
+                openExternalUrl({url: "https://discord.com/invite/soulmagic"})
                 }
               )
 
               //Add TwitterL3 
              const TwitterL3 = engine.addEntity()
-             Transform.create(TwitterL3,{
+             TransformSafeWrapper.create(TwitterL3,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -475,13 +526,13 @@ function initGamiMallScene(_scene:Entity){
                   opts: { button: InputAction.IA_POINTER, hoverText: 'Check Brand Twitter' },
                 },
                 function () {
-                openExternalUrl({url: "https://twitter.com/soulmagicnft"})
+                openExternalUrl({url: "https://x.com/anymagik"})
                 }
               )
 
               //Add DiscordL3 
              const DiscordL3 = engine.addEntity()
-             Transform.create(DiscordL3,{
+             TransformSafeWrapper.create(DiscordL3,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -498,13 +549,13 @@ function initGamiMallScene(_scene:Entity){
                   opts: { button: InputAction.IA_POINTER, hoverText: 'Check Brand Discord' },
                 },
                 function () {
-                openExternalUrl({url: "https://discord.com/invite/soulmagic"})
+                openExternalUrl({url: "https://discord.com/invite/anymagik"})
                 }
               )
 
                //Add TwitterL4 
              const TwitterL4 = engine.addEntity()
-             Transform.create(TwitterL4,{
+             TransformSafeWrapper.create(TwitterL4,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -527,7 +578,7 @@ function initGamiMallScene(_scene:Entity){
 
               //Add DiscordL4 
              const DiscordL4 = engine.addEntity()
-             Transform.create(DiscordL4,{
+             TransformSafeWrapper.create(DiscordL4,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -550,7 +601,7 @@ function initGamiMallScene(_scene:Entity){
 
                //Add TwitterL5 
              const TwitterL5 = engine.addEntity()
-             Transform.create(TwitterL5,{
+             TransformSafeWrapper.create(TwitterL5,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -567,13 +618,13 @@ function initGamiMallScene(_scene:Entity){
                   opts: { button: InputAction.IA_POINTER, hoverText: 'Check Brand Twitter' },
                 },
                 function () {
-                openExternalUrl({url: "https://twitter.com/MUA_MUADAO"})
+                openExternalUrl({url: "https://twitter.com/DhingiaBuilds"})
                 }
               )
 
               //Add DiscordL5 
              const DiscordL5 = engine.addEntity()
-             Transform.create(DiscordL5,{
+             TransformSafeWrapper.create(DiscordL5,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -590,13 +641,13 @@ function initGamiMallScene(_scene:Entity){
                   opts: { button: InputAction.IA_POINTER, hoverText: 'Check Brand Discord' },
                 },
                 function () {
-                openExternalUrl({url: "https://discord.com/invite/mua-dao"})
+                openExternalUrl({url: "https://discord.com/invite/3STwXc8D8u"})
                 }
               )
 
-               //Add TwitterL6 
+   /*            //Add TwitterL6 
              const TwitterL6 = engine.addEntity()
-             Transform.create(TwitterL6,{
+             TransformSafeWrapper.create(TwitterL6,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -619,7 +670,7 @@ function initGamiMallScene(_scene:Entity){
 
               //Add DiscordL6 
              const DiscordL6 = engine.addEntity()
-             Transform.create(DiscordL6,{
+             TransformSafeWrapper.create(DiscordL6,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -639,10 +690,10 @@ function initGamiMallScene(_scene:Entity){
                 openExternalUrl({url: "https://discord.com/invite/3STwXc8D8u"})
                 }
               )
-
+ */
               //Add TwitterR1 
              const TwitterR1 = engine.addEntity()
-             Transform.create(TwitterR1,{
+             TransformSafeWrapper.create(TwitterR1,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -665,7 +716,7 @@ function initGamiMallScene(_scene:Entity){
 
                //Add DiscordR1 
              const DiscordR1 = engine.addEntity()
-             Transform.create(DiscordR1,{
+             TransformSafeWrapper.create(DiscordR1,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -688,7 +739,7 @@ function initGamiMallScene(_scene:Entity){
 
               //Add TwitterR2 
              const TwitterR2 = engine.addEntity()
-             Transform.create(TwitterR2,{
+             TransformSafeWrapper.create(TwitterR2,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -705,13 +756,13 @@ function initGamiMallScene(_scene:Entity){
                   opts: { button: InputAction.IA_POINTER, hoverText: 'Check Brand Twitter' },
                 },
                 function () {
-                openExternalUrl({url: "https://twitter.com/WonderZoneGames"})
+                openExternalUrl({url: "https://twitter.com/pacmoon_"})
                 }
               )
-
+/*
                //Add DiscordR2 
              const DiscordR2 = engine.addEntity()
-             Transform.create(DiscordR2,{
+             TransformSafeWrapper.create(DiscordR2,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -728,13 +779,13 @@ function initGamiMallScene(_scene:Entity){
                   opts: { button: InputAction.IA_POINTER, hoverText: 'Check Brand Discord' },
                 },
                 function () {
-                openExternalUrl({url: "https://discord.com/invite/puM8KZCkcU"})
+                openExternalUrl({url: "https://twitter.com/pacmoon_"})
                 }
-              )
+              ) */
 
                //Add TwitterR3 
              const TwitterR3 = engine.addEntity()
-             Transform.create(TwitterR3,{
+             TransformSafeWrapper.create(TwitterR3,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -751,13 +802,13 @@ function initGamiMallScene(_scene:Entity){
                   opts: { button: InputAction.IA_POINTER, hoverText: 'Check Brand Twitter' },
                 },
                 function () {
-                openExternalUrl({url: "https://twitter.com/residence_meta"})
+                openExternalUrl({url: "https://x.com/stoney_eye"})
                 }
               )
 
-               //Add DiscordR3 
+           /*    //Add DiscordR3 
              const DiscordR3 = engine.addEntity()
-             Transform.create(DiscordR3,{
+             TransformSafeWrapper.create(DiscordR3,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -777,10 +828,10 @@ function initGamiMallScene(_scene:Entity){
                 openExternalUrl({url: "https://discord.com/invite/e6v3nvCZ8Q"})
                 }
               )
-
+*/
                 //Add TwitterR4 
              const TwitterR4 = engine.addEntity()
-             Transform.create(TwitterR4,{
+             TransformSafeWrapper.create(TwitterR4,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -797,13 +848,13 @@ function initGamiMallScene(_scene:Entity){
                   opts: { button: InputAction.IA_POINTER, hoverText: 'Check Brand Twitter' },
                 },
                 function () {
-                openExternalUrl({url: "https://twitter.com/Vroomwayio"})
+                openExternalUrl({url: "https://x.com/MetafoxCrew"})
                 }
               )
 
                //Add DiscordR4 
              const DiscordR4 = engine.addEntity()
-             Transform.create(DiscordR4,{
+             TransformSafeWrapper.create(DiscordR4,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -820,13 +871,13 @@ function initGamiMallScene(_scene:Entity){
                   opts: { button: InputAction.IA_POINTER, hoverText: 'Check Brand Discord' },
                 },
                 function () {
-                openExternalUrl({url: "https://discord.gg/vk4kcpkgre"})
+                openExternalUrl({url: "https://discord.com/invite/YbBqhbmKh2"})
                 }
               )
 
             //Add TwitterR5 
              const TwitterR5 = engine.addEntity()
-             Transform.create(TwitterR5,{
+             TransformSafeWrapper.create(TwitterR5,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -843,13 +894,13 @@ function initGamiMallScene(_scene:Entity){
                   opts: { button: InputAction.IA_POINTER, hoverText: 'Check Brand Twitter' },
                 },
                 function () {
-                openExternalUrl({url: "https://twitter.com/MetaPartyDCL"})
+                openExternalUrl({url: "https://x.com/freethought3D"})
                 }
               )
 
             //Add DiscordR5 
              const DiscordR5 = engine.addEntity()
-             Transform.create(DiscordR5,{
+             TransformSafeWrapper.create(DiscordR5,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -863,16 +914,16 @@ function initGamiMallScene(_scene:Entity){
             pointerEventsSystem.onPointerDown(
                 {
                   entity: DiscordR5,
-                  opts: { button: InputAction.IA_POINTER, hoverText: 'Check Brand Discord' },
+                  opts: { button: InputAction.IA_POINTER, hoverText: 'Check Brand Website' },
                 },
                 function () {
-                openExternalUrl({url: "http://discord.gg/2Skr3ayxT7"})
+                openExternalUrl({url: "https://www.pupbusiness.com/"})
                 }
               )
 
               //Add TwitterR6 
              const TwitterR6 = engine.addEntity()
-             Transform.create(TwitterR6,{
+             TransformSafeWrapper.create(TwitterR6,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -889,13 +940,13 @@ function initGamiMallScene(_scene:Entity){
                   opts: { button: InputAction.IA_POINTER, hoverText: 'Check Brand Twitter' },
                 },
                 function () {
-                openExternalUrl({url: "https://twitter.com/dgliveofficial"})
+                openExternalUrl({url: "https://x.com/VoxBoardsNFT"})
                 }
               )
 
             //Add DiscordR6 
              const DiscordR6 = engine.addEntity()
-             Transform.create(DiscordR6,{
+             TransformSafeWrapper.create(DiscordR6,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -912,13 +963,13 @@ function initGamiMallScene(_scene:Entity){
                   opts: { button: InputAction.IA_POINTER, hoverText: 'Check Brand Website' },
                 },
                 function () {
-                openExternalUrl({url: "https://www.dglive.org/"})
+                openExternalUrl({url: "https://linktr.ee/voxboards"})
                 }
               )
-
+/*
               //Add TwitterR61 
              const TwitterR61 = engine.addEntity()
-             Transform.create(TwitterR61,{
+             TransformSafeWrapper.create(TwitterR61,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -941,7 +992,7 @@ function initGamiMallScene(_scene:Entity){
 
             //Add DiscordR61 
              const DiscordR61 = engine.addEntity()
-             Transform.create(DiscordR61,{
+             TransformSafeWrapper.create(DiscordR61,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -961,10 +1012,10 @@ function initGamiMallScene(_scene:Entity){
                 openExternalUrl({url: "http://discord.com/invite/PQwdjaqKpc"})
                 }
               )
-
+*/
             //Add TwitterS1 
              const TwitterS1 = engine.addEntity()
-             Transform.create(TwitterS1,{
+             TransformSafeWrapper.create(TwitterS1,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -987,7 +1038,7 @@ function initGamiMallScene(_scene:Entity){
 
               //Add TwitterS2 
              const TwitterS2 = engine.addEntity()
-             Transform.create(TwitterS2,{
+             TransformSafeWrapper.create(TwitterS2,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -1010,7 +1061,7 @@ function initGamiMallScene(_scene:Entity){
 
                //Add TwitterS3 
              const TwitterS3 = engine.addEntity()
-             Transform.create(TwitterS3,{
+             TransformSafeWrapper.create(TwitterS3,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -1033,7 +1084,7 @@ function initGamiMallScene(_scene:Entity){
 
                 //Add TwitterS4 
              const TwitterS4 = engine.addEntity()
-             Transform.create(TwitterS4,{
+             TransformSafeWrapper.create(TwitterS4,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -1056,7 +1107,7 @@ function initGamiMallScene(_scene:Entity){
 
               //Add TwitterS5 
              const TwitterS5 = engine.addEntity()
-             Transform.create(TwitterS5,{
+             TransformSafeWrapper.create(TwitterS5,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -1079,7 +1130,7 @@ function initGamiMallScene(_scene:Entity){
 
               //Add TwitterS6 
              const TwitterS6 = engine.addEntity()
-             Transform.create(TwitterS6,{
+             TransformSafeWrapper.create(TwitterS6,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -1102,7 +1153,7 @@ function initGamiMallScene(_scene:Entity){
 
                //Add TwitterS7 
              const TwitterS7 = engine.addEntity()
-             Transform.create(TwitterS7,{
+             TransformSafeWrapper.create(TwitterS7,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -1125,7 +1176,7 @@ function initGamiMallScene(_scene:Entity){
 
               //Add TwitterS8 
              const TwitterS8 = engine.addEntity()
-             Transform.create(TwitterS8,{
+             TransformSafeWrapper.create(TwitterS8,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -1148,7 +1199,7 @@ function initGamiMallScene(_scene:Entity){
 
               //Add TwitterS9 
              const TwitterS9 = engine.addEntity()
-             Transform.create(TwitterS9,{
+             TransformSafeWrapper.create(TwitterS9,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -1165,13 +1216,13 @@ function initGamiMallScene(_scene:Entity){
                   opts: { button: InputAction.IA_POINTER, hoverText: 'Check Brand Twitter' },
                 },
                 function () {
-                openExternalUrl({url: "https://twitter.com/BeatTrekker"})
+                openExternalUrl({url: "https://sx.bet/"})
                 }
               )
 
               //Add TwitterS10 
              const TwitterS10 = engine.addEntity()
-             Transform.create(TwitterS10,{
+             TransformSafeWrapper.create(TwitterS10,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -1194,7 +1245,7 @@ function initGamiMallScene(_scene:Entity){
 
               //Add TwitterS11 
              const TwitterS11 = engine.addEntity()
-             Transform.create(TwitterS11,{
+             TransformSafeWrapper.create(TwitterS11,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -1211,13 +1262,13 @@ function initGamiMallScene(_scene:Entity){
                   opts: { button: InputAction.IA_POINTER, hoverText: 'Check Brand Twitter' },
                 },
                 function () {
-                openExternalUrl({url: "https://twitter.com/MetafoxCrew"})
+                openExternalUrl({url: "https://twitter.com/SpottieWiFi"})
                 }
               )
 
               //Add TwitterS12 
              const TwitterS12 = engine.addEntity()
-             Transform.create(TwitterS12,{
+             TransformSafeWrapper.create(TwitterS12,{
                  position: Vector3.create(48, 0, 40),
                  rotation: Quaternion.create(0, 0, 0, 1),
                  scale: Vector3.create(1, 1, 1),
@@ -1244,7 +1295,7 @@ function initGamiMallScene(_scene:Entity){
 
             //making TeleporterL1 Teleporter
            const TeleporterL1 = engine.addEntity()
-           Transform.create(TeleporterL1,{
+           TransformSafeWrapper.create(TeleporterL1,{
                position: Vector3.create(48, 0, 40),
                rotation: Quaternion.create(0, 0, 0, 1),
                scale: Vector3.create(1, 1, 1),
@@ -1271,7 +1322,7 @@ function initGamiMallScene(_scene:Entity){
 
            //making TeleporterL2 Teleporter
            const TeleporterL2 = engine.addEntity()
-           Transform.create(TeleporterL2,{
+           TransformSafeWrapper.create(TeleporterL2,{
                position: Vector3.create(48, 0, 40),
                rotation: Quaternion.create(0, 0, 0, 1),
                scale: Vector3.create(1, 1, 1),
@@ -1298,7 +1349,7 @@ function initGamiMallScene(_scene:Entity){
 
            //making TeleporterL3 Teleporter
            const TeleporterL3 = engine.addEntity()
-           Transform.create(TeleporterL3,{
+           TransformSafeWrapper.create(TeleporterL3,{
                position: Vector3.create(48, 0, 40),
                rotation: Quaternion.create(0, 0, 0, 1),
                scale: Vector3.create(1, 1, 1),
@@ -1325,7 +1376,7 @@ function initGamiMallScene(_scene:Entity){
 
            //making TeleporterL4 Teleporter
            const TeleporterL4 = engine.addEntity()
-           Transform.create(TeleporterL4,{
+           TransformSafeWrapper.create(TeleporterL4,{
                position: Vector3.create(48, 0, 40),
                rotation: Quaternion.create(0, 0, 0, 1),
                scale: Vector3.create(1, 1, 1),
@@ -1352,7 +1403,7 @@ function initGamiMallScene(_scene:Entity){
 
            //making TeleporterL5 Teleporter
            const TeleporterL5 = engine.addEntity()
-           Transform.create(TeleporterL5,{
+           TransformSafeWrapper.create(TeleporterL5,{
                position: Vector3.create(48, 0, 40),
                rotation: Quaternion.create(0, 0, 0, 1),
                scale: Vector3.create(1, 1, 1),
@@ -1379,7 +1430,7 @@ function initGamiMallScene(_scene:Entity){
 
            //making TeleporterL6 Teleporter
            const TeleporterL6 = engine.addEntity()
-           Transform.create(TeleporterL6,{
+           TransformSafeWrapper.create(TeleporterL6,{
                position: Vector3.create(48, 0, 40),
                rotation: Quaternion.create(0, 0, 0, 1),
                scale: Vector3.create(1, 1, 1),
@@ -1406,7 +1457,7 @@ function initGamiMallScene(_scene:Entity){
 
            //making TeleporterR1 Teleporter
            const TeleporterR1 = engine.addEntity()
-           Transform.create(TeleporterR1,{
+           TransformSafeWrapper.create(TeleporterR1,{
                position: Vector3.create(48, 0, 40),
                rotation: Quaternion.create(0, 0, 0, 1),
                scale: Vector3.create(1, 1, 1),
@@ -1433,7 +1484,7 @@ function initGamiMallScene(_scene:Entity){
 
            //making TeleporterR2 Teleporter
            const TeleporterR2 = engine.addEntity()
-           Transform.create(TeleporterR2,{
+           TransformSafeWrapper.create(TeleporterR2,{
                position: Vector3.create(48, 0, 40),
                rotation: Quaternion.create(0, 0, 0, 1),
                scale: Vector3.create(1, 1, 1),
@@ -1460,7 +1511,7 @@ function initGamiMallScene(_scene:Entity){
 
            //making TeleporterR3 Teleporter
            const TeleporterR3 = engine.addEntity()
-           Transform.create(TeleporterR3,{
+           TransformSafeWrapper.create(TeleporterR3,{
                position: Vector3.create(48, 0, 40),
                rotation: Quaternion.create(0, 0, 0, 1),
                scale: Vector3.create(1, 1, 1),
@@ -1487,7 +1538,7 @@ function initGamiMallScene(_scene:Entity){
 
            //making TeleporterR4 Teleporter
            const TeleporterR4 = engine.addEntity()
-           Transform.create(TeleporterR4,{
+           TransformSafeWrapper.create(TeleporterR4,{
                position: Vector3.create(48, 0, 40),
                rotation: Quaternion.create(0, 0, 0, 1),
                scale: Vector3.create(1, 1, 1),
@@ -1514,7 +1565,7 @@ function initGamiMallScene(_scene:Entity){
 
            //making TeleporterR5 Teleporter
            const TeleporterR5 = engine.addEntity()
-           Transform.create(TeleporterR5,{
+           TransformSafeWrapper.create(TeleporterR5,{
                position: Vector3.create(48, 0, 40),
                rotation: Quaternion.create(0, 0, 0, 1),
                scale: Vector3.create(1, 1, 1),
@@ -1541,7 +1592,7 @@ function initGamiMallScene(_scene:Entity){
 
            //making TeleporterR6 Teleporter
            const TeleporterR6 = engine.addEntity()
-           Transform.create(TeleporterR6,{
+           TransformSafeWrapper.create(TeleporterR6,{
                position: Vector3.create(48, 0, 40),
                rotation: Quaternion.create(0, 0, 0, 1),
                scale: Vector3.create(1, 1, 1),
@@ -1565,10 +1616,10 @@ function initGamiMallScene(_scene:Entity){
               })
             }
           )
-
+/*
           //making TeleporterR61 Teleporter
           const TeleporterR61 = engine.addEntity()
-          Transform.create(TeleporterR61,{
+          TransformSafeWrapper.create(TeleporterR61,{
               position: Vector3.create(48, 0, 40),
               rotation: Quaternion.create(0, 0, 0, 1),
               scale: Vector3.create(1, 1, 1),
@@ -1592,10 +1643,10 @@ function initGamiMallScene(_scene:Entity){
              })
            }
          )
-
+*/
          //making SP1Teleportertorewardscenter Teleporter
          const SP1Teleportertorewardscenter = engine.addEntity()
-         Transform.create(SP1Teleportertorewardscenter,{
+         TransformSafeWrapper.create(SP1Teleportertorewardscenter,{
              position: Vector3.create(48, 0, 40),
              rotation: Quaternion.create(0, 0, 0, 1),
              scale: Vector3.create(1, 1, 1),
@@ -1622,7 +1673,7 @@ function initGamiMallScene(_scene:Entity){
 
         //making SP2Teleportertorewardscenter Teleporter
         const SP2Teleportertorewardscenter = engine.addEntity()
-        Transform.create(SP2Teleportertorewardscenter,{
+        TransformSafeWrapper.create(SP2Teleportertorewardscenter,{
             position: Vector3.create(48, 0, 40),
             rotation: Quaternion.create(0, 0, 0, 1),
             scale: Vector3.create(1, 1, 1),
@@ -1649,7 +1700,7 @@ function initGamiMallScene(_scene:Entity){
 
        //making SP3Teleportertorewardscenter Teleporter
        const SP3Teleportertorewardscenter = engine.addEntity()
-       Transform.create(SP3Teleportertorewardscenter,{
+       TransformSafeWrapper.create(SP3Teleportertorewardscenter,{
            position: Vector3.create(48, 0, 40),
            rotation: Quaternion.create(0, 0, 0, 1),
            scale: Vector3.create(1, 1, 1),
@@ -1676,7 +1727,7 @@ function initGamiMallScene(_scene:Entity){
 
       //making SP4Teleportertorewardscenter Teleporter
       const SP4Teleportertorewardscenter = engine.addEntity()
-      Transform.create(SP4Teleportertorewardscenter,{
+      TransformSafeWrapper.create(SP4Teleportertorewardscenter,{
           position: Vector3.create(48, 0, 40),
           rotation: Quaternion.create(0, 0, 0, 1),
           scale: Vector3.create(1, 1, 1),
@@ -1703,7 +1754,7 @@ function initGamiMallScene(_scene:Entity){
 
      //making SP5Teleportertorewardscenter Teleporter
      const SP5Teleportertorewardscenter = engine.addEntity()
-     Transform.create(SP5Teleportertorewardscenter,{
+     TransformSafeWrapper.create(SP5Teleportertorewardscenter,{
          position: Vector3.create(48, 0, 40),
          rotation: Quaternion.create(0, 0, 0, 1),
          scale: Vector3.create(1, 1, 1),
@@ -1730,7 +1781,7 @@ function initGamiMallScene(_scene:Entity){
 
     //making SP6Teleportertorewardscenter Teleporter
     const SP6Teleportertorewardscenter = engine.addEntity()
-    Transform.create(SP6Teleportertorewardscenter,{
+    TransformSafeWrapper.create(SP6Teleportertorewardscenter,{
         position: Vector3.create(48, 0, 40),
         rotation: Quaternion.create(0, 0, 0, 1),
         scale: Vector3.create(1, 1, 1),
@@ -1757,7 +1808,7 @@ function initGamiMallScene(_scene:Entity){
 
    //making SP7Teleportertorewardscenter Teleporter
    const SP7Teleportertorewardscenter = engine.addEntity()
-   Transform.create(SP7Teleportertorewardscenter,{
+   TransformSafeWrapper.create(SP7Teleportertorewardscenter,{
        position: Vector3.create(48, 0, 40),
        rotation: Quaternion.create(0, 0, 0, 1),
        scale: Vector3.create(1, 1, 1),
@@ -1784,7 +1835,7 @@ function initGamiMallScene(_scene:Entity){
 
   //making SP8Teleportertorewardscenter Teleporter
   const SP8Teleportertorewardscenter = engine.addEntity()
-  Transform.create(SP8Teleportertorewardscenter,{
+  TransformSafeWrapper.create(SP8Teleportertorewardscenter,{
       position: Vector3.create(48, 0, 40),
       rotation: Quaternion.create(0, 0, 0, 1),
       scale: Vector3.create(1, 1, 1),
@@ -1810,7 +1861,7 @@ function initGamiMallScene(_scene:Entity){
  )
 
  const SP9Teleportertorewardscenter = engine.addEntity()
-  Transform.create(SP9Teleportertorewardscenter,{
+  TransformSafeWrapper.create(SP9Teleportertorewardscenter,{
       position: Vector3.create(48, 0, 40),
       rotation: Quaternion.create(0, 0, 0, 1),
       scale: Vector3.create(1, 1, 1),
@@ -1836,7 +1887,7 @@ function initGamiMallScene(_scene:Entity){
  )
 
  const SP10Teleportertorewardscenter = engine.addEntity()
-  Transform.create(SP10Teleportertorewardscenter,{
+  TransformSafeWrapper.create(SP10Teleportertorewardscenter,{
       position: Vector3.create(48, 0, 40),
       rotation: Quaternion.create(0, 0, 0, 1),
       scale: Vector3.create(1, 1, 1),
@@ -1862,7 +1913,7 @@ function initGamiMallScene(_scene:Entity){
  )
 
  const SP11Teleportertorewardscenter = engine.addEntity()
-  Transform.create(SP11Teleportertorewardscenter,{
+  TransformSafeWrapper.create(SP11Teleportertorewardscenter,{
       position: Vector3.create(48, 0, 40),
       rotation: Quaternion.create(0, 0, 0, 1),
       scale: Vector3.create(1, 1, 1),
@@ -1888,7 +1939,7 @@ function initGamiMallScene(_scene:Entity){
  )
 
  const SP12Teleportertorewardscenter = engine.addEntity()
-  Transform.create(SP12Teleportertorewardscenter,{
+  TransformSafeWrapper.create(SP12Teleportertorewardscenter,{
       position: Vector3.create(48, 0, 40),
       rotation: Quaternion.create(0, 0, 0, 1),
       scale: Vector3.create(1, 1, 1),
@@ -1914,7 +1965,7 @@ function initGamiMallScene(_scene:Entity){
  )
 
  const SP61Teleportertorewardscenter = engine.addEntity()
-  Transform.create(SP61Teleportertorewardscenter,{
+  TransformSafeWrapper.create(SP61Teleportertorewardscenter,{
       position: Vector3.create(48, 0, 40),
       rotation: Quaternion.create(0, 0, 0, 1),
       scale: Vector3.create(1, 1, 1),
@@ -1938,6 +1989,8 @@ function initGamiMallScene(_scene:Entity){
      })
    }
  )
+
+ 
 
 
     }catch(e){

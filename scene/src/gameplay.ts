@@ -10,7 +10,7 @@ import { Color4, Vector3 } from '@dcl/sdk/math';
 import { addRepeatTrigger } from './utils4Game';
 import { CONFIG } from './config';
 import { COIN_MANAGER, RewardNotification, CoinType as CoinDataType, Coin } from './gamimall/coin';
-import { GAME_STATE, resetAllGameStateGameCoin, resetAllGameStateGameCoinRewards } from './state';
+import { GAME_STATE, GameState, resetAllGameStateGameCoin, resetAllGameStateGameCoinRewards } from './state';
 import { isNull } from './utils';
 import { Room } from 'colyseus.js';
 import { refreshUserData } from './gamimall/login-flow';
@@ -183,6 +183,12 @@ function handleRewardData(result:RewardNotification){
       const addToWallet = 
            result.rewardType !== 'mining-lack-of-funds'  
         && result.rewardType !== 'buying-lack-of-funds' 
+        && result.rewardType !== 'mining-maxed-out' 
+        && result.rewardType !== 'buying-maxed-out' 
+        && result.rewardType !== 'mining-maxed-out-calls' 
+        && result.rewardType !== 'buying-maxed-out-calls' 
+        && result.rewardType !== 'mining-maxed-out-wheel' 
+        && result.rewardType !== 'buying-maxed-out-wheel' 
         && result.rewardType !== 'mining-maxed-out-inventory'
         && result.rewardType !== 'buying-maxed-out-inventory'
 
@@ -248,8 +254,19 @@ function handleRewardData(result:RewardNotification){
           break;
         case 'buying-maxed-out-inventory' :
         case 'mining-maxed-out-inventory' :          
-        minableController.showUIMaxedOutInventory( true, result )
+          minableController.showUIMaxedOutInventory( true, result )
           break;
+        case 'buying-maxed-out' :
+        case 'mining-maxed-out' : 
+        case 'buying-maxed-out-calls' :
+        case 'mining-maxed-out-calls' :          
+          minableController.showUIMaxedOut( true, result )
+          break;
+        //TODO let controller handle speicifc message?
+        case 'buying-maxed-out-wheel' :
+        case 'mining-maxed-out-wheel' :          
+            minableController.showUIMaxedOutWheel( true, result )
+            break;
         case 'buying-lack-of-funds' :
         case 'mining-lack-of-funds' :          
           minableController.showUINotEnoughFunds( true, result )
@@ -277,6 +294,7 @@ function addRemoveTrackFeature(trackFeat: clientState.ITrackFeatureState,type:|'
         
       }else{
         //remove
+        //TODO remove from engine???
       }
   }
 }
@@ -596,7 +614,7 @@ export const onJoinActions = (
       CONFIG.speedCapOverageReduction = config?.coinCap.overageReduction
 
       if(config?.coinCap.formula){
-        log("room.msg.update.config","using remote formula","local",CONFIG.GAME_DAILY_COIN_MAX_FORMULA_CONST,"vs",config.coinCap.formula);
+        log("room.msg.update.config","using remote coinCap formula","local",CONFIG.GAME_DAILY_COIN_MAX_FORMULA_CONST,"vs",config.coinCap.formula);
         CONFIG.GAME_DAILY_COIN_MAX_FORMULA_CONST = config?.coinCap.formula
  
         //testXPandCoinCap("remoteConfig")
@@ -605,6 +623,13 @@ export const onJoinActions = (
       REGISTRY.ui.staminaPanel.updateDailyCoins(REGISTRY.ui.staminaPanel.dailyCoins)
     }else{
       if(REGISTRY.ui.staminaPanel.staminaPanel.isVisible()) REGISTRY.ui.staminaPanel.show()
+    }
+
+    if(config?.xpLeveling && config?.xpLeveling.formula){
+      log("room.msg.update.config","using remote xpLeveling formula","local",CONFIG.GAME_LEVELING_FORMULA_CONST,"vs",config.xpLeveling.formula);
+      CONFIG.GAME_LEVELING_FORMULA_CONST = config?.xpLeveling.formula
+
+      //testXPandCoinCap("remoteConfig")
     }
   })
   
@@ -693,9 +718,17 @@ export const onJoinActions = (
     //GAME_STATE.setGameEndResultMsg()
   });
 
-  
   room.onMessage("notify.levelUp", (message) => {
     log("room.msg.notify.levelUp", message);
+    if (message !== undefined) {
+      const result = (message as RewardNotification)
+      
+      handleRewardData(result)
+    }
+  })
+
+  room.onMessage("notify.stay-in-sceneReward", (message) => {
+    log("room.msg.notify.stay-in-sceneReward", message);
     if (message !== undefined) {
       const result = (message as RewardNotification)
       
@@ -720,6 +753,15 @@ export const onJoinActions = (
           handleRewardData(result)
         }
       })
+      room.onMessage("notify."+interactionType+"MaxedOut", (message) => {
+        log("room.msg.notify."+interactionType+"MaxedOut", message);
+        if (message !== undefined) {
+          const result = (message as RewardNotification)
+          
+          handleRewardData(result)
+        }
+      })
+      
 
       room.onMessage("notify."+interactionType+"MaxedOutInventory", (message) => {
         log("room.msg.notify."+interactionType+"MaxedOutInventory", message);
@@ -837,6 +879,7 @@ export const colyseusReConnect = () => {
         onJoinActions(room, "reconnect");
       })
       .catch((err) => {
+        GAME_STATE.setGameConnected("disconnected");
         log("ERROR","colyseusReConnect",err)
       });
   }

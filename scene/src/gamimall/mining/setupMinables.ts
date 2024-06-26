@@ -1,4 +1,4 @@
-import { Vector3 } from "@dcl/sdk/math";
+import { Quaternion, Vector3 } from "@dcl/sdk/math";
 import { CONFIG, SCENE_TYPE_GAMIMALL, initConfig } from "../../config";
 import * as serverStateSpec from "../../gamimall/state/MyRoomStateSpec";
 import { initPickAxeManager } from "./pickAxeMgr";
@@ -22,6 +22,54 @@ export let COIN_GAME_FEATURE_DEF:serverStateSpec.TrackFeatureDef
   }
   COIN_GAME_FEATURE_DEF = {
     buyables:[ 
+      {
+        id: 'buyable.item.lucky.wheel',
+        name: "Lucky Wheel",
+        enabled: true && CONFIG.GAME_BUYABLES_ENABLED,
+        type: 'buyable.item.lucky.wheel',//tree/rock
+        rewards:[
+          //can only send these values to a server with debug enabled
+          //we cannot let client to send these values as it can be hacked
+          { type:"VirtualCurrency","id":CONFIG.GAME_COIN_TYPE_GC,amount: 0 },
+          { type:"VirtualCurrency","id":CONFIG.GAME_COIN_TYPE_MC,amount: 1 } ,
+        ],//RewardData[]
+        purchaseDelay:10000, //time mining to take 
+        cost:[
+          //can only send these values to a server with debug enabled
+          //we cannot let client to send these values as it can be hacked
+          { type:"VirtualCurrency","id":CONFIG.GAME_COIN_TYPE_GC,amount: 1 },
+          { type:"VirtualCurrency","id":CONFIG.GAME_COIN_TYPE_MC,amount: 1 },
+          //{ type:"CatalogItem","id":"Minables.v1",amount: 0 },
+        ],//CostData[]
+        ui:{ //configure stuff visible for scene
+          minableModel:{src:"models/fortunewheel.glb"},
+          description:"Spin the lucky wheel once a day for your \nchance to win prizes",
+          descriptionTitle:"Information",
+          portrait:{src:"images/Fortunewheal.png",width:503,height:503},  
+          hoverText:"Spin the Lucky Wheel",
+          modalClaimButtonLabel: "Spin!"//
+          //toolDistanceOffCenterTarget:-1.8
+          //toolModel:"",
+          //toolOffset:Vector3.create(1,0,1)
+        },
+        //triggerSize?: Vector3State 
+        //health:HealthDataState
+        //activateDistance?:number //distance to activate
+        spawnDef:{
+          concurrentMax:1,
+          expireTime:undefined, //-1 or undefined = never expire
+          respawnTime:undefined, //-1 or undefined = immediate respawn
+          coolDownTime: 1000, //-1 or undefined = time to cooldown between expire/hit
+          zones:[
+            {
+              //because not parented had to flip x,z around to get it to work
+              position: Vector3.create(40, 0, 48)
+              ,scale:Vector3.create(1,1,1)
+              ,rotation:Quaternion.fromEulerDegrees(0,270,0)
+            }
+          ] 
+        } 
+      },//end buyable lucky wheel
       {
       id: 'buyable.item.bronze.shoe',
       name: "MetaMine Pass Key",
@@ -395,7 +443,7 @@ export let COIN_GAME_FEATURE_DEF:serverStateSpec.TrackFeatureDef
                     ],//CostData[]
                     ui:{ //configure stuff visible for scene
                       minableModel:{src:"models/Rewards/CoinsBagTicket.glb"},
-                      description:"Enter daily raffle, 5 winners will get a ticket that\n you can used to claim a coins bag v2(BETA) ",
+                      description:"Enter daily raffle, 3 winners will get a ticket that\n you can used to claim a coins bag v2(BETA) ",
                       descriptionTitle:"Information",
                       portrait:{src:"images/ui/RaffleCoinBag.png",width:500,height:500},  
                       hoverText:"Buy Raffle Entry for Coin Bag V2 (BETA)",
@@ -614,7 +662,7 @@ export let COIN_GAME_FEATURE_DEF:serverStateSpec.TrackFeatureDef
           { type:"VirtualCurrency","id":CONFIG.GAME_COIN_TYPE_GC,amount: 2 },
           { type:"VirtualCurrency","id":CONFIG.GAME_COIN_TYPE_MC,amount: 2 } 
         ],//RewardData[]
-        purchaseDelay:0, //time mining to take
+        purchaseDelay:500, //time mining to take
         cost:[
           { type:"VirtualCurrency","id":CONFIG.GAME_COIN_TYPE_GC,amount: 1 },
           { type:"VirtualCurrency","id":CONFIG.GAME_COIN_TYPE_MC,amount: 0 } 
@@ -643,7 +691,7 @@ export let COIN_GAME_FEATURE_DEF:serverStateSpec.TrackFeatureDef
         //activateDistance?:number //distance to activate
   
           spawnDef:{
-            concurrentMax:2,
+            concurrentMax:3,
             expireTime:[60000,60000], //-1 or undefined = never expire
             respawnTime:[10000,50000], //-1 or undefined = immediate respawn
             coolDownTime: 1000, //-1 or undefined = time to cooldown between expire/hit

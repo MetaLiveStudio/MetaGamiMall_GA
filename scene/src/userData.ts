@@ -3,14 +3,14 @@
 
 import { EnvironmentRealm, getCurrentRealm } from "~system/EnvironmentApi"
 import { UserData } from "~system/Players"
-import { RealmInfo, getRealm } from "~system/Runtime"
+import { PBRealmInfo, getRealm } from "~system/Runtime"
 import { GetUserDataResponse, getUserData } from "~system/UserIdentity"
 import { GAME_STATE } from "./state"
 import { log } from "./back-ports/backPorts"
 
 //TODO MOVE TO GAME STATE
 let userData: UserData
-let playerRealm: RealmInfo//EnvironmentRealm
+let playerRealm: PBRealmInfo//EnvironmentRealm
 
 export function initUserData(){
   
@@ -37,7 +37,7 @@ export function getAndSetUserDataIfNullNoWait(){
 export function getUserDataFromLocal():UserData|null {
   return userData
 }
-export function getRealmDataFromLocal():RealmInfo|null {
+export function getRealmDataFromLocal():PBRealmInfo|null {
   return playerRealm
 }
 

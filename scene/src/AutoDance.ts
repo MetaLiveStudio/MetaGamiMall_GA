@@ -3,6 +3,7 @@ import { engine, Transform, MeshRenderer, VisibilityComponent } from '@dcl/sdk/e
 import { Vector3 } from '@dcl/sdk/math'
 import { triggerEmote, triggerSceneEmote } from '~system/RestrictedActions'
 import { cameraOnlyTrigger } from './sdk7-utils/cameraOnlyTrigger'
+import { TransformSafeWrapper } from './back-ports/workarounds'
 
 const basicEmotesToTrigger = [
   //'robot',
@@ -17,7 +18,7 @@ let isDancing = false // Flag to track if the player is dancing
 
 export function createBasicDanceArea(position: Vector3, scale: Vector3) {
   const myEntity = engine.addEntity()
-  Transform.create(myEntity, {
+  TransformSafeWrapper.create(myEntity, {
     position: position,
     scale: scale
   })

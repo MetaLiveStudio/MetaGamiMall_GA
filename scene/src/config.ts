@@ -8,6 +8,7 @@ import { getRealm } from '~system/Runtime';
   
 export const SCENE_TYPE_GAMIMALL = "gamimall"
 export const SCENE_TYPE_UNIFIED_SCENE = "unified-scene"
+export const SCENE_TYPE_PX = "px"
 
 type SceneType = 'gamimall'|'unified-scene'|'px'
 let SCENE_TYPE:SceneType = SCENE_TYPE_GAMIMALL//SCENE_TYPE_UNIFIED_SCENE//SCENE_TYPE_GAMIMALL
@@ -78,10 +79,10 @@ export const GAME_RACING_BP_NI_VC_ENABLED_VALS: Record<string, boolean> = {
 };
    
 export const GAME_LEVELING_FORMULA_CONST_VALS: Record<string, LevelingFormulaConfig> = {
-  local: {x:.05, y:2, min:0,max:100,levelOffset:0},//{x:.05, y:2, min:0,max:100},
-  dev: {x:.05, y:2, min:0,max:100,levelOffset:0},//{x:.05, y:2, min:0,max:100}, //TESTING ONLY using much much lower level up rules
-  stg: {x:.05, y:2, min:0,max:100,levelOffset:0},
-  prd: {x:.05, y:2, min:0,max:100,levelOffset:0}
+  local: {x:.05, y:2, min:0,max:120,levelOffset:0},//{x:.05, y:2, min:0,max:100},
+  dev: {x:.05, y:2, min:0,max:120,levelOffset:0},//{x:.05, y:2, min:0,max:100}, //TESTING ONLY using much much lower level up rules
+  stg: {x:.05, y:2, min:0,max:120,levelOffset:0},
+  prd: {x:.05, y:2, min:0,max:120,levelOffset:0}
 };
 
 
@@ -264,6 +265,16 @@ export class Config {
     COINS:{
       MONTHLY:{
         name:"coinsCollectedMonthly",
+        defaultPageSize:100
+      }
+    },
+    POINTS:{
+      MONTHLY:{
+        name:"pointsEarnedMonthly",
+        defaultPageSize:100
+      },
+      EPOCH:{
+        name:"pointsEarnedEpoch",
         defaultPageSize:100
       }
     }

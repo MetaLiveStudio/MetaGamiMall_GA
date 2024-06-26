@@ -29,19 +29,23 @@ export class ConnectSystem  {
   connected: boolean = false
   isPreview: boolean = false
   checking: boolean = false
+  lastConnectTryTime: number = -1
+
   async update(dt: number) {
     const METHOD_NAME = "update"
 
-    const playerPos = Transform.getOrNull(engine.PlayerEntity)
-    if(this.checkParcleInterval.update(dt) && playerPos !== null){
-      const parcelVec =  Vector3.floor(Vector3.divide(playerPos.position,PARCEL_16_METERS))//Camera.instance.worldPosition.divide(PARCEL_16_METERS).floor()
-      
-      if(!isNull(PARCELS_PX_DISABLED[parcelVec.x.toString()]?.[parcelVec.z.toString()])){
-        log(CLASS_NAME,METHOD_NAME,"px disabled for this parcel",parcelVec)
-        setPxEnabled(false)
-        return;
-      }else{
-        setPxEnabled(true)
+    if(CONFIG.SCENE_TYPE === "px"){
+      const playerPos = Transform.getOrNull(engine.PlayerEntity)
+      if(this.checkParcleInterval.update(dt) && playerPos !== null){
+        const parcelVec =  Vector3.floor(Vector3.divide(playerPos.position,PARCEL_16_METERS))//Camera.instance.worldPosition.divide(PARCEL_16_METERS).floor()
+        
+        if(!isNull(PARCELS_PX_DISABLED[parcelVec.x.toString()]?.[parcelVec.z.toString()])){
+          log(CLASS_NAME,METHOD_NAME,"PX disabled for this parcel","scene_type is",CONFIG.SCENE_TYPE,parcelVec)
+          setPxEnabled(false)
+          return;
+        }else{
+          setPxEnabled(true)
+        }
       }
     }
 
@@ -60,6 +64,19 @@ export class ConnectSystem  {
       log(CLASS_NAME,METHOD_NAME,"px not enabled, skipping","GAME_STATE.gameConnected ",GAME_STATE.gameConnected ,"connectRetryCount",GAME_STATE.connectRetryCount,"CONFIG.GAME_CONNECT_RETRY_MAX",CONFIG.GAME_CONNECT_RETRY_MAX)
       return
     }
+    const lastConnectRetryDelta = this.lastConnectTryTime > 0 ? Date.now() - this.lastConnectTryTime: -1
+    if(lastConnectRetryDelta > 0 && lastConnectRetryDelta > CONFIG.GAME_CONNECT_RESTART_RETRY_INTERVAL){
+      //check if has not tried in a while let it try again
+      log(CLASS_NAME,METHOD_NAME,"connect retry has not been attempted in a while, LETS TRY AGAIN","lastConnectTryTime",this.lastConnectTryTime,"lastConnectRetryDelta",lastConnectRetryDelta,"connectRetryCount",GAME_STATE.connectRetryCount,"CONFIG.GAME_CONNECT_RETRY_MAX",CONFIG.GAME_CONNECT_RETRY_MAX)
+      
+      GAME_STATE.connectRetryCount=0//reset counter
+    }else{
+      if(GAME_STATE.connectRetryCount > CONFIG.GAME_CONNECT_RETRY_MAX){
+        log(CLASS_NAME,METHOD_NAME,"connect retry count hit max, will not try again","lastConnectTryTime",this.lastConnectTryTime,"lastConnectRetryDelta",lastConnectRetryDelta,"connectRetryCount",GAME_STATE.connectRetryCount,"CONFIG.GAME_CONNECT_RETRY_MAX",CONFIG.GAME_CONNECT_RETRY_MAX)
+        showConnectingEnded(false)
+        return;
+      }
+    }
  
     if(GAME_STATE.connectRetryCount > CONFIG.GAME_CONNECT_RETRY_MAX){
       log(CLASS_NAME,METHOD_NAME,"connect retry count hit max, will not try again","connectRetryCount",GAME_STATE.connectRetryCount,"CONFIG.GAME_CONNECT_RETRY_MAX",CONFIG.GAME_CONNECT_RETRY_MAX)
@@ -69,17 +86,17 @@ export class ConnectSystem  {
     if(isNull(GAME_STATE.playerState.playFabLoginResult)){
       log(CLASS_NAME,METHOD_NAME,"not logged in yet",GAME_STATE.playerState.playFabLoginResult)
       return;
-    }
+    } 
     
     if( this.checking ){
       log(CLASS_NAME,METHOD_NAME,"mid check, skip",this.checking,GAME_STATE.gameConnected)
       return;
     }
-    if( GAME_STATE.gameConnected === 'connecting' || GAME_STATE.gameConnected === 'disconnecting' ){
+    if( GAME_STATE.gameConnected === 'connecting' || GAME_STATE.gameConnected === 'disconnecting' ){//} || GAME_STATE.gameConnected === 'reconnecting' ){
       log(CLASS_NAME,METHOD_NAME,"mid check, skip",this.checking,GAME_STATE.gameConnected)
       return;
     }
-    if( GAME_STATE.gameRoom !== null && GAME_STATE.gameRoom !== undefined ){
+    if( this.connected && GAME_STATE.gameRoom !== null && GAME_STATE.gameRoom !== undefined ){
       log(CLASS_NAME,METHOD_NAME,"currently connected to " , GAME_STATE.gameRoom.name, GAME_STATE.gameRoomData !== undefined ? GAME_STATE.gameRoomData.id : "???" )
       return;
     }
@@ -99,6 +116,7 @@ export class ConnectSystem  {
         
       showConnectingStarted()
       GAME_STATE.connectRetryCount++
+      this.lastConnectTryTime = Date.now()
  
       if(realm.realmInfo !== undefined ) currentRealm = realm.realmInfo.realmName
       //currentRoom = realm.room
