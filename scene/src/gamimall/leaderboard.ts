@@ -374,6 +374,18 @@ export function createLeaderBoardUI(){
   );
 
 
+  const pointsMonthlyLeaderboard = new LeaderBoardPrompt(
+    "Monthly Points Leaderboard",
+    leaderBoardPlaceHolderText,
+    "OK",
+    () => {},
+    {
+      //textPositionY: -30,
+      //modalHeight: 500,
+      height: LEADERBOARD_PROMPT_HEIGHT,
+      width: LEADERBOARD_PROMPT_WIDTH,
+    }
+  );
   
 
   const levelLeaderboard = new LeaderBoardPrompt(
@@ -429,16 +441,23 @@ export function createLeaderBoardUI(){
     //or what is is in players stat menu wont match server for rankings
     monthlyLeaderboard.show() 
   }
+  REGISTRY.ui.openLeaderboardPointsMonthly = ()=> { 
+    //TODO on open refresh?  trick is must save and refresh
+    //or what is is in players stat menu wont match server for rankings
+    pointsMonthlyLeaderboard.show() 
+  }
+  
   REGISTRY.ui.openLeaderboardLevelEpoch = ()=> { levelLeaderboard.show() }
   REGISTRY.ui.openRaffleCoinBagEntries = ()=> { coinBagRaffleLeaderboard.show() }
 
   const LEADERBOARD_REG = getLeaderboardRegistry()
   LEADERBOARD_REG.hourly.push(hourlyLeaderBoard)
   LEADERBOARD_REG.weekly.push(weeklyLeaderboard)
-  LEADERBOARD_REG.monthly.push(monthlyLeaderboard)
+  //LEADERBOARD_REG.monthly.push(monthlyLeaderboard)
   LEADERBOARD_REG.daily.push(dailyLeaderboard)
   LEADERBOARD_REG.epoch.push(levelLeaderboard)
   LEADERBOARD_REG.raffleCoinBag.push(coinBagRaffleLeaderboard)
+  LEADERBOARD_REG.pointsMonthly.push(pointsMonthlyLeaderboard)
 
 
   GAME_STATE.leaderboardState.addChangeListener(
@@ -505,8 +524,23 @@ export function createLeaderBoardUI(){
           leaderArr = newVal.Leaderboard;
           maxResults = CONFIG.GAME_LEADEBOARD_RAFFLE_MAX_RESULTS
           break;
+        } else if (
+          leaderBoardConfig.pointsMonthly() &&
+          key == leaderBoardConfig.prefix + "pointsMonthlyLeaderboard"
+        ) {
+          leaderBoardItem = leaderBoardConfig.pointsMonthly();
+          leaderArr = newVal.Leaderboard;
+          maxResults = CONFIG.GAME_LEADERBOARDS.POINTS.MONTHLY.defaultPageSize
+          break;
+        } else if (
+          leaderBoardConfig.pointsEpoch() &&
+          key == leaderBoardConfig.prefix + "pointsEpochLeaderboard"
+        ) {
+          leaderBoardItem = leaderBoardConfig.pointsEpoch();
+          leaderArr = newVal.Leaderboard;
+          maxResults = CONFIG.GAME_LEADERBOARDS.POINTS.EPOCH.defaultPageSize
+          break;
         }
-        
       }
 
       updateLeaderBoard(key,leaderBoardItem,leaderArr,maxResults)
@@ -545,7 +579,10 @@ export function createLeaderBoardUI(){
             let coinCollectingWeeklyStat: PlayFabClientModels.StatisticValue;
             let coinCollectingMonthyStat: PlayFabClientModels.StatisticValue;
             let coinCollectingHourlyStat: PlayFabClientModels.StatisticValue;
-
+            let pointsEarnedMonthtlyStat: PlayFabClientModels.StatisticValue;
+            let pointsEarnedEpochStat: PlayFabClientModels.StatisticValue;
+            
+            
             let playerFabUserInfo:
               | PlayFabClientModels.GetPlayerCombinedInfoResultPayload
               | null
@@ -586,6 +623,16 @@ export function createLeaderBoardUI(){
                     leaderBoardConfig.prefix + CONFIG.GAME_LEADERBOARDS.COINS.MONTHLY.name
                   ) {
                     coinCollectingMonthyStat = stat;
+                  } else if (
+                    stat.StatisticName ==
+                    leaderBoardConfig.prefix + CONFIG.GAME_LEADERBOARDS.POINTS.MONTHLY.name
+                  ) {
+                    pointsEarnedMonthtlyStat = stat;
+                  } else if (
+                    stat.StatisticName ==
+                    leaderBoardConfig.prefix + CONFIG.GAME_LEADERBOARDS.POINTS.EPOCH.name
+                  ) {
+                    pointsEarnedEpochStat = stat;
                   }
                   
                 }
@@ -647,6 +694,22 @@ export function createLeaderBoardUI(){
                   DisplayName: playerName + "",
                   Position: -1,
                   StatValue:coinCollectingMonthyStat! ? coinCollectingMonthyStat.Value : -1,
+                })
+              }));
+
+              leaderBoardConfig.pointsMonthly()?.forEach((p=>{
+                p.setCurrentPlayer({
+                  DisplayName: playerName + "",
+                  Position: -1,
+                  StatValue:pointsEarnedMonthtlyStat! ? pointsEarnedMonthtlyStat.Value : -1,
+                })
+              }));
+
+              leaderBoardConfig.pointsEpoch()?.forEach((p=>{
+                p.setCurrentPlayer({
+                  DisplayName: playerName + "",
+                  Position: -1,
+                  StatValue:pointsEarnedEpochStat! ? pointsEarnedEpochStat.Value : -1,
                 })
               }));
             }

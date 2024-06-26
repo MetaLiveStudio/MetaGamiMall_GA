@@ -38,6 +38,7 @@ import { onCanvasInfoChangedObservable } from './ui_engineInfo'
 import { teleportTo } from '~system/RestrictedActions'
 import { getAndSetRealmDataIfNull } from '../userData'
 import { leaderBoardsConfigs } from '../gamimall/leaderboard-utils'
+import { applyUIScaling } from './ui-hud-debugger'
 
 const MASTER_SCALE = 1.2;
 
@@ -76,7 +77,7 @@ const STAMINA_PROMPT_MARGIN_LEFT = [-5,-20]
 
 const labelFont = [26,42]
 const statsFont = [18,31]
-const STATS_BOTTOM_ROW_Y = [-28,-55]
+const STATS_BOTTOM_ROW_Y = [-28*.65,-55 * .65]
 
 const BAR_Y_BASE = [80,140]
 const BAR_X_OFFSET = [-100,-200]
@@ -259,21 +260,21 @@ export class StaminaPanel implements Modal {
     //health.show() 
 
 
-    this.staminaCoins.xPosition = SCREEN_TYPE == SCREEN_STANDARD ? -110 :-180
+    this.staminaCoins.xPosition = SCREEN_TYPE == SCREEN_STANDARD ? -110 * 1.3 :-180 * 1.3
     this.staminaCoins.yPosition = STATS_BOTTOM_ROW_Y[SCREEN_TYPE]
     this.staminaCoins.size = statsFont[SCREEN_TYPE] 
 
     log("staminaPanel","applyUIScaling",this.staminaCoins.size,statsFont[SCREEN_TYPE] ,this.screenType)
-    this.staminaDollars.xPosition = SCREEN_TYPE == SCREEN_STANDARD ? 10 :20
+    this.staminaDollars.xPosition = SCREEN_TYPE == SCREEN_STANDARD ? 10 * -.7 :20 * -.7
     this.staminaDollars.yPosition = STATS_BOTTOM_ROW_Y[SCREEN_TYPE]
     this.staminaDollars.size = statsFont[SCREEN_TYPE]
 
-    this.StaminaTime.xPosition = SCREEN_TYPE == SCREEN_STANDARD ? 150 : 250
+    this.StaminaTime.xPosition = SCREEN_TYPE == SCREEN_STANDARD ? 150 * .75 : 250 * .75
     this.StaminaTime.yPosition = STATS_BOTTOM_ROW_Y[SCREEN_TYPE]
     this.StaminaTime.size = statsFont[SCREEN_TYPE]
 
-    this.staminaText.xPosition = SCREEN_TYPE == SCREEN_STANDARD ? -80 : -120
-    this.staminaText.yPosition = SCREEN_TYPE == SCREEN_STANDARD ? 60 : 80
+    this.staminaText.xPosition = SCREEN_TYPE == SCREEN_STANDARD ? -80 * 2.3 : -120 * 2.5
+    this.staminaText.yPosition = SCREEN_TYPE == SCREEN_STANDARD ? 60 * 1.3 : 80 * 1.5
     this.staminaText.size = labelFont[SCREEN_TYPE]
     //this.staminaText.textElement. = SCREEN_TYPE == SCREEN_STANDARD ? 15 : 26 
     //REQUIRED for workaround to set color to diff values.  If color is set it will also let font size work. this has to be a bug
@@ -284,8 +285,8 @@ export class StaminaPanel implements Modal {
     } 
     
     
-    this.staminaMultiplier.xPosition = SCREEN_TYPE == SCREEN_STANDARD ? 110 : 180
-    this.staminaMultiplier.yPosition = SCREEN_TYPE == SCREEN_STANDARD ? 48 : 65
+    this.staminaMultiplier.xPosition = SCREEN_TYPE == SCREEN_STANDARD ? 110 * .7 : 180 * .7
+    this.staminaMultiplier.yPosition = SCREEN_TYPE == SCREEN_STANDARD ? 48 * 1.3 : 65 * 1.3
     this.staminaMultiplier.size = statsFont[SCREEN_TYPE]
   }
   show(): void {
@@ -481,10 +482,10 @@ export class GameToolsLowerScreen implements Modal{
         }
       ) 
       this.monthlyLeaderBoardBtn.imageElement.onMouseDown = ()=>{
-        if(REGISTRY.ui.openLeaderboardMonthly){
-          REGISTRY.ui.openLeaderboardMonthly()
+        if(REGISTRY.ui.openLeaderboardPointsMonthly){
+          REGISTRY.ui.openLeaderboardPointsMonthly()
         }else{ 
-          log("ShowMonthlyLeaderboardPanel","ERROR!!! REGISTRY.ui.openLeaderboardMonthly is undefined")
+          log("ShowMonthlyLeaderboardPanel","ERROR!!! REGISTRY.ui.openLeaderboardPointsMonthly is undefined")
         }
       }
     }
@@ -1234,8 +1235,8 @@ export class ShowMonthlyLeaderboardPanel extends TogglePanelButton {
         log("clicked ShowMonthlyLeaderboardPanel ");
         //open modal, fetch data
         //TODO is this needed for PX
-        if(REGISTRY.ui.openLeaderboardMonthly){
-          REGISTRY.ui.openLeaderboardMonthly()
+        if(REGISTRY.ui.openLeaderboardPointsMonthly){
+          REGISTRY.ui.openLeaderboardPointsMonthly()
         }else{ 
           log("ShowMonthlyLeaderboardPanel","ERROR!!! REGISTRY.ui.openLeaderboardMonthly is undefined")
         }
@@ -1331,6 +1332,7 @@ export function initUIBGModals(){
     
 
     if(scale > 1){
+      applyUIScaling(SCREEN_RETINA)
       staminaPanel.screenType = SCREEN_RETINA
       gameTools.setScreenType(SCREEN_RETINA)
       leaderBoardsConfigs.forEach((config)=>{
@@ -1339,8 +1341,11 @@ export function initUIBGModals(){
         config.hourly().forEach((item)=>{ item.setScreenType(SCREEN_RETINA) })
         config.monthly().forEach((item)=>{ item.setScreenType(SCREEN_RETINA) })
         config.raffleCoinBag().forEach((item)=>{ item.setScreenType(SCREEN_RETINA) })
+        config.pointsMonthly().forEach((item)=>{ item.setScreenType(SCREEN_RETINA) })
+        config.pointsEpoch().forEach((item)=>{ item.setScreenType(SCREEN_RETINA) })
       })
     }else{
+      applyUIScaling(SCREEN_STANDARD)
       staminaPanel.screenType = SCREEN_STANDARD
       gameTools.setScreenType(SCREEN_STANDARD )
       leaderBoardsConfigs.forEach((config)=>{
@@ -1349,6 +1354,8 @@ export function initUIBGModals(){
         config.hourly().forEach((item)=>{ item.setScreenType(SCREEN_STANDARD) })
         config.monthly().forEach((item)=>{ item.setScreenType(SCREEN_STANDARD) })
         config.raffleCoinBag().forEach((item)=>{ item.setScreenType(SCREEN_STANDARD) })
+        config.pointsMonthly().forEach((item)=>{ item.setScreenType(SCREEN_STANDARD) })
+        config.pointsEpoch().forEach((item)=>{ item.setScreenType(SCREEN_STANDARD) })
       })
     }
     log("staminaPanel.onCanvasInfoChangedObservable",info,"scale",scale,"screenType",staminaPanel.screenType)
@@ -1360,6 +1367,9 @@ export function initUIBGModals(){
       config.hourly().forEach((item)=>{ item.applyUIScaling() })
       config.monthly().forEach((item)=>{ item.applyUIScaling() })
       config.raffleCoinBag().forEach((item)=>{ item.applyUIScaling() })
+
+      config.pointsMonthly().forEach((item)=>{ item.applyUIScaling() })
+      config.pointsEpoch().forEach((item)=>{ item.applyUIScaling() })
     })
     staminaPanel.applyUIScaling() 
     gameTools.applyUIScaling() 

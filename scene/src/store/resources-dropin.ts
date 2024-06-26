@@ -79,7 +79,7 @@ export function initResourceDropIns(_scene:Entity) {
 
     wearableArr.push({
       sceneId: "gamimall",
-      contract: "0x1e5c7f7bd7bc0cf32f9739a31e6930ae09f02b59",
+      contract: "0x05267a0e08c9b756a000362d2b2c7e3ce29e740d",
       itemId: "0",
       options: {
         type: "2D-UI",
@@ -87,7 +87,7 @@ export function initResourceDropIns(_scene:Entity) {
           parent: _scene,
           entityName: "entL1",
           shapeName: "models/Rewards/rewardL1.glb",
-          hoverText: "Claim a SX Bet Wearable",
+          hoverText: "Claim a Natcats Wearable",
           transform: transformArgs,
           motionData: {
             rotationVelocity: ROTATE_VELOCITY_OFF,
@@ -98,16 +98,16 @@ export function initResourceDropIns(_scene:Entity) {
         nftUIData: {
           style: "version20Modal",
           type: "MetaDoge",
-          image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x1e5c7f7bd7bc0cf32f9739a31e6930ae09f02b59:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+          image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x05267a0e08c9b756a000362d2b2c7e3ce29e740d:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
           //imageSection: {  },
           imageWidth: 1024,
           imageHeight: 1024,
           detailsFontSize: 12, 
           
-          detailsInfo: "4% GamiMall Coin bonus, 35 USD  \n free credits in SX Bet",
+          detailsInfo: "8% Seasonal Coin bonus \n Raffle Ticket for Natfishes NFT ",
           directLink: "https://market.decentraland.org/",
           directLinkFontSize: 10,
-          title: "DAOAlchemist JetPack",
+          title: "Natcats Helmet",
           detailsTitle: "HIGHLIGHTS!",
           cost: [
             {
@@ -125,10 +125,10 @@ export function initResourceDropIns(_scene:Entity) {
           ],
           showStockQty:true,//defaults to true
           qtyCurrent: -2,
-          qtyTotal:100,
+          qtyTotal:60,
           claimWindowEnabled:true,//defaults to true
           checkLatestMarketPrices: true,
-          claimStartMS: Date.UTC(2023,8,15,15,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+          claimStartMS: Date.UTC(2024,5,1,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
           claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
         },
       },
@@ -149,7 +149,7 @@ export function initResourceDropIns(_scene:Entity) {
   
       wearableArr.push({
         sceneId: "gamimall",
-        contract: "0xe8420d97a71f29a682fb573bc4ee82a152ec93cf",
+        contract: "0x42ba008eb6b2bcf68fb18b1f16e8b01b1bf006eb",
         itemId: "0",
         options: {
           type: "2D-UI",
@@ -157,7 +157,7 @@ export function initResourceDropIns(_scene:Entity) {
             parent: _scene,
             entityName: "entL2",
             shapeName: "models/Rewards/rewardL2.glb",
-            hoverText: "Claim a MetaViu Wearable",
+            hoverText: "Claim a Phoenix Hat",
             transform: transformArgs,
             motionData: {
               rotationVelocity: ROTATE_VELOCITY_OFF,
@@ -168,16 +168,16 @@ export function initResourceDropIns(_scene:Entity) {
           nftUIData: {
             style: "version20Modal",
             type: "MetaDoge",
-            image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0xe8420d97a71f29a682fb573bc4ee82a152ec93cf:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+            image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x42ba008eb6b2bcf68fb18b1f16e8b01b1bf006eb:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
             //imageSection: {  },
             imageWidth: 1024,
             imageHeight: 1024,
             detailsFontSize: 12, 
             
-            detailsInfo: "4% GamiMall Coin bonus, a total  \n  500 USD raffle for 10 people",
+            detailsInfo: "8% GamiMall Coin bonus",
             directLink: "https://market.decentraland.org/",
             directLinkFontSize: 10,
-            title: "DAOAlchemist Trouser",
+            title: "Phoenix Hat",
             detailsTitle: "HIGHLIGHTS!",
             cost: [
               {
@@ -195,10 +195,10 @@ export function initResourceDropIns(_scene:Entity) {
             ],
             showStockQty:true,//defaults to true
             qtyCurrent: -2,
-            qtyTotal:90,
+            qtyTotal:60,
             claimWindowEnabled:true,//defaults to true
             checkLatestMarketPrices: true,
-            claimStartMS:  Date.UTC(2023,8,15,15,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+            claimStartMS:  Date.UTC(2024,5,1,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
             claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
           },
         },
@@ -219,7 +219,7 @@ if (true) {
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0x83d431a9a5084bf26ef4e1081e26fbe90798aa3a",
+    contract: "0x7853ba7ee91ae884cfcf55e86416d10a6b4c259e",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -227,7 +227,7 @@ if (true) {
         parent: _scene,
         entityName: "entL3",
         shapeName: "models/Rewards/rewardL3.glb",
-        hoverText: "Claim a Soul Magic Wearable",
+        hoverText: "Claim a Mekablast Gauntlet",
         transform: transformArgs,
 
         lazyLoading:{
@@ -255,16 +255,16 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x83d431a9a5084bf26ef4e1081e26fbe90798aa3a:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x7853ba7ee91ae884cfcf55e86416d10a6b4c259e:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
         imageWidth: 1024,
         imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "2% GamiMall Coin bonus \n Critical material in Soul Magic",
+        detailsInfo: "4.5% GamiMall Seasonal Coin bonus \n Smart Wearable",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "Soul Magic StarDust",
+        title: "Mekablast Gauntlet",
         detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
@@ -283,9 +283,9 @@ if (true) {
         checkLatestMarketPrices:true,
         showStockQty:true,//defaults to true
         qtyCurrent: -2,
-        qtyTotal: 60,
+        qtyTotal: 65,
         claimWindowEnabled:true,//defaults to true
-        claimStartMS:  Date.UTC(2023,8,15,14,30,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        claimStartMS:  Date.UTC(2024,5,1,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
@@ -347,7 +347,7 @@ if (true) {
         imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "2% GamiMall Coin bonus \n Raffle tickets for 10 VIPE heros",
+        detailsInfo: "4.5% GamiMall Coin bonus \n Raffle tickets for 1 VIPE heros",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
         title: "VIPE Jacket",
@@ -372,7 +372,7 @@ if (true) {
         qtyTotal: 100,
         claimWindowEnabled:true,//defaults to true
         checkLatestMarketPrices: true,
-        claimStartMS:  Date.UTC(2023,8,15,14,30,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        claimStartMS:  Date.UTC(2024,5,1,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
@@ -393,7 +393,7 @@ if (true) {
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0x43dd2ba27cc0ff7b7fe014b0f2c2147ba7b72e9d",
+    contract: "0x35a88018309c9ea212b8c152c11b2a08cd229728",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -401,7 +401,7 @@ if (true) {
         parent: _scene,
         entityName: "entL5",
         shapeName: "models/Rewards/rewardL5.glb",
-        hoverText: "Claim a MUA Wearable",
+        hoverText: "Claim a Pooka Mask Full Skin",
         transform: transformArgs,
         lazyLoading:{
           enabled: true,
@@ -428,16 +428,16 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x43dd2ba27cc0ff7b7fe014b0f2c2147ba7b72e9d:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x35a88018309c9ea212b8c152c11b2a08cd229728:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
         imageWidth: 1024,
         imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "3% GamiMall Coin bonus \n total 50 USD raffle",
+        detailsInfo: "4.5% GamiMall Coin bonus \n Smart Wearable",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "Cyber Tiara",
+        title: "Pooka Mask Full Skin",
         detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
@@ -456,9 +456,9 @@ if (true) {
         checkLatestMarketPrices:true,
         showStockQty:true,//defaults to true
         qtyCurrent: -2,
-        qtyTotal: 50,
+        qtyTotal: 6,
         claimWindowEnabled:true,//defaults to true
-        claimStartMS:  Date.UTC(2023,8,15,14,30,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        claimStartMS:  Date.UTC(2024,5,1,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
@@ -479,7 +479,7 @@ if (true) {
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0x89182938e2051d0e4d03603fdbc5deb2ebefa814",
+    contract: "0xc84fa1cea29ca3403cbe0dedf2616ee2133a5aa0",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -487,7 +487,7 @@ if (true) {
         parent: _scene,
         entityName: "entL6",
         shapeName: "models/Rewards/rewardL6.glb",
-        hoverText: "Claim a MRDingia Builds Wearable",
+        hoverText: "Claim a Soul Magic Phoenix Robe",
         transform: transformArgs,
         lazyLoading:{
           enabled: true,
@@ -514,16 +514,16 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x89182938e2051d0e4d03603fdbc5deb2ebefa814:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0xc84fa1cea29ca3403cbe0dedf2616ee2133a5aa0:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
         imageWidth: 1024,
         imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "3% GamiMall Coin Bonus \n total 50 USD raffle",
+        detailsInfo: "4.5% GamiMall Coin Bonus+Game Utility",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "Dhingia Bot Buddy",
+        title: "Phoenix Robe",
         detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
@@ -541,10 +541,10 @@ if (true) {
         ],
         showStockQty:true,//defaults to true
         qtyCurrent: -2,
-        qtyTotal: 70,
+        qtyTotal: 5,
         claimWindowEnabled:true,//defaults to true
         checkLatestMarketPrices: true,
-        claimStartMS:  Date.UTC(2023,8,15,14,30,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        claimStartMS:  Date.UTC(2024,5,1,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
@@ -565,7 +565,7 @@ if (true) {
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0x498857ed6659791c204b07fc4c3527692f92e119",
+    contract: "0xf08a9b150500595f160c75ed3fa284d7335ead6a",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -573,7 +573,7 @@ if (true) {
         parent: _scene,
         entityName: "entR1",
         shapeName: "models/Rewards/rewardR1.glb",
-        hoverText: "Claim a Decentral Games Wearable ",
+        hoverText: "Claim a DG Frog Eye Patch",
         transform: transformArgs,
         motionData: {
           rotationVelocity: ROTATE_VELOCITY_OFF,
@@ -584,16 +584,16 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x498857ed6659791c204b07fc4c3527692f92e119:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0xf08a9b150500595f160c75ed3fa284d7335ead6a:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
         imageWidth: 1024,
         imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "4% GamiMall Coin bonus \n SNG wearbale with 15 shines",
+        detailsInfo: "8% Seasonal Coin bonus \n Free DG Tickets (Shines)",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "DAOAlchemist Helmet",
+        title: "DG Frog Eye Patch",
         detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
@@ -611,10 +611,10 @@ if (true) {
         ],
         showStockQty:true,//defaults to true
         qtyCurrent: -2,
-        qtyTotal: 100,
+        qtyTotal: 60,
         claimWindowEnabled:true,//defaults to true
         checkLatestMarketPrices: true,
-        claimStartMS: Date.UTC(2023,8,15,15,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        claimStartMS: Date.UTC(2024,5,1,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
@@ -635,7 +635,7 @@ if (true) {
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0xe0dfb4793f82b5c2b619fa4305a308e5880c2537",
+    contract: "0x04e154db53007bdff215cc95b944018bbac81bc0",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -643,7 +643,7 @@ if (true) {
         parent: _scene,
         entityName: "entR2",
         shapeName: "models/Rewards/rewardR2.glb",
-        hoverText: "Claim a WonderZone Wearable",
+        hoverText: "Claim a Pacmoon Helmet",
         transform: transformArgs,
         motionData: {
           rotationVelocity: ROTATE_VELOCITY_OFF,
@@ -654,16 +654,16 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0xe0dfb4793f82b5c2b619fa4305a308e5880c2537:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x04e154db53007bdff215cc95b944018bbac81bc0:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
         imageWidth: 1024,
         imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "4% GamiMall Coin bonus \n 4% WonderMine minging bonus",
+        detailsInfo: "9% GamiMall Coin bonus \n Use it to earn Pacmoon Airdrop!!!",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "DAOAlchemist Torso",
+        title: "Pacmoon Helmet",
         detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
@@ -681,10 +681,10 @@ if (true) {
         ],
         showStockQty:true,//defaults to true
         qtyCurrent: -2,
-        qtyTotal: 50,
+        qtyTotal: 100,
         claimWindowEnabled:true,//defaults to true
         checkLatestMarketPrices: true,
-        claimStartMS: Date.UTC(2023,8,15,15,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        claimStartMS: Date.UTC(2024,3,21,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
@@ -705,7 +705,7 @@ if (true) {
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0xe93455667c8ee9fe0294920b9c0afaccfab84158",
+    contract: "0xb145f65254210d5f61c152999d6123054e660c3f",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -713,7 +713,7 @@ if (true) {
         parent: _scene,
         entityName: "entR3",
         shapeName: "models/Rewards/rewardR3.glb",
-        hoverText: "Claim Meta Residence Tower Wearable ",
+        hoverText: "Claim Stoney locs ",
         transform: transformArgs,
         lazyLoading:{
           enabled: true,
@@ -740,16 +740,16 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0xe93455667c8ee9fe0294920b9c0afaccfab84158:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0xb145f65254210d5f61c152999d6123054e660c3f:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
         imageWidth: 1024,
         imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "3% GamiMall Coin bonus \n 5 coins per 15 minutes in MRT ",
+        detailsInfo: "4.5% GamiMall Coin bonus",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "MRT Pink Slippers",
+        title: "Stoney Locs",
         detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
@@ -767,10 +767,10 @@ if (true) {
         ],
         showStockQty:true,//defaults to true
         qtyCurrent: -2,
-        qtyTotal: 60,
+        qtyTotal: 90,
         claimWindowEnabled:true,//defaults to true
         checkLatestMarketPrices: true,
-        claimStartMS: Date.UTC(2023,8,15,14,30,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        claimStartMS: Date.UTC(2024,5,1,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
@@ -791,7 +791,7 @@ if (true) {
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0x681a6e37e96340f21bf7401e3d770d10e3e1f1d7",
+    contract: "0xaca18156b12632e8deda762f13ac047850e88615",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -799,7 +799,7 @@ if (true) {
         parent: _scene,
         entityName: "entR4",
         shapeName: "models/Rewards/rewardR4.glb",
-        hoverText: "Claim a VroomWay wearable ",
+        hoverText: "Claim a MetaFox Doom ",
         transform: transformArgs,
         lazyLoading:{
           enabled: true,
@@ -826,16 +826,16 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x681a6e37e96340f21bf7401e3d770d10e3e1f1d7:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0xaca18156b12632e8deda762f13ac047850e88615:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
         imageWidth: 1024,
         imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "3% GamiMall coin bonus \n smart wearable with multiple utilities ",
+        detailsInfo: "4.5% Seasonal coin bonus",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "BuildaVroom Skin",
+        title: "Metafox Doom",
         detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
@@ -853,10 +853,10 @@ if (true) {
         ],
         showStockQty:true,//defaults to true
         qtyCurrent: -2,
-        qtyTotal: 50,
+        qtyTotal: 42,
         claimWindowEnabled:true,//defaults to true
         checkLatestMarketPrices: true,
-        claimStartMS: Date.UTC(2023,8,15,14,30,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        claimStartMS: Date.UTC(2024,5,1,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
@@ -877,7 +877,7 @@ if (true) {
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0x49962c9b084430ac77fd3f3960cc43ee6a5033ee",
+    contract: "0x61dfb0887d61ccc38acbab7fbfe26dbd82976b79",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -885,7 +885,7 @@ if (true) {
         parent: _scene,
         entityName: "entR5",
         shapeName: "models/Rewards/rewardR5.glb",
-        hoverText: "Claim a MetaParty Wearable",
+        hoverText: "Claim a Doge Cookie Glasses",
         transform: transformArgs,
         lazyLoading:{
           enabled: true,
@@ -912,16 +912,16 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x49962c9b084430ac77fd3f3960cc43ee6a5033ee:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x61dfb0887d61ccc38acbab7fbfe26dbd82976b79:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
         imageWidth: 1024,
         imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "3% GamiMall Coin bonus \n total 50 USD raffle",
+        detailsInfo: "4.5% GamiMall Coin bonus",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "DAOAlchemist Glasses",
+        title: "Doge Cookie Glasses",
         detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
@@ -939,10 +939,10 @@ if (true) {
         ],
         showStockQty:true,//defaults to true
         qtyCurrent: -2,
-        qtyTotal: 60,
+        qtyTotal: 39,
         claimWindowEnabled:true,//defaults to true
         checkLatestMarketPrices: true,
-        claimStartMS: Date.UTC(2023,8,15,14,30,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        claimStartMS: Date.UTC(2024,5,1,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
@@ -963,7 +963,7 @@ if (true) {
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0x8b9d82662463c15017fd6b30de51e4754b57dc33",
+    contract: "0x627f0e588fcf1232bb0018b43098ba4765f5401e",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -971,7 +971,7 @@ if (true) {
         parent: _scene,
         entityName: "entR6",
         shapeName: "models/Rewards/rewardR6.glb",
-        hoverText: "Claim a DG Live Wearable",
+        hoverText: "Claim a VoxBoard Wearable",
         transform: transformArgs,
         lazyLoading:{
           enabled: true,
@@ -998,16 +998,16 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x8b9d82662463c15017fd6b30de51e4754b57dc33:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x627f0e588fcf1232bb0018b43098ba4765f5401e:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
         imageWidth: 1024,
         imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "3% Meta GamiMall Coins Bonus \n total 50 USD raffle",
+        detailsInfo: "5% MetaGamiMall Coins Bonus \n Smart Wearable",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "DAOAlchemist Mask",
+        title: "FingerBoard",
         detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
@@ -1025,16 +1025,16 @@ if (true) {
         ],
         showStockQty:true,//defaults to true
         qtyCurrent: -2,
-        qtyTotal: 80,
+        qtyTotal: 91,
         claimWindowEnabled:true,//defaults to true
         checkLatestMarketPrices: true,
-        claimStartMS:Date.UTC(2023,8,15,14,30,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
+        claimStartMS:Date.UTC(2024,5,1,12,0,0,0),//-1,//Date.UTC(2022,11,11,15,16,17,0),//UTC
         claimEndMS: -1,//Date.UTC(2021,11,11,15,16,17,0),
       },
     },
   });
 }
-
+/*
 ////START MAKING REWARD R61
 if (true) {
   //block scope
@@ -1120,7 +1120,7 @@ if (true) {
     },
   });
 }
-////START MAKING REWARD R61
+////START MAKING REWARD R61 */
 
 //START MAKING REWARD S1
 if (true) {
@@ -1776,7 +1776,7 @@ if (true) {
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0x0c0de214ab1ceae679c757249868ac656cf51f32",
+    contract: "0x1e5c7f7bd7bc0cf32f9739a31e6930ae09f02b59",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -1784,7 +1784,7 @@ if (true) {
         parent: _scene,
         entityName: "entS9",
         shapeName: "models/Rewards/rewardS9.glb",
-        hoverText: "Claim a BeatTrekkers Wearable",
+        hoverText: "Claim a SXBet Wearable",
         transform: transformArgs,
         lazyLoading:{
           enabled: true,
@@ -1811,16 +1811,16 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "MetaDoge",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x0c0de214ab1ceae679c757249868ac656cf51f32:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x1e5c7f7bd7bc0cf32f9739a31e6930ae09f02b59:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
         imageWidth: 1024,
         imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "Do you feel the beats?",
+        detailsInfo: "4% GamiMall Coin bonus",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "BeatTrekkers Jeans",
+        title: "DAOAlchemist JetPack",
         detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
@@ -1936,7 +1936,7 @@ if (true) {
 
   wearableArr.push({
     sceneId: "gamimall",
-    contract: "0x348829d82bf657a8640bd96d7a8e89eef12fe72e",
+    contract: "0x27637f88b881538c7148c78ccaae10d6f2bf22a2",
     itemId: "0",
     options: {
       type: "2D-UI",
@@ -1944,7 +1944,7 @@ if (true) {
         parent: _scene,
         entityName: "entS10",
         shapeName: "models/Rewards/rewardS11.glb",
-        hoverText: "Claim a MetaFoxCrew Wearable",
+        hoverText: "Claim a SpottieWifi Wearable",
         transform: transformArgs,
         lazyLoading:{
           enabled: true,
@@ -1971,16 +1971,16 @@ if (true) {
       nftUIData: {
         style: "version20Modal",
         type: "NUO Mask",
-        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x348829d82bf657a8640bd96d7a8e89eef12fe72e:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
+        image: "https://peer-lb.decentraland.org/lambdas/collections/contents/urn:decentraland:matic:collections-v2:0x27637f88b881538c7148c78ccaae10d6f2bf22a2:0/thumbnail",//BASE_DIR + "images/makersPlaceAliceInWater.png",
         //imageSection: {  },
         imageWidth: 1024,
         imageHeight: 1024,
         detailsFontSize: 12, 
         
-        detailsInfo: "Be a member of the Metafox Crew",
+        detailsInfo: "Claim a SpottieWifi skin",
         directLink: "https://market.decentraland.org/",
         directLinkFontSize: 10,
-        title: "Metafox Crew Member",
+        title: "SpottieWifi skin",
         detailsTitle: "HIGHLIGHTS!",
         cost: [
           {
@@ -3237,7 +3237,7 @@ if (true) {
         });
       } 
       //END MAKING REWARD Music Stage Left
-
+ /*
          //START MAKING REWARD Music Stage Middle
          if (true) {
           //block scope
@@ -3405,7 +3405,7 @@ if (true) {
           });
         } 
         //END MAKING REWARD Music Stage Right
-
+   
          //START MAKING REWARD Music Stage Pool
          if (true) {
           //block scope
@@ -3415,7 +3415,7 @@ if (true) {
               rotation: Quaternion.create(0, 0, 0, 1),
               scale: Vector3.create(1, 1, 1),
             };
-        
+    
           wearableArr.push({
             sceneId: "gamimall",
             contract: "0x7d87bbb0746de9a602058715afaa84449de3a9f1",
@@ -3573,7 +3573,7 @@ if (true) {
           });
         } 
         //END MAKING REWARD Metaroost
-    
+    */
     
 
   //OTHERS

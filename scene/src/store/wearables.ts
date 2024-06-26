@@ -27,6 +27,7 @@ import * as ui from 'dcl-ui-toolkit'
 import { Entity, GltfContainer, InputAction, TextShape, Transform, VisibilityComponent, engine, pointerEventsSystem } from '@dcl/sdk/ecs';
 import { Color3, Vector3 } from '@dcl/sdk/math';
 import { cameraOnlyTrigger } from '../sdk7-utils/cameraOnlyTrigger';
+import { TransformSafeWrapper } from '../back-ports/workarounds';
 
 const CLASSNAME = "wearables.ts"
 
@@ -45,13 +46,13 @@ export async function createWearableLink(arg: WearableBoothArgs) {
 
   if (options.featuredEntityData?.transform){
     //ent.addComponent(new Transform(options.featuredEntityData?.transform));
-    Transform.create(ent,{
+    TransformSafeWrapper.create(ent,{
       ...options.featuredEntityData?.transform,
       parent: options.featuredEntityData?.parent
     })
   }else{
     //define default transform so can set parent if set
-    Transform.create(ent,{
+    TransformSafeWrapper.create(ent,{
       //...options.featuredEntityData?.transform,
       parent: options.featuredEntityData?.parent
     })
@@ -61,7 +62,7 @@ export async function createWearableLink(arg: WearableBoothArgs) {
   ////if(options.featureEntData && options.featureEntData.transform){
   ////featureEntity.addComponent(new Transform(options.featureEntData.transform))
   ////}else{
-    Transform.create(featureEntity, {parent: ent})
+    TransformSafeWrapper.create(featureEntity, {parent: ent})
   //featureEntity.addComponent(new Transform({}));
   ////}
   //engine.addEntity(featureEntity);
@@ -112,7 +113,7 @@ export async function createWearableLink(arg: WearableBoothArgs) {
         ////featureEntity.addComponent(new Transform(options.featureEntData.transform))
         ////}else{
 
-          Transform.create(featureEntityPlaceHolder,{
+          TransformSafeWrapper.create(featureEntityPlaceHolder,{
             position: cardData.lazyLoading.placeHolder.position !== undefined ? cardData.lazyLoading.placeHolder.position : Vector3.Zero()
           })
           //featureEntityPlaceHolder.addComponent(new Transform({
@@ -137,7 +138,7 @@ export async function createWearableLink(arg: WearableBoothArgs) {
 
       if(cardData.lazyLoading.trigger.positionType ==='featureEnt.parent'){
         triggerEnt = engine.addEntity()
-        Transform.create(triggerEnt,{
+        TransformSafeWrapper.create(triggerEnt,{
           parent: Transform.get(ent).parent
         })
         //triggerEnt.addComponent(triggerComp)
@@ -145,7 +146,7 @@ export async function createWearableLink(arg: WearableBoothArgs) {
         //triggerEnt.setParent(ent.getParent())
       }else if( cardData.lazyLoading.trigger.positionType ==='featureEnt'){
         triggerEnt = engine.addEntity()
-        Transform.create(triggerEnt,{
+        TransformSafeWrapper.create(triggerEnt,{
           parent: ent
         })
         //triggerEnt.addComponent(triggerComp)
@@ -179,7 +180,7 @@ export async function createWearableLink(arg: WearableBoothArgs) {
           //TODO ADD BACK??
           //triggerDebugEnt.addComponent(new BoxShape()).withCollisions=false
 
-          Transform.create(triggerDebugEnt,
+          TransformSafeWrapper.create(triggerDebugEnt,
           //triggerDebugEnt.addComponent( new Transform(
             {position:Vector3.add(
               cardData.lazyLoading.trigger.position ? cardData.lazyLoading.trigger.position : Vector3.Zero(),
@@ -254,7 +255,7 @@ export async function createWearableLink(arg: WearableBoothArgs) {
         scale: Vector3.create(0.3, 0.3, 0.3),
       })
     );*/
-    Transform.create(debugEnt,{
+    TransformSafeWrapper.create(debugEnt,{
       position: Vector3.create(0, 2, 0),
       scale: Vector3.create(0.3, 0.3, 0.3),
       parent: ent

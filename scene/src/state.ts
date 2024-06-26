@@ -15,7 +15,7 @@ import { GameLevelData as GameRoomData } from "./gamimall/resources";
 //import { TrackData } from 'src/meta-decentrally/modules/trackPlacement'
 import { GetPlayerCombinedInfoResultHelper } from "./gamimall/playfab-utils/playfabGetPlayerCombinedInfoResultHelper";
 import { UserData } from "~system/Players";
-import { RealmInfo } from "~system/Runtime";
+import { PBRealmInfo } from "~system/Runtime";
 import { ObservableComponentSubscription, log } from "./back-ports/backPorts";
 import { onIdleStateChangedObservable } from "./back-ports/onIdleStateChangedObservable";
 import { EnvironmentRealm } from "~system/EnvironmentApi";
@@ -29,7 +29,7 @@ export class PlayerState {
   playerPlayFabId: string = "not-set"; //player playfab address
   dclUserData: UserData | null = null;
   //let userData: UserData
-  dclUserRealm: RealmInfo | null = null;
+  dclUserRealm: PBRealmInfo | null = null;
   playFabLoginResult: LoginResult | null = null;
   playFabUserInfo: GetPlayerCombinedInfoResultPayload | undefined | null;
   playFabUserInfoHelper: GetPlayerCombinedInfoResultHelper
@@ -78,7 +78,7 @@ export class PlayerState {
     this.playerDclId = val.userId; //sideaffect
     this.notifyOnChange("dclUserData", val, oldVal);
   }
-  setDclUserRealm(val: RealmInfo) {
+  setDclUserRealm(val: PBRealmInfo) {
     const oldVal = this.dclUserRealm;
     this.dclUserRealm = val;
     this.notifyOnChange("dclUserRealm", val, oldVal);
@@ -112,6 +112,8 @@ class LeaderboardState {
   dailyLeaderboard?: PlayFabClientModels.GetLeaderboardResult;
   hourlyLeaderboard?: PlayFabClientModels.GetLeaderboardResult;
   monthlyLeaderboard?: PlayFabClientModels.GetLeaderboardResult;
+  pointsMonthlyLeaderboard?: PlayFabClientModels.GetLeaderboardResult;
+  pointsEpochLeaderboard?: PlayFabClientModels.GetLeaderboardResult;
 
   levelEpochLeaderboardRecord: Record<
     string,
@@ -133,7 +135,10 @@ class LeaderboardState {
     string,
     PlayFabClientModels.GetLeaderboardResult
   > = {};
-  
+  pointsMonthlyLeaderboardRecord: Record<
+    string,
+    PlayFabClientModels.GetLeaderboardResult
+  > = {};
   setHourlyLeaderBoard(
     val: PlayFabClientModels.GetLeaderboardResult,
     prefix: string = ""
@@ -163,6 +168,21 @@ class LeaderboardState {
     this.notifyOnChange(prefix + "monthlyLeaderboard", val, oldVal);
   }
   
+  setPointsMonthlyLeaderBoard(
+    val: PlayFabClientModels.GetLeaderboardResult,
+    prefix: string = ""
+  ) {
+    const oldVal = this.pointsMonthlyLeaderboard;
+
+    if (prefix && prefix !== "") {
+      this.pointsMonthlyLeaderboardRecord[prefix] = val;
+    } else {
+      this.pointsMonthlyLeaderboard = val;
+    }
+    this.notifyOnChange(prefix + "pointsMonthlyLeaderboard", val, oldVal);
+  }
+  
+
   setLevelEpocLeaderBoard(
     val: PlayFabClientModels.GetLeaderboardResult,
     prefix: string = ""

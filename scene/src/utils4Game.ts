@@ -2,6 +2,7 @@ import * as utils from '@dcl-sdk/utils'
 import { Entity, Transform, engine } from '@dcl/sdk/ecs';
 import { Color3, Quaternion, Vector3 } from '@dcl/sdk/math';
 import { ReadOnlyVector3 } from '~system/EngineApi';
+import { TransformSafeWrapper } from './back-ports/workarounds';
 
 export function shuffleArray<T>(array: T[]): T[] {
   for (let i = array.length - 1; i > 0; i--) {
@@ -31,7 +32,7 @@ export function addRepeatTrigger(
   
 
   const trigger = engine.addEntity()
-  Transform.create(trigger,
+  TransformSafeWrapper.create(trigger,
     {
       position:position,
       parent:parent

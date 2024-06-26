@@ -113,14 +113,17 @@ export class ProgressBarExt extends ProgressBar {
               //key={key}
               //{...this.textElement}
               color={this.fontColor}
+              textWrap='nowrap'
               //fontSize={this.size}
               fontSize={this.fontSize}
               value={this.text}
               uiTransform={{
                 //...this.textElement.uiTransform,
                 //display: this.visible ? 'flex' : 'none',
-                //positionType: 'absolute',
-                position: { top: "-10%", left: "-50%" },
+                positionType: 'absolute',
+                //width: '100%',
+                //padding: { left: '50%' },
+                position: { top: "-20%", left: "10%" },
               }}
             />
         

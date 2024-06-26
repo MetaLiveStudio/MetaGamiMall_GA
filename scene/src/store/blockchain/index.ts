@@ -207,7 +207,7 @@ export async function buyVC(
     if( args && args.claimStartMS && args.claimStartMS >= 0 && args.claimStartMS > now && !expired){
       //this.claimWindow.text.value = claimWindowDateToYMDHMS( new Date(nftUIData.claimStartMS) )
       //notInClaimableWindowPrompt.title.text.value = "Claim Not Active"
-      notInClaimableWindowPrompt.text.value = "Sorry, this cannot be claimed until after " + convertDateToYMDHMS( new Date(args.claimStartMS) )
+      notInClaimableWindowPrompt.text.value = "Sorry, this cannot be claimed \n until after " + convertDateToYMDHMS( new Date(args.claimStartMS) )
       notInClaimableWindowPrompt.show()
       return;
     }else if( args.claimStartMS && expired ){

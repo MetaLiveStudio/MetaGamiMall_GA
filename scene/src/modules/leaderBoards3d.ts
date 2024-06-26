@@ -7,6 +7,7 @@ import { PlayerLeaderboardEntryType, getLeaderboardRegistry } from '../gamimall/
 import { CONFIG, SCENE_TYPE_GAMIMALL } from '../config';
 import { log } from '../back-ports/backPorts';
 import { REGISTRY } from '../registry';
+import { TransformSafeWrapper } from '../back-ports/workarounds';
 
 const CLASSNAME = "leaderBoards3d.ts"
 
@@ -33,7 +34,7 @@ export function initLeaderboards3D(_scene:Entity){
     //engine.addEntity(leaderboardBigWeekly);
     //leaderboardBigWeekly.setParent(_scene);
     //XsignpostTreeSkyMaze.setParent(_scene)
-    Transform.create(leaderboardBigWeekly,{
+    TransformSafeWrapper.create(leaderboardBigWeekly,{
         position: Vector3.create(
           boardPlacementZ ,
           boardPlacementY,
@@ -48,7 +49,7 @@ export function initLeaderboards3D(_scene:Entity){
     //engine.addEntity(leaderboardBigDaily);
     //leaderboardBigDaily.setParent(_scene);
     //XsignpostTreeSkyMaze.setParent(_scene)
-    Transform.create(leaderboardBigDaily,{
+    TransformSafeWrapper.create(leaderboardBigDaily,{
         position: Vector3.create(
           boardPlacementZ ,
           boardPlacementY,
@@ -64,7 +65,7 @@ export function initLeaderboards3D(_scene:Entity){
     //engine.addEntity(leaderboardBigHourly);
     //leaderboardBigHourly.setParent(_scene);
     //XsignpostTreeSkyMaze.setParent(_scene)
-    Transform.create(leaderboardBigHourly,{
+    TransformSafeWrapper.create(leaderboardBigHourly,{
         position: Vector3.create(
           boardPlacementZ,
           boardPlacementY,

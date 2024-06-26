@@ -35,6 +35,8 @@ import { createBasicDanceArea } from './AutoDance'
 import { Vector3 } from '@dcl/sdk/math'
 import { initAvatarSwap } from './modules/avatar-swap/arissa';
 import { log } from './back-ports/backPorts';
+import { initCountdownWidgits } from './modules/counters/countdown';
+import { initSceneVideos } from './video/sceneVideos';
 
 // export all the functions required to make the scene work
 export * from '@dcl/sdk'
@@ -75,6 +77,7 @@ export function main(){
         //loadAltScene();
         //loadSecondAltScene();
         //initGameSceneMgr();
+        initSceneVideos(_scene)
         initResourceDropIns(_scene)
 
         
@@ -92,6 +95,9 @@ export function main(){
         createLeaderBoardUI()
         
         initUIGameHud();
+
+        initCountdownWidgits()
+        
         /*
         initUIStartGame();
         */

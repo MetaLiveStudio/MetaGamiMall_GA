@@ -22,10 +22,12 @@ export class CountdownBanner{
     //hourText:TextShape
     eventName:string
     eventStartTime:number
+    includeDays:boolean = false
 
-    constructor(eventName:string,eventStartTime:number,baseTransform:TransformTypeWithOptionals){
+    constructor(eventName:string,eventStartTime:number,baseTransform:TransformTypeWithOptionals,includeDays?:boolean){
         this.eventName = eventName
         this.eventStartTime = eventStartTime
+        this.includeDays = includeDays !== undefined ? includeDays : false
         
         const host = this.host = engine.addEntity()//new Entity()
         Transform.createOrReplace(host,baseTransform)
@@ -125,6 +127,7 @@ export class CountdownBanner{
     }
 }
 
+let systemAdded = false
 
 export class CountdownTimerSystem {
     refreshRate: number = 0.5
@@ -144,11 +147,18 @@ export class CountdownTimerSystem {
 
         if (totalSecond > 0) {
             log(CLASSNAME,"countdown will count down from :)",totalSecond)
-            engine.addSystem(this.systemFnCache)
+            if(!systemAdded){
+                systemAdded = true
+                engine.addSystem(this.systemFnCache)
+                log(CLASSNAME,"CountdownTimerSystem added")
+            }else{
+                log(CLASSNAME,"CountdownTimerSystem already added")
+            }
 
             countdownBanner.addToEngine()
         }else{
             log(CLASSNAME,"countdown has passed, do nothing :)",totalSecond)
+            countdownBanner.removeText()
         }
     }
     createUpdateFn(){
@@ -183,11 +193,10 @@ export class CountdownTimerSystem {
                     activeCounter++
                 }
 
-                const INCLUDE_DAYS_ENABLED = false
                 let days = 0
                 let hours = Math.floor(totalSecond / 3600)
                 //if doing days
-                if(INCLUDE_DAYS_ENABLED && hours >= 24){
+                if(countDownInst.includeDays && hours >= 24){
                     days = Math.floor(hours / 24)
                     hours = Math.floor(hours % 24)
                 }
@@ -195,7 +204,7 @@ export class CountdownTimerSystem {
                 let mins = Math.floor(second_remain / 60)
                 let secs = Math.floor(second_remain % 60)
 
-                if(INCLUDE_DAYS_ENABLED && days > 0){
+                if(countDownInst.includeDays && days > 0){
                     countDownInst.updateText(  digitFormat2Digit(days) + ":" + digitFormat2Digit(hours) + ":" + digitFormat2Digit(mins) + ":" + digitFormat2Digit(secs) )
                 }else{
                     countDownInst.updateText(  digitFormat2Digit(hours) + ":" + digitFormat2Digit(mins) + ":" + digitFormat2Digit(secs) )
@@ -209,20 +218,23 @@ export class CountdownTimerSystem {
                 log("countdown.no more counters, removing system")
                 engine.removeSystem(this.systemFnCache)
             }
-        }
+        } 
     }
 }
 
 export function initCountdownWidgits(){ 
+
+    const INCLUDE_DAYS_ENABLED = false //change to true if want days included in countdown
+
     //month is 0 based; 0 = January
-    //format is year,month,date,hours,minutes,seconds,ms - UTC ALWAYS
-    let eventTime0 = Date.UTC(2023, 1, 19, 23, 21, 30) //(Date.now() ) + (1) //Saturday, June 11, 2022 21:00:00 UTC 
+    //format is year,month,date,hours,minutes,seconds,ms - UTC ALWAYS 2024,5,1,12,0,0,0
+    let eventTime0 = Date.UTC(2024, 4, 1, 10, 0, 0) //(Date.now() ) + (1) //Saturday, June 11, 2022 21:00:00 UTC 
     log(CLASSNAME,"counter",new Date(eventTime0),new Date(eventTime0).toLocaleString(),eventTime0-(Date.now()))
-    let eventTime1 = Date.UTC(2023, 8, 15, 15, 0, 0)
+    let eventTime1 = Date.UTC(2024, 4, 1, 13, 0, 0)
     log(CLASSNAME,"counter",new Date(eventTime1),eventTime1-(Date.now()))
-    let eventTime2 = Date.UTC(2023, 8, 15, 14, 30, 0)
+    let eventTime2 = Date.UTC(2024, 4, 1, 12, 0, 0)
     log(CLASSNAME,"counter",new Date(eventTime2),eventTime2-(Date.now()))
-    let eventTime3 = Date.UTC(2023, 8, 15, 14, 0, 0)
+    let eventTime3 = Date.UTC(2024, 4, 1, 10, 0, 0)
     log(CLASSNAME,"counter",new Date(eventTime3),eventTime3-(Date.now()))
 
     const countdownSystem = new CountdownTimerSystem()
@@ -233,7 +245,8 @@ export function initCountdownWidgits(){
             , {
                 position: Vector3.create(baseX, baseY-2.5, baseZ),
                 rotation: Quaternion.fromEulerDegrees(0,0,0),
-                scale: Vector3.create(0.7,0.7,0.7)}
+                scale: Vector3.create(0.7,0.7,0.7)},
+            INCLUDE_DAYS_ENABLED
         )
     )
 
@@ -245,7 +258,8 @@ export function initCountdownWidgits(){
                 position: Vector3.create(baseX, baseY-5.5, baseZ+12),
                 rotation: Quaternion.fromEulerDegrees(0,0,0),
                 scale: Vector3.create(0.5,0.5,0.5)
-            }
+            },
+            INCLUDE_DAYS_ENABLED
         )
     )
 
@@ -257,7 +271,8 @@ export function initCountdownWidgits(){
                 position: Vector3.create(baseX, baseY-5.5, baseZ+28.5),
                 rotation: Quaternion.fromEulerDegrees(0,0,0),
                 scale: Vector3.create(0.5,0.5,0.5)
-            }
+            },
+            INCLUDE_DAYS_ENABLED
         )
     )
 
@@ -269,16 +284,17 @@ export function initCountdownWidgits(){
                 position: Vector3.create(baseX, baseY-2.5, baseZ+55),
                 rotation: Quaternion.fromEulerDegrees(0,0,0),
                 scale: Vector3.create(0.5,0.5,0.5)
-            }
+            },
+            INCLUDE_DAYS_ENABLED
         )
     )
 
 
 
-    log("countdown added")
-    engine.addSystem(
-        countdownSystem.systemFnCache
-    )
+    //log("countdown added")
+    // engine.addSystem(
+    //     countdownSystem.systemFnCache
+    // )
 }
 
 function digitFormat2Digit(val: number) {

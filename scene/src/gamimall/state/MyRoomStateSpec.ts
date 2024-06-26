@@ -79,7 +79,7 @@ export type SpawnZoneDef={
 }
 
 
-export type TrackFeatureType = "minable.rock1" | 'minable.rock2' |  "minable.MysteryBlock" | "buyable.item.bronze.shoe"| "buyable.rock2"| "buyable.rock3"| "buyable.BP"|"buyable.NI"|"buyable.ADS"|"buyable.MC"|"buyable.rock1"|"buyable.item.stat.raffle_coin_bag"|"buyable.item.ticket.raffle_coin_bag";
+export type TrackFeatureType = "minable.rock1" | 'minable.rock2' |  "minable.MysteryBlock" | "buyable.item.bronze.shoe"| "buyable.rock2"| "buyable.rock3"| "buyable.BP"|"buyable.NI"|"buyable.ADS"|"buyable.MC"|"buyable.rock1"|"buyable.item.stat.raffle_coin_bag"|"buyable.item.ticket.raffle_coin_bag" | 'buyable.item.lucky.wheel';
 export type TrackFeatureStatus = "not-init"|"active"|"inactive"|"cooling-down"|"scheduled";
 
 
@@ -154,7 +154,8 @@ export type MinableTypeDef={
   type?: TrackFeatureType;//tree/rock
   rewards?:RewardData[]
   cost?:CostData[]
-  purchaseDelay?:number //time mining to take
+  /** time mining to take, milliseconds */
+  purchaseDelay?:number 
 
   //triggerSize?: Vector3State
   //health:HealthDataState
@@ -441,6 +442,10 @@ export type RemoteBaseCoinRoomConfig={
   saveInterval:{
     notes:string
     value:number
+  },
+  xpLeveling:{
+    notes:string
+    formula:LevelingFormulaConfig
   },
   coinCap:{
     notes:string

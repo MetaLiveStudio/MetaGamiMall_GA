@@ -3,6 +3,7 @@ import { disconnect } from "../gamimall/connection"
 import { REGISTRY } from "../registry"
 import * as ui from 'dcl-ui-toolkit'
 import { log } from "../back-ports/backPorts"
+import { CONFIG, SCENE_TYPE_GAMIMALL, SCENE_TYPE_PX } from "../config"
 
 const CLASS_NAME = "ui_px.ts"
 
@@ -60,7 +61,7 @@ let pxEnabled = true
 
 export function isPxEnabled(){
   return pxEnabled
-} 
+}  
 export function setPxEnabled(_pxEnabled:boolean,_force?:boolean){
   const METHOD_NAME = "setPxEnabled"
   //log(CLASS_NAME,METHOD_NAME,"ENTRY",_pxEnabled,"_force",_force) 
@@ -130,6 +131,10 @@ export function setPxStatusMsg(msg:string,color:Color4 = Color4.White()){
 }
  
 export function initPxState(){
+  if(CONFIG.SCENE_TYPE !== SCENE_TYPE_PX){
+    log(CLASS_NAME,"initPxState","scene is not PX, disable, scene_type is",CONFIG.SCENE_TYPE)
+    return
+  }
   //setPxStatusMsg("PX Running");
   //setPxStatusMsg("PX Is Loading...");
   setPxStatusMsg("")//default msg value

@@ -355,7 +355,7 @@ export class CustomClaimPrompt implements Modal {
 
     howToBuyCoinsNMaterialsBtn.setSubTextVisible(true)
     howToBuyCoinsNMaterialsBtn.subText="________________________________________________________"
-    howToBuyCoinsNMaterialsBtn.setSubTextPosition({top:24,left:82})
+    howToBuyCoinsNMaterialsBtn.setSubTextPosition({top:24 - 8,left:82 - 130})
     
     //TODO DO WE NEED AN UNDERLINE??? maybe just make it the background image???
     /*const howToBuyCoinsNMaterialsBtnUnderline = new UIText(howToBuyCoinsNMaterialsBtn.image)
@@ -843,50 +843,53 @@ export class CustomClaimPrompt implements Modal {
     }
     //END LEGACY
 
-    const xOffset = 8
-    const yOffset = 14
-    
-    this.title.xPosition = 200 + xOffset + 30
-    this.title.yPosition = 142 + yOffset
+    const xOffset = 8 //- 140
+    const yOffset = 14 //+ 10
+
+    const xOffset2 = - 140
+    const yOffset2 =  14
+
+    this.title.xPosition = 200 + xOffset + 30 + xOffset2
+    this.title.yPosition = 142 + yOffset + yOffset2
 
     this.itemName.xPosition = 125 - 70 + xOffset
-    this.itemName.yPosition = 210 + yOffset
+    this.itemName.yPosition = 210 + yOffset + 13
 
     this.subtitleItemName.textElement.textAlign = "middle-right"
     this.subtitleItemName.xPosition = 300 + 70 + xOffset // pushed over right
       //125 - 70 + xOffset//aligned with title
     this.subtitleItemName.yPosition = 185 + yOffset
 
-    this.subtitle.xPosition = 200 + xOffset + 30
-    this.subtitle.yPosition = 100 + yOffset
+    this.subtitle.xPosition = 200 + xOffset + 30 + xOffset2
+    this.subtitle.yPosition = 100 + yOffset + yOffset2
 
     this.image.xPosition = -165 + xOffset,
     this.image.yPosition = 22 + yOffset
 
     this.itemQtyAmount.textElement.textAlign = "middle-left"
     this.itemQtyAmount.xPosition = 25 + xOffset + 30//125 + 75 + xOffset
-    this.itemQtyAmount.yPosition = 110 + 70 + yOffset
+    this.itemQtyAmount.yPosition = 110 + 70 + yOffset + 5
 
     this.claimWindow.xPosition = 125 + 75 + xOffset
-    this.claimWindow.yPosition = -60 - 120 + yOffset
+    this.claimWindow.yPosition = -60 - 130 + yOffset
 
-    this.checkingLatestPriceUI.xPosition = 200 + xOffset
-    this.checkingLatestPriceUI.yPosition = -20 + yOffset
+    // this.checkingLatestPriceUI.xPosition = 200 + xOffset
+    // this.checkingLatestPriceUI.yPosition = -20 + yOffset
 
 
-    this.checkingLatestPriceUI.xPosition = 200 + 15 + xOffset
-    this.checkingLatestPriceUI.yPosition = -30 + yOffset
+    this.checkingLatestPriceUI.xPosition = 200 + 15 + xOffset - 100
+    this.checkingLatestPriceUI.yPosition = -50 + yOffset
 
-    this.howToBuyCoinsNMaterialsBtn.xPosition = 200 + 20 + xOffset
-    this.howToBuyCoinsNMaterialsBtn.yPosition = -95 + yOffset
+    this.howToBuyCoinsNMaterialsBtn.xPosition = 200 + 20 + xOffset// - 120
+    this.howToBuyCoinsNMaterialsBtn.yPosition = -95 + yOffset// + 5
 
 
     const COST_POS_Y =45
 
     const COST_X_BASE = this.showCostIcons && CONFIG.CLAIM_CHECK_FOR_LATEST_PRICES ? 180 + 45 : 200
 
-    this.costText.xPosition = COST_X_BASE
-    this.costText.yPosition = COST_POS_Y + 2
+    this.costText.xPosition = COST_X_BASE - 14
+    this.costText.yPosition = COST_POS_Y + 2 + 14
         
     if(this.showCostIcons){
       this.costInfoIcon.xPosition = COST_X_BASE+72
@@ -1006,7 +1009,7 @@ export class CustomClaimPrompt implements Modal {
     //wrapping in a executeTask, not sure if it helps or not to run in seperate thread
     executeTask(async () => {
     //do price update check
-    const result = fetchNFTData(this.contract).then(
+    const result = fetchNFTData(this.contract,{withMetadata:false}).then(
       (result:any)=>{
         log(CLASSNAME,METHOD_NAME,"result",result)
 
@@ -1506,7 +1509,7 @@ function applyClaimPanel(
       
       tradeButton.subTextElement.fontSize = 12
       tradeButton.setTextPosition({top: -10})
-      tradeButton.setSubTextPosition({top: 35})
+      tradeButton.setSubTextPosition({top: 35 - 10})
       tradeButton.setSubTextVisible(true)  
 
       const iconSizeWidth = 32

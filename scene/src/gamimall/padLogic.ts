@@ -41,6 +41,7 @@ import * as ui from 'dcl-ui-toolkit'
 import { IntervalUtil } from '../meta-decentrally/modules/interval-util';
 import { movePlayerTo } from '~system/RestrictedActions';
 import { onIdleStateChangedObservable } from '../back-ports/onIdleStateChangedObservable';
+import { TransformSafeWrapper } from '../back-ports/workarounds';
 
 //initRegistry()
 //initConfig()
@@ -71,7 +72,7 @@ export function initPad(_scene:Entity){
 
   const pad = engine.addEntity()
   
-  Transform.create(pad,{
+  TransformSafeWrapper.create(pad,{
     position: Vector3.create(
       25.78313446044922,
       0.8795676231384277,
@@ -137,7 +138,7 @@ export function initPad(_scene:Entity){
   const padSummon = engine.addEntity()
   //engine.addEntity(padSummon);
   //padSummon.setParent(_scene);
-  Transform.create(padSummon,{
+  TransformSafeWrapper.create(padSummon,{
     position: Vector3.create(48, 0, 40),
     rotation: Quaternion.create(0, 0, 0, 1),
     scale: Vector3.create(1, 1, 1),
